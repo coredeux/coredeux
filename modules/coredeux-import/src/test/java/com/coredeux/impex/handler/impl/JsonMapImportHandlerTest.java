@@ -79,6 +79,18 @@ class JsonMapImportHandlerTest {
     }
 
     @Test
+    void shouldHandleMissingColumnContextInErrors() {
+        CoredeuxImportException exception = assertThrows(CoredeuxImportException.class,
+                () -> handler.handle(ImportValueContext.builder()
+                        .rawValue(42)
+                        .mapValueType(Object.class)
+                        .build()));
+
+        assertNull(exception.getColumn());
+        assertTrue(exception.getMessage().contains("for column: null"));
+    }
+
+    @Test
     void shouldRejectUnsupportedRawAndScalarTypesWithColumnContext() {
         CoredeuxImportException unsupportedRaw = assertThrows(CoredeuxImportException.class,
                 () -> handler.handle(context(42, Object.class)));

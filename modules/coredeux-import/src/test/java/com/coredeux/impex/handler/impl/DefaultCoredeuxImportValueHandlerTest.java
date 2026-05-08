@@ -56,6 +56,18 @@ class DefaultCoredeuxImportValueHandlerTest {
     }
 
     @Test
+    void shouldReturnRawValueWhenExpectedTypeIsObjectOrMissing() {
+        assertEquals("raw", handle("raw", Object.class));
+        Object missingType = handler.handle(ImportValueContext.builder()
+                .rawValue("raw")
+                .effectiveValue("raw")
+                .column(ImportColumn.builder().name("sample").build())
+                .build());
+
+        assertEquals("raw", missingType);
+    }
+
+    @Test
     void shouldConvertCollectionsAndPreserveEscapedSeparators() {
         Object list = handler.handle(context("one,two\\,too,three\\\\", List.class)
                 .collectionElementType(String.class)
@@ -72,9 +84,12 @@ class DefaultCoredeuxImportValueHandlerTest {
     void shouldRejectUnsupportedConversion() {
         CoredeuxImportException exception = assertThrows(CoredeuxImportException.class,
                 () -> handle("value", Field.class));
+        CoredeuxImportException charException = assertThrows(CoredeuxImportException.class,
+                () -> handle("A", char.class));
 
         assertTrue(exception.getMessage().contains("No default import conversion available"));
         assertTrue(exception.getMessage().contains("sample"));
+        assertTrue(charException.getMessage().contains("No default import conversion available"));
     }
 
     @Test
