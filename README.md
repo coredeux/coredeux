@@ -74,6 +74,36 @@ That becomes especially useful when the same capability needs to work across
 different persistence technologies, or when import/export and agent-driven
 actions should follow the same framework contract as normal application calls.
 
+## Is Coredeux Relevant In The Age Of Claude And Codex?
+
+Yes, because agents generate and operate workflows, while Coredeux hosts,
+validates, persists, imports, exports, and governs them.
+
+AI coding tools can produce application code quickly, but long-lived systems
+still need consistency beyond a single prompt session. Teams need stable
+conventions, repeatable module patterns, safe data access paths, import and
+export contracts, and examples that can be understood, reused, and extended.
+
+Coredeux is designed to be that agent-friendly application substrate for
+Java/Spring systems:
+
+- a framework for AI-assisted enterprise applications
+- a reference architecture for CRUD, search, import, export, and workflow-heavy
+  systems
+- a stable backend foundation that agents such as Codex and Claude can extend
+  predictably
+- a demo platform that shows how new modules can be added without inventing the
+  structure from scratch each time
+- a practical framework for teams that still want control over the code they
+  copy, run, test, and own
+
+The name Coredeux reflects that direction: a foundational core for data,
+services, workflow, and integration. In the agent era, Coredeux aims to be more
+than another Java utility framework. It is infrastructure that makes
+agent-assisted development easier to trust: clear docs, predictable module
+conventions, working examples, clean tests, and room for AI-ready recipes such
+as "add a new entity module using this pattern."
+
 ## Start Here
 
 If you are new to Coredeux, these are the two fastest paths into the project:
