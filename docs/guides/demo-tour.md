@@ -44,6 +44,8 @@ Important areas:
 - `src/main/java/com/coredeux/demo/imports`: custom import value handlers
 - `src/main/java/com/coredeux/demo/export`: custom export storage backend
 - `src/main/java/com/coredeux/demo/workflow`: demo custom module
+- `src/main/java/com/coredeux/demo/bootstrap`: startup data and JSONB search
+  examples
 - `samples`: import files used to load demo data
 
 ## Entity Definitions
@@ -312,10 +314,27 @@ shows the typical export API shape:
 The controller returns `202 Accepted` while jobs are `NEW` or `IN_PROGRESS`,
 then returns the completed response once the worker finishes.
 
+## Bootstrap Data And JSONB Search
+
+[DemoDataRunner.java](../../examples/coredeux-demo/src/main/java/com/coredeux/demo/bootstrap/DemoDataRunner.java)
+loads sample data at startup.
+
+It demonstrates:
+
+- saving entities through `CoredeuxService`
+- loading saved entities through `CoredeuxService`
+- updating an entity through the framework path
+- searching normal fields and JSONB metadata
+- using PostgreSQL JSONB comparators such as `JSONB(TEXT)` and `JSONB(NUMERIC)`
+
+Bootstrap can be disabled with:
+
+```text
+coredeux.demo.bootstrap.enabled=false
+```
+
 ## Sample Import Files
 
-The demo still seeds a small PostgreSQL dataset during application startup
-through [DemoDataRunner.java](../../examples/coredeux-demo/src/main/java/com/coredeux/demo/bootstrap/DemoDataRunner.java).
 Additional sample data lives under [samples](../../examples/coredeux-demo/samples)
 and is imported through the file import endpoints.
 
@@ -348,8 +367,8 @@ Use this order when studying the code:
 5. Read the workflow module to understand how new modules are added.
 6. Read the import handlers and import controllers.
 7. Read the export storage service and export controller.
-8. Finish with `DemoDataRunner` and the sample import files to see both startup
-   bootstrap data and import-pipeline data.
+8. Finish with `DemoDataRunner` to see startup data and JSONB search in action,
+   then read the sample import files to see import-pipeline data.
 
 ## What To Copy Into Your App
 
