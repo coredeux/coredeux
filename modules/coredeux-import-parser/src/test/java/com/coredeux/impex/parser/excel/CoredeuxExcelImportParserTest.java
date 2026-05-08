@@ -94,6 +94,26 @@ class CoredeuxExcelImportParserTest {
     }
 
     @Test
+    void shouldParseFirstSheetWhenSheetArgumentsAreNullOrBlank() throws IOException {
+        InputStream nullArgsWorkbook = workbook(workbook -> {
+            Sheet products = workbook.createSheet("Products");
+            strings(products.createRow(0), "CREATE com.example.Product", "sku");
+            strings(products.createRow(1), "", "P-1");
+        });
+        ImportRequest nullArgsRequest = parser.parse(nullArgsWorkbook, (String[]) null);
+
+        InputStream blankNameWorkbook = workbook(workbook -> {
+            Sheet products = workbook.createSheet("Products");
+            strings(products.createRow(0), "CREATE com.example.Product", "sku");
+            strings(products.createRow(1), "", "P-2");
+        });
+        ImportRequest blankNameRequest = parser.parse(blankNameWorkbook, " ");
+
+        assertEquals("P-1", nullArgsRequest.getStatements().get(0).getRows().get(0).getValues().get("sku"));
+        assertEquals("P-2", blankNameRequest.getStatements().get(0).getRows().get(0).getValues().get("sku"));
+    }
+
+    @Test
     void shouldParseNamedSheetWhenSheetNameIsProvided() throws IOException {
         ImportRequest request = parser.parse(workbook(workbook -> {
             Sheet products = workbook.createSheet("Products");
@@ -106,6 +126,21 @@ class CoredeuxExcelImportParserTest {
 
         assertEquals("com.example.Category", request.getStatements().get(0).getEntity());
         assertEquals("fruit", request.getStatements().get(0).getRows().get(0).getValues().get("code"));
+    }
+
+    @Test
+    void shouldIgnoreNullAndBlankWorkbookRows() throws IOException {
+        ImportRequest request = parser.parse(workbook(workbook -> {
+            Sheet sheet = workbook.createSheet("Sparse");
+            strings(sheet.createRow(0), "CREATE com.example.Product", "sku");
+            Row blankRow = sheet.createRow(2);
+            blankRow.createCell(0, CellType.BLANK);
+            blankRow.createCell(1, CellType.BLANK);
+            strings(sheet.createRow(3), "", "P-1");
+        }));
+
+        assertEquals(1, request.getStatements().get(0).getRows().size());
+        assertEquals("P-1", request.getStatements().get(0).getRows().get(0).getValues().get("sku"));
     }
 
     @Test
@@ -122,6 +157,15 @@ class CoredeuxExcelImportParserTest {
                 () -> parser.parse(workbook(workbook -> workbook.createSheet("Products")), "Products", "extra"));
 
         assertTrue(exception.getMessage().contains("supports only one optional argument"));
+    }
+
+    @Test
+    void shouldRejectWorkbookWithoutSheets() throws IOException {
+        CoredeuxImportParserException exception = assertThrows(CoredeuxImportParserException.class,
+                () -> parser.parse(workbook(workbook -> {
+                })));
+
+        assertTrue(exception.getMessage().contains("must contain at least one sheet"));
     }
 
     @Test
@@ -173,6 +217,15 @@ class CoredeuxExcelImportParserTest {
                 () -> parser.parse(null));
 
         assertTrue(exception.getMessage().contains("must not be null"));
+    }
+
+    @Test
+    void shouldWrapWorkbookParseFailures() {
+        CoredeuxImportParserException exception = assertThrows(CoredeuxImportParserException.class,
+                () -> parser.parse(new ByteArrayInputStream("not an xlsx workbook".getBytes())));
+
+        assertTrue(exception.getMessage().contains("Failed to parse Excel import workbook"));
+        assertTrue(exception.getCause() instanceof IOException);
     }
 
     private InputStream workbook(WorkbookWriter writer) throws IOException {
