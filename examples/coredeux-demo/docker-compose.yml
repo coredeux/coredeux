@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: coredeux_oss
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d coredeux_oss"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' | grep 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  coredeux-demo:
+    build:
+      context: ../..
+      dockerfile: examples/coredeux-demo/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      COREDEUX_DEMO_DB_HOST: postgres
+      COREDEUX_DEMO_DB_PORT: 5432
+      COREDEUX_DEMO_DB_NAME: coredeux_oss
+      COREDEUX_DEMO_DB_USER: postgres
+      COREDEUX_DEMO_DB_PASSWORD: root
+      COREDEUX_DEMO_MONGO_HOST: mongodb
+      COREDEUX_DEMO_MONGO_PORT: 27017
+      COREDEUX_DEMO_MONGO_DB: coredeux_oss
+      COREDEUX_DEMO_ELASTICSEARCH_HOST: elasticsearch
+      COREDEUX_DEMO_ELASTICSEARCH_PORT: 9200
+      COREDEUX_DEMO_ELASTICSEARCH_SCHEME: http
+      COREDEUX_DEMO_REDIS_HOST: redis
+      COREDEUX_DEMO_REDIS_PORT: 6379
+    ports:
+      - "8080:8080"

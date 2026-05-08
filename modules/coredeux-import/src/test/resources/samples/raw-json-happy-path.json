@@ -1,0 +1,98 @@
+{
+  "macros": {
+    "&defaultCategory": {
+      "value": "SOFTWARE",
+      "metadata": {
+        "purpose": "test-default"
+      }
+    }
+  },
+  "options": {
+    "passes": 2,
+    "failFast": false,
+    "validateOnly": false
+  },
+  "statements": [
+    {
+      "operation": "CREATE",
+      "entity": "com.coredeux.impex.service.impl.DefaultCoredeuxImportServiceTest$Product",
+      "metadata": {
+        "source": "raw-json-guide",
+        "priority": 1
+      },
+      "columns": [
+        {
+          "name": "sku",
+          "metadata": {
+            "sourceColumn": "sku"
+          }
+        },
+        {
+          "name": "price",
+          "defaultValue": "10"
+        },
+        {
+          "name": "active",
+          "defaultValue": "true"
+        },
+        {
+          "name": "category",
+          "defaultValue": "&defaultCategory"
+        },
+        {
+          "name": "tags",
+          "mode": "replace"
+        },
+        {
+          "name": "attributes",
+          "handler": "jsonMapImportHandler"
+        },
+        {
+          "name": "metadata",
+          "handler": "jsonMapImportHandler"
+        }
+      ],
+      "rows": [
+        {
+          "key": "&productRawJson",
+          "metadata": {
+            "line": 1,
+            "source": "resource"
+          },
+          "values": {
+            "sku": "raw-json-sku",
+            "active": "",
+            "tags": "primary\\, literal,featured",
+            "attributes": "{\"color\":\"blue\",\"size\":42}",
+            "metadata": {
+              "createdBy": "guide",
+              "score": 7,
+              "published": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "operation": "CREATE",
+      "entity": "com.coredeux.impex.service.impl.DefaultCoredeuxImportServiceTest$ProductOwner",
+      "columns": [
+        {
+          "name": "email"
+        },
+        {
+          "name": "product",
+          "reference": "*"
+        }
+      ],
+      "rows": [
+        {
+          "values": {
+            "email": "owner.raw@example.com",
+            "product": "&productRawJson"
+          }
+        }
+      ]
+    }
+  ]
+}

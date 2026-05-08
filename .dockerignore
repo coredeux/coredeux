@@ -1,0 +1,5 @@
+.git
+**/target
+**/.m2
+**/.idea
+**/*.log

@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: coredeux-demo
+  datasource:
+    url: jdbc:postgresql://${COREDEUX_DEMO_DB_HOST:localhost}:${COREDEUX_DEMO_DB_PORT:5432}/${COREDEUX_DEMO_DB_NAME:coredeux_oss}
+    driver-class-name: org.postgresql.Driver
+    username: ${COREDEUX_DEMO_DB_USER:postgres}
+    password: ${COREDEUX_DEMO_DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+coredeux:
+  entities:
+    config-location: classpath:coredeux-entities.yml
+  demo:
+    mongodb:
+      host: ${COREDEUX_DEMO_MONGO_HOST:localhost}
+      port: ${COREDEUX_DEMO_MONGO_PORT:27017}
+      database: ${COREDEUX_DEMO_MONGO_DB:coredeux_oss}
+    elasticsearch:
+      host: ${COREDEUX_DEMO_ELASTICSEARCH_HOST:localhost}
+      port: ${COREDEUX_DEMO_ELASTICSEARCH_PORT:9200}
+      scheme: ${COREDEUX_DEMO_ELASTICSEARCH_SCHEME:http}
+    redis:
+      host: ${COREDEUX_DEMO_REDIS_HOST:localhost}
+      port: ${COREDEUX_DEMO_REDIS_PORT:6379}
+  export:
+    log:
+      default-service: defaultCoredeuxExportLogService
+    storage:
+      default-service: databaseCoredeuxExportStorageService
+      filesystem:
+        base-directory: ${COREDEUX_EXPORT_FILESYSTEM_BASE_DIRECTORY:${java.io.tmpdir}/coredeux-export}
+    worker:
+      enabled: true
+      max-parallel: 2
+      delay-ms: 3000
+
+logging:
+  level:
+    com.coredeux: INFO
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha

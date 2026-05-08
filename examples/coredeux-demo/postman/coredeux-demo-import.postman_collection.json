@@ -1,0 +1,439 @@
+{
+  "info": {
+    "name": "Coredeux Demo Import API",
+    "_postman_id": "e5fe6c95-92db-4c88-a58d-142cb7d3f9d5",
+    "description": "Sample and adversarial JSON/file import requests for the Coredeux demo import endpoints. File requests use samples under examples/coredeux-demo/postman/samples.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "roleEntity",
+      "value": "com.coredeux.demo.domain.Role"
+    },
+    {
+      "key": "productEntity",
+      "value": "com.coredeux.demo.domain.Product"
+    },
+    {
+      "key": "customerEntity",
+      "value": "com.coredeux.demo.domain.Customer"
+    },
+    {
+      "key": "addressEntity",
+      "value": "com.coredeux.demo.domain.Address"
+    },
+    {
+      "key": "profileEntity",
+      "value": "com.coredeux.demo.domain.CustomerProfile"
+    },
+    {
+      "key": "orderEntity",
+      "value": "com.coredeux.demo.domain.CustomerOrder"
+    },
+    {
+      "key": "orderItemEntity",
+      "value": "com.coredeux.demo.domain.OrderItem"
+    }
+  ],
+  "item": [
+    {
+      "name": "Happy Path",
+      "item": [
+        {
+          "name": "Validate Complete Import Graph",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('validation succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('no import errors', function () { pm.expect(pm.response.json().logs).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": {\n    \"passes\": 3,\n    \"failFast\": false\n  },\n  \"statements\": [\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{roleEntity}}\",\n      \"columns\": [\n        { \"name\": \"code\", \"unique\": true },\n        { \"name\": \"description\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&roleBuyer\", \"values\": { \"code\": \"BUYER\", \"description\": \"Buyer role imported from JSON\" } },\n        { \"key\": \"&roleReviewer\", \"values\": { \"code\": \"REVIEWER\", \"description\": \"Reviewer role imported from JSON\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [\n        { \"name\": \"sku\", \"unique\": true },\n        { \"name\": \"name\" },\n        { \"name\": \"price\" },\n        { \"name\": \"documentationUrl\", \"handler\": \"demoUriImportHandler\" },\n        { \"name\": \"active\" },\n        { \"name\": \"category\" },\n        { \"name\": \"tags\" },\n        { \"name\": \"attributes\", \"handler\": \"jsonMapImportHandler\" },\n        { \"name\": \"metadata\", \"handler\": \"jsonMapImportHandler\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&productStarter\", \"values\": { \"sku\": \"IMPORT-SKU-1001\", \"name\": \"Imported Starter Product\", \"price\": \"149.99\", \"documentationUrl\": \"https://docs.coredeux.dev/products/import-starter\", \"active\": \"true\", \"category\": \"SOFTWARE\", \"tags\": \"import,demo,starter\", \"attributes\": { \"tier\": \"starter\", \"rank\": 1 }, \"metadata\": \"{\\\"source\\\":\\\"postman-string\\\",\\\"priority\\\":1}\" } },\n        { \"key\": \"&productHardware\", \"values\": { \"sku\": \"IMPORT-SKU-2001\", \"name\": \"Imported Hardware Product\", \"price\": \"249.50\", \"documentationUrl\": \"https://docs.coredeux.dev/products/import-hardware\", \"active\": \"true\", \"category\": \"HARDWARE\", \"tags\": \"import,demo,hardware\", \"attributes\": { \"tier\": \"hardware\", \"rank\": 2 }, \"metadata\": { \"source\": \"postman-map\", \"priority\": 2 } } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{customerEntity}}\",\n      \"columns\": [\n        { \"name\": \"email\", \"unique\": true },\n        { \"name\": \"name\" },\n        { \"name\": \"active\" },\n        { \"name\": \"status\" },\n        { \"name\": \"registeredAt\" },\n        { \"name\": \"birthDate\" },\n        { \"name\": \"loyaltyPoints\" },\n        { \"name\": \"creditLimit\" },\n        { \"name\": \"phoneNumbers\" },\n        { \"name\": \"roles\", \"reference\": \"code\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&customerAlice\", \"values\": { \"email\": \"import.alice@example.com\", \"name\": \"Import Alice\", \"active\": \"true\", \"status\": \"ACTIVE\", \"registeredAt\": \"2026-05-02T02:00:00Z\", \"birthDate\": \"1991-05-20\", \"loyaltyPoints\": \"150\", \"creditLimit\": \"1500.00\", \"phoneNumbers\": \"+61-400-111-222,+61-400-333-444\", \"roles\": \"BUYER,REVIEWER\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{addressEntity}}\",\n      \"columns\": [\n        { \"name\": \"customer\", \"reference\": \"*\" },\n        { \"name\": \"line1\", \"unique\": true },\n        { \"name\": \"type\" },\n        { \"name\": \"city\" },\n        { \"name\": \"country\" },\n        { \"name\": \"primaryAddress\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&addressAliceHome\", \"values\": { \"customer\": \"&customerAlice\", \"line1\": \"12 Import Street\", \"type\": \"HOME\", \"city\": \"Sydney\", \"country\": \"Australia\", \"primaryAddress\": \"true\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{profileEntity}}\",\n      \"columns\": [\n        { \"name\": \"customer\", \"reference\": \"*\", \"unique\": true },\n        { \"name\": \"biography\" },\n        { \"name\": \"marketingOptIn\" },\n        { \"name\": \"favoriteTags\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&profileAlice\", \"values\": { \"customer\": \"&customerAlice\", \"biography\": \"Imported profile generated through coredeux-import.\", \"marketingOptIn\": \"true\", \"favoriteTags\": \"import,json,postman\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{orderEntity}}\",\n      \"columns\": [\n        { \"name\": \"customer\", \"reference\": \"*\" },\n        { \"name\": \"shippingAddress\", \"reference\": \"*\" },\n        { \"name\": \"status\" },\n        { \"name\": \"createdAt\", \"unique\": true },\n        { \"name\": \"totalAmount\" },\n        { \"name\": \"notes\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&orderAlice\", \"values\": { \"customer\": \"&customerAlice\", \"shippingAddress\": \"&addressAliceHome\", \"status\": \"DRAFT\", \"createdAt\": \"2026-05-02T03:00:00Z\", \"totalAmount\": \"399.49\", \"notes\": \"Imported order,verify references\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{orderItemEntity}}\",\n      \"columns\": [\n        { \"name\": \"order\", \"reference\": \"*\", \"unique\": true },\n        { \"name\": \"product\", \"reference\": \"sku\", \"unique\": true },\n        { \"name\": \"quantity\" },\n        { \"name\": \"unitPrice\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&orderItemAliceStarter\", \"values\": { \"order\": \"&orderAlice\", \"product\": \"IMPORT-SKU-1001\", \"quantity\": \"2\", \"unitPrice\": \"149.99\" } }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import/validate"
+          }
+        },
+        {
+          "name": "Import Complete Graph",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('import succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('no import errors', function () { pm.expect(pm.response.json().logs).to.be.an('array').that.is.empty; });",
+                  "pm.test('references are internal only', function () { pm.expect(pm.response.json().references).to.be.undefined; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": {\n    \"passes\": 3,\n    \"failFast\": false\n  },\n  \"statements\": [\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{roleEntity}}\",\n      \"columns\": [\n        { \"name\": \"code\", \"unique\": true },\n        { \"name\": \"description\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&roleBuyer\", \"values\": { \"code\": \"BUYER\", \"description\": \"Buyer role imported from JSON\" } },\n        { \"key\": \"&roleReviewer\", \"values\": { \"code\": \"REVIEWER\", \"description\": \"Reviewer role imported from JSON\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [\n        { \"name\": \"sku\", \"unique\": true },\n        { \"name\": \"name\" },\n        { \"name\": \"price\" },\n        { \"name\": \"documentationUrl\", \"handler\": \"demoUriImportHandler\" },\n        { \"name\": \"active\" },\n        { \"name\": \"category\" },\n        { \"name\": \"tags\" },\n        { \"name\": \"attributes\", \"handler\": \"jsonMapImportHandler\" },\n        { \"name\": \"metadata\", \"handler\": \"jsonMapImportHandler\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&productStarter\", \"values\": { \"sku\": \"IMPORT-SKU-1001\", \"name\": \"Imported Starter Product\", \"price\": \"149.99\", \"documentationUrl\": \"https://docs.coredeux.dev/products/import-starter\", \"active\": \"true\", \"category\": \"SOFTWARE\", \"tags\": \"import,demo,starter\", \"attributes\": { \"tier\": \"starter\", \"rank\": 1 }, \"metadata\": \"{\\\"source\\\":\\\"postman-string\\\",\\\"priority\\\":1}\" } },\n        { \"key\": \"&productHardware\", \"values\": { \"sku\": \"IMPORT-SKU-2001\", \"name\": \"Imported Hardware Product\", \"price\": \"249.50\", \"documentationUrl\": \"https://docs.coredeux.dev/products/import-hardware\", \"active\": \"true\", \"category\": \"HARDWARE\", \"tags\": \"import,demo,hardware\", \"attributes\": { \"tier\": \"hardware\", \"rank\": 2 }, \"metadata\": { \"source\": \"postman-map\", \"priority\": 2 } } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{customerEntity}}\",\n      \"columns\": [\n        { \"name\": \"email\", \"unique\": true },\n        { \"name\": \"name\" },\n        { \"name\": \"active\" },\n        { \"name\": \"status\" },\n        { \"name\": \"registeredAt\" },\n        { \"name\": \"birthDate\" },\n        { \"name\": \"loyaltyPoints\" },\n        { \"name\": \"creditLimit\" },\n        { \"name\": \"phoneNumbers\" },\n        { \"name\": \"roles\", \"reference\": \"code\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&customerAlice\", \"values\": { \"email\": \"import.alice@example.com\", \"name\": \"Import Alice\", \"active\": \"true\", \"status\": \"ACTIVE\", \"registeredAt\": \"2026-05-02T02:00:00Z\", \"birthDate\": \"1991-05-20\", \"loyaltyPoints\": \"150\", \"creditLimit\": \"1500.00\", \"phoneNumbers\": \"+61-400-111-222,+61-400-333-444\", \"roles\": \"BUYER,REVIEWER\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{addressEntity}}\",\n      \"columns\": [\n        { \"name\": \"customer\", \"reference\": \"*\" },\n        { \"name\": \"line1\", \"unique\": true },\n        { \"name\": \"type\" },\n        { \"name\": \"city\" },\n        { \"name\": \"country\" },\n        { \"name\": \"primaryAddress\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&addressAliceHome\", \"values\": { \"customer\": \"&customerAlice\", \"line1\": \"12 Import Street\", \"type\": \"HOME\", \"city\": \"Sydney\", \"country\": \"Australia\", \"primaryAddress\": \"true\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{profileEntity}}\",\n      \"columns\": [\n        { \"name\": \"customer\", \"reference\": \"*\", \"unique\": true },\n        { \"name\": \"biography\" },\n        { \"name\": \"marketingOptIn\" },\n        { \"name\": \"favoriteTags\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&profileAlice\", \"values\": { \"customer\": \"&customerAlice\", \"biography\": \"Imported profile generated through coredeux-import.\", \"marketingOptIn\": \"true\", \"favoriteTags\": \"import,json,postman\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{orderEntity}}\",\n      \"columns\": [\n        { \"name\": \"customer\", \"reference\": \"*\" },\n        { \"name\": \"shippingAddress\", \"reference\": \"*\" },\n        { \"name\": \"status\" },\n        { \"name\": \"createdAt\", \"unique\": true },\n        { \"name\": \"totalAmount\" },\n        { \"name\": \"notes\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&orderAlice\", \"values\": { \"customer\": \"&customerAlice\", \"shippingAddress\": \"&addressAliceHome\", \"status\": \"DRAFT\", \"createdAt\": \"2026-05-02T03:00:00Z\", \"totalAmount\": \"399.49\", \"notes\": \"Imported order,verify references\" } }\n      ]\n    },\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{orderItemEntity}}\",\n      \"columns\": [\n        { \"name\": \"order\", \"reference\": \"*\", \"unique\": true },\n        { \"name\": \"product\", \"reference\": \"sku\", \"unique\": true },\n        { \"name\": \"quantity\" },\n        { \"name\": \"unitPrice\" }\n      ],\n      \"rows\": [\n        { \"key\": \"&orderItemAliceStarter\", \"values\": { \"order\": \"&orderAlice\", \"product\": \"IMPORT-SKU-1001\", \"quantity\": \"2\", \"unitPrice\": \"149.99\" } }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        },
+        {
+          "name": "Modify Product Using Lookup Strategy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('lookup import succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('no import errors', function () { pm.expect(pm.response.json().logs).to.be.an('array').that.is.empty; });",
+                  "pm.test('references are internal only', function () { pm.expect(pm.response.json().references).to.be.undefined; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": {\n    \"passes\": 2,\n    \"failFast\": false\n  },\n  \"statements\": [\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [\n        {\n          \"name\": \"sku\",\n          \"unique\": true\n        },\n        {\n          \"name\": \"name\"\n        },\n        {\n          \"name\": \"price\"\n        },\n        {\n          \"name\": \"active\"\n        },\n        {\n          \"name\": \"category\"\n        },\n        {\n          \"name\": \"tags\"\n        }\n      ],\n      \"rows\": [\n        {\n          \"key\": \"&lookupsku1001\",\n          \"values\": {\n            \"sku\": \"LOOKUP-SKU-1001\",\n            \"name\": \"Lookup Seed Product\",\n            \"price\": \"51.00\",\n            \"active\": \"true\",\n            \"category\": \"SOFTWARE\",\n            \"tags\": \"lookup,seed\"\n          }\n        }\n      ]\n    },\n    {\n      \"operation\": \"MODIFY\",\n      \"entity\": \"{{productEntity}}\",\n      \"lookup\": [\n        {\n          \"field\": \"sku\",\n          \"comparator\": \"STARTSWITH\"\n        }\n      ],\n      \"columns\": [\n        {\n          \"name\": \"sku\"\n        },\n        {\n          \"name\": \"name\"\n        },\n        {\n          \"name\": \"price\"\n        },\n        {\n          \"name\": \"active\"\n        },\n        {\n          \"name\": \"category\"\n        },\n        {\n          \"name\": \"tags\"\n        }\n      ],\n      \"rows\": [\n        {\n          \"values\": {\n            \"sku\": \"LOOKUP-SKU-1001\",\n            \"name\": \"Lookup Modified Product\",\n            \"price\": \"52.25\",\n            \"active\": \"true\",\n            \"category\": \"SOFTWARE\",\n            \"tags\": \"lookup,modified\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        },
+        {
+          "name": "Modify Product Using Query Strategy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('query import succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('no import errors', function () { pm.expect(pm.response.json().logs).to.be.an('array').that.is.empty; });",
+                  "pm.test('references are internal only', function () { pm.expect(pm.response.json().references).to.be.undefined; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": {\n    \"passes\": 2,\n    \"failFast\": false\n  },\n  \"statements\": [\n    {\n      \"operation\": \"UPSERT\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [\n        {\n          \"name\": \"sku\",\n          \"unique\": true\n        },\n        {\n          \"name\": \"name\"\n        },\n        {\n          \"name\": \"price\"\n        },\n        {\n          \"name\": \"active\"\n        },\n        {\n          \"name\": \"category\"\n        },\n        {\n          \"name\": \"tags\"\n        }\n      ],\n      \"rows\": [\n        {\n          \"key\": \"&querysku1001\",\n          \"values\": {\n            \"sku\": \"QUERY-SKU-1001\",\n            \"name\": \"Query Seed Product\",\n            \"price\": \"61.00\",\n            \"active\": \"true\",\n            \"category\": \"SOFTWARE\",\n            \"tags\": \"query,seed\"\n          }\n        }\n      ]\n    },\n    {\n      \"operation\": \"MODIFY\",\n      \"entity\": \"{{productEntity}}\",\n      \"query\": {\n        \"text\": \"select p from Product p where p.sku = :sku\",\n        \"params\": {\n          \"sku\": {}\n        }\n      },\n      \"columns\": [\n        {\n          \"name\": \"sku\"\n        },\n        {\n          \"name\": \"name\"\n        },\n        {\n          \"name\": \"price\"\n        },\n        {\n          \"name\": \"active\"\n        },\n        {\n          \"name\": \"category\"\n        },\n        {\n          \"name\": \"tags\"\n        }\n      ],\n      \"rows\": [\n        {\n          \"values\": {\n            \"sku\": \"QUERY-SKU-1001\",\n            \"name\": \"Query Modified Product\",\n            \"price\": \"62.75\",\n            \"active\": \"true\",\n            \"category\": \"SOFTWARE\",\n            \"tags\": \"query,modified\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        }
+      ]
+    },
+    {
+      "name": "File Imports",
+      "item": [
+        {
+          "name": "Validate Text Import File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('text file validation succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('no import errors', function () { pm.expect(pm.response.json().logs).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "samples/import-products.import"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/import/file/validate"
+          }
+        },
+        {
+          "name": "Import Text Import File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('text file import succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('no import errors', function () { pm.expect(pm.response.json().logs).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "samples/import-products.import"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/import/file"
+          }
+        },
+        {
+          "name": "Validate Excel Import File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('excel file validation succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('no import errors', function () { pm.expect(pm.response.json().logs).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "samples/import-products.xlsx"
+                },
+                {
+                  "key": "sheetName",
+                  "value": "Products",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/import/file/validate"
+          }
+        },
+        {
+          "name": "Import Excel Import File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('excel file import succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('no import errors', function () { pm.expect(pm.response.json().logs).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "samples/import-products.xlsx"
+                },
+                {
+                  "key": "sheetName",
+                  "value": "Products",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/import/file"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Failure Probes",
+      "item": [
+        {
+          "name": "Missing Field",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statements\": [\n    {\n      \"operation\": \"CREATE\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [ { \"name\": \"doesNotExist\" } ],\n      \"rows\": [ { \"values\": { \"doesNotExist\": \"boom\" } } ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        },
+        {
+          "name": "Modify Without Resolution Strategy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statements\": [\n    {\n      \"operation\": \"MODIFY\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [ { \"name\": \"sku\" }, { \"name\": \"name\" } ],\n      \"rows\": [ { \"values\": { \"sku\": \"IMPORT-SKU-1001\", \"name\": \"Should fail before row processing\" } } ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        },
+        {
+          "name": "Bad Enum Value",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": { \"passes\": 1 },\n  \"statements\": [\n    {\n      \"operation\": \"CREATE\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [\n        { \"name\": \"sku\" },\n        { \"name\": \"name\" },\n        { \"name\": \"price\" },\n        { \"name\": \"documentationUrl\", \"handler\": \"demoUriImportHandler\" },\n        { \"name\": \"active\" },\n        { \"name\": \"category\" }\n      ],\n      \"rows\": [ { \"values\": { \"sku\": \"BAD-ENUM-1\", \"name\": \"Bad enum\", \"price\": \"10.00\", \"active\": \"true\", \"category\": \"NOT_A_CATEGORY\" } } ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        },
+        {
+          "name": "Missing Row Key Reference",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": { \"passes\": 1 },\n  \"statements\": [\n    {\n      \"operation\": \"CREATE\",\n      \"entity\": \"{{addressEntity}}\",\n      \"columns\": [\n        { \"name\": \"customer\", \"reference\": \"*\" },\n        { \"name\": \"type\" },\n        { \"name\": \"line1\" },\n        { \"name\": \"city\" },\n        { \"name\": \"country\" },\n        { \"name\": \"primaryAddress\" }\n      ],\n      \"rows\": [ { \"values\": { \"customer\": \"&missingCustomer\", \"type\": \"HOME\", \"line1\": \"Broken Reference Street\", \"city\": \"Sydney\", \"country\": \"Australia\", \"primaryAddress\": \"true\" } } ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        },
+        {
+          "name": "Collect Multiple Row Errors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": { \"passes\": 1, \"failFast\": false },\n  \"statements\": [\n    {\n      \"operation\": \"CREATE\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [ { \"name\": \"sku\" }, { \"name\": \"price\" } ],\n      \"rows\": [\n        { \"values\": { \"sku\": \"BROKEN-1\", \"price\": \"not-a-number\" } },\n        { \"values\": { \"sku\": \"BROKEN-2\", \"price\": \"also-not-a-number\" } }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        },
+        {
+          "name": "Unsupported Nested Map Conversion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": { \"passes\": 1 },\n  \"statements\": [\n    {\n      \"operation\": \"CREATE\",\n      \"entity\": \"{{productEntity}}\",\n      \"columns\": [\n        { \"name\": \"sku\" },\n        { \"name\": \"name\" },\n        { \"name\": \"price\" },\n        { \"name\": \"documentationUrl\", \"handler\": \"demoUriImportHandler\" },\n        { \"name\": \"active\" },\n        { \"name\": \"category\" },\n        { \"name\": \"metadata\", \"handler\": \"jsonMapImportHandler\" }\n      ],\n      \"rows\": [ { \"values\": { \"sku\": \"MAP-FAIL-1\", \"name\": \"Nested Map Failure\", \"price\": \"10.00\", \"active\": \"true\", \"category\": \"SOFTWARE\", \"metadata\": { \"family\": \"demo\", \"nested\": { \"name\": \"unsupported\" } } } } ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        },
+        {
+          "name": "Mixed Resolution Strategies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statements\": [\n    {\n      \"operation\": \"MODIFY\",\n      \"entity\": \"{{productEntity}}\",\n      \"lookup\": [\n        {\n          \"field\": \"sku\",\n          \"comparator\": \"EQUALS\"\n        }\n      ],\n      \"columns\": [\n        {\n          \"name\": \"sku\",\n          \"unique\": true\n        },\n        {\n          \"name\": \"name\"\n        }\n      ],\n      \"rows\": [\n        {\n          \"values\": {\n            \"sku\": \"IMPORT-SKU-1001\",\n            \"name\": \"Should fail because unique and lookup are both present\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/import"
+          }
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('probe is rejected', function () { pm.response.to.have.status(400); });",
+              "pm.test('error logs are returned', function () { pm.expect(pm.response.json().logs.length).to.be.above(0); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

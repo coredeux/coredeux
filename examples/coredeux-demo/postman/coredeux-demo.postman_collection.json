@@ -1,0 +1,685 @@
+{
+  "info": {
+    "name": "Coredeux Demo API",
+    "_postman_id": "9f9135dd-fb54-45c7-a6bb-2cb3ec183b4a",
+    "description": "Sample CRUD and export collection for the Coredeux demo application. Entity paths use fully qualified class names because Coredeux resolves entity definitions by fullClassName.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "roleEntity",
+      "value": "com.coredeux.demo.domain.Role"
+    },
+    {
+      "key": "productEntity",
+      "value": "com.coredeux.demo.domain.Product"
+    },
+    {
+      "key": "customerEntity",
+      "value": "com.coredeux.demo.domain.Customer"
+    },
+    {
+      "key": "addressEntity",
+      "value": "com.coredeux.demo.domain.Address"
+    },
+    {
+      "key": "profileEntity",
+      "value": "com.coredeux.demo.domain.CustomerProfile"
+    },
+    {
+      "key": "orderEntity",
+      "value": "com.coredeux.demo.domain.CustomerOrder"
+    },
+    {
+      "key": "orderItemEntity",
+      "value": "com.coredeux.demo.domain.OrderItem"
+    },
+    {
+      "key": "roleId",
+      "value": "1"
+    },
+    {
+      "key": "productId",
+      "value": "1"
+    },
+    {
+      "key": "customerId",
+      "value": "1"
+    },
+    {
+      "key": "addressId",
+      "value": "1"
+    },
+    {
+      "key": "profileId",
+      "value": "1"
+    },
+    {
+      "key": "orderId",
+      "value": "1"
+    },
+    {
+      "key": "orderItemId",
+      "value": "1"
+    },
+    {
+      "key": "exportUid",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Swagger",
+      "item": [
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v3/api-docs"
+          }
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/swagger-ui.html"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Role",
+      "item": [
+        {
+          "name": "Create Role (bootstrap disabled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"ADMIN\",\n  \"description\": \"Administrative role\"\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{roleEntity}}",
+            "description": "The default demo bootstrap already creates all RoleType enum values. Use this request only when coredeux.demo.bootstrap.enabled=false."
+          }
+        },
+        {
+          "name": "Get Role",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{roleEntity}}/{{roleId}}"
+          }
+        },
+        {
+          "name": "List Roles",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{roleEntity}}?pageSize=20&currentPage=1"
+          }
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"ADMIN\",\n  \"description\": \"Administrative role updated\"\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{roleEntity}}/{{roleId}}"
+          }
+        },
+        {
+          "name": "Delete Role",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/entities/{{roleEntity}}/{{roleId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Product",
+      "item": [
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"POSTMAN-SKU-{{$timestamp}}\",\n  \"name\": \"Coredeux Starter Product\",\n  \"price\": 199.99,\n  \"active\": true,\n  \"category\": \"SOFTWARE\",\n  \"tags\": [\"starter\", \"demo\"],\n  \"attributes\": {\n    \"color\": \"black\",\n    \"size\": \"L\"\n  },\n  \"metadata\": {\n    \"brand\": \"Coredeux\",\n    \"rating\": 4.8,\n    \"dimensions\": {\n      \"width\": 10,\n      \"height\": 20\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{productEntity}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('request succeeded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]); });",
+                  "if (pm.response.code !== 204) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.pk) { pm.collectionVariables.set('productId', String(body.pk)); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Product",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{productEntity}}/{{productId}}"
+          }
+        },
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{productEntity}}?pageSize=20&currentPage=1"
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"SKU-1001\",\n  \"name\": \"Coredeux Starter Product Updated\",\n  \"price\": 249.99,\n  \"active\": true,\n  \"category\": \"SOFTWARE\",\n  \"tags\": [\"starter\", \"demo\", \"updated\"],\n  \"attributes\": {\n    \"color\": \"silver\",\n    \"size\": \"XL\"\n  },\n  \"metadata\": {\n    \"brand\": \"Coredeux\",\n    \"rating\": 4.9,\n    \"dimensions\": {\n      \"width\": 12,\n      \"height\": 24\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{productEntity}}/{{productId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('request succeeded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]); });",
+                  "if (pm.response.code !== 204) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.pk) { pm.collectionVariables.set('productId', String(body.pk)); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/entities/{{productEntity}}/{{productId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "item": [
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example\",\n  \"email\": \"postman.alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\",\n  \"registeredAt\": \"2026-04-29T10:00:00Z\",\n  \"birthDate\": \"1991-05-20\",\n  \"loyaltyPoints\": 150,\n  \"creditLimit\": 1500.00,\n  \"phoneNumbers\": [\"+61-400-111-222\"],\n  \"preferences\": {\n    \"language\": \"en\",\n    \"currency\": \"AUD\"\n  },\n  \"roles\": [\n    {\n      \"pk\": {{roleId}}\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{customerEntity}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('request succeeded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]); });",
+                  "if (pm.response.code !== 204) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Customer",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{customerEntity}}/{{customerId}}"
+          }
+        },
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{customerEntity}}?pageSize=20&currentPage=1"
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Updated\",\n  \"email\": \"alice@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\",\n  \"registeredAt\": \"2026-04-29T10:00:00Z\",\n  \"birthDate\": \"1991-05-20\",\n  \"loyaltyPoints\": 220,\n  \"creditLimit\": 1750.00,\n  \"phoneNumbers\": [\"+61-400-111-222\", \"+61-400-333-444\"],\n  \"preferences\": {\n    \"language\": \"en\",\n    \"currency\": \"AUD\",\n    \"newsletter\": \"weekly\"\n  },\n  \"roles\": [\n    {\n      \"pk\": {{roleId}}\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{customerEntity}}/{{customerId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('request succeeded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]); });",
+                  "if (pm.response.code !== 204) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/entities/{{customerEntity}}/{{customerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Address",
+      "item": [
+        {
+          "name": "Create Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"pk\": {{customerId}}\n  },\n  \"type\": \"HOME\",\n  \"line1\": \"12 Demo Street\",\n  \"city\": \"Sydney\",\n  \"country\": \"Australia\",\n  \"primaryAddress\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{addressEntity}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('request succeeded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]); });",
+                  "if (pm.response.code !== 204) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.pk) { pm.collectionVariables.set('addressId', String(body.pk)); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Address",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{addressEntity}}/{{addressId}}"
+          }
+        },
+        {
+          "name": "List Addresses",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{addressEntity}}?pageSize=20&currentPage=1"
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"pk\": {{customerId}}\n  },\n  \"type\": \"OFFICE\",\n  \"line1\": \"99 Updated Street\",\n  \"city\": \"Melbourne\",\n  \"country\": \"Australia\",\n  \"primaryAddress\": false\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{addressEntity}}/{{addressId}}"
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/entities/{{addressEntity}}/{{addressId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "CustomerProfile",
+      "item": [
+        {
+          "name": "Create CustomerProfile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"pk\": {{customerId}}\n  },\n  \"biography\": \"Customer profile for demo purposes.\",\n  \"marketingOptIn\": true,\n  \"favoriteTags\": [\"tech\", \"travel\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{profileEntity}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('request succeeded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]); });",
+                  "if (pm.response.code !== 204) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.pk) { pm.collectionVariables.set('profileId', String(body.pk)); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get CustomerProfile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{profileEntity}}/{{profileId}}"
+          }
+        },
+        {
+          "name": "List CustomerProfiles",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{profileEntity}}?pageSize=20&currentPage=1"
+          }
+        },
+        {
+          "name": "Update CustomerProfile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"pk\": {{customerId}}\n  },\n  \"biography\": \"Updated customer profile.\",\n  \"marketingOptIn\": false,\n  \"favoriteTags\": [\"tech\", \"books\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{profileEntity}}/{{profileId}}"
+          }
+        },
+        {
+          "name": "Delete CustomerProfile",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/entities/{{profileEntity}}/{{profileId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "CustomerOrder",
+      "item": [
+        {
+          "name": "Create CustomerOrder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"pk\": {{customerId}}\n  },\n  \"shippingAddress\": {\n    \"pk\": {{addressId}}\n  },\n  \"status\": \"DRAFT\",\n  \"createdAt\": \"2026-04-29T11:00:00Z\",\n  \"totalAmount\": 199.99,\n  \"notes\": [\"Leave at the front desk\"],\n  \"items\": []\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{orderEntity}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('request succeeded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]); });",
+                  "if (pm.response.code !== 204) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.pk) { pm.collectionVariables.set('orderId', String(body.pk)); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get CustomerOrder",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{orderEntity}}/{{orderId}}"
+          }
+        },
+        {
+          "name": "List CustomerOrders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{orderEntity}}?pageSize=20&currentPage=1"
+          }
+        },
+        {
+          "name": "Update CustomerOrder",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"pk\": {{customerId}}\n  },\n  \"shippingAddress\": {\n    \"pk\": {{addressId}}\n  },\n  \"status\": \"CONFIRMED\",\n  \"createdAt\": \"2026-04-29T11:00:00Z\",\n  \"totalAmount\": 249.99,\n  \"notes\": [\"Leave at the front desk\", \"Updated delivery note\"],\n  \"items\": []\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{orderEntity}}/{{orderId}}"
+          }
+        },
+        {
+          "name": "Delete CustomerOrder",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/entities/{{orderEntity}}/{{orderId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "OrderItem",
+      "item": [
+        {
+          "name": "Create OrderItem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": {\n    \"pk\": {{orderId}}\n  },\n  \"product\": {\n    \"pk\": {{productId}}\n  },\n  \"quantity\": 2,\n  \"unitPrice\": 99.99\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{orderItemEntity}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('request succeeded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]); });",
+                  "if (pm.response.code !== 204) {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.pk) { pm.collectionVariables.set('orderItemId', String(body.pk)); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get OrderItem",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{orderItemEntity}}/{{orderItemId}}"
+          }
+        },
+        {
+          "name": "List OrderItems",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{orderItemEntity}}?pageSize=20&currentPage=1"
+          }
+        },
+        {
+          "name": "Update OrderItem",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": {\n    \"pk\": {{orderId}}\n  },\n  \"product\": {\n    \"pk\": {{productId}}\n  },\n  \"quantity\": 3,\n  \"unitPrice\": 89.99\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{orderItemEntity}}/{{orderItemId}}"
+          }
+        },
+        {
+          "name": "Delete OrderItem",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/entities/{{orderItemEntity}}/{{orderItemId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Export",
+      "item": [
+        {
+          "name": "Queue Product Export",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('export is accepted or completed', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (body.uid) { pm.collectionVariables.set('exportUid', body.uid); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entity\": \"{{productEntity}}\",\n  \"fieldList\": [\n    {\n      \"path\": \"sku\"\n    },\n    {\n      \"path\": \"name\"\n    },\n    {\n      \"path\": \"price\"\n    },\n    {\n      \"path\": \"category\"\n    },\n    {\n      \"path\": \"active\"\n    }\n  ],\n  \"options\": {\n    \"format\": \"XLSX\",\n    \"includeHeader\": true,\n    \"fileName\": \"products.xlsx\",\n    \"storageService\": \"databaseCoredeuxExportStorageService\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/export"
+          }
+        },
+        {
+          "name": "Get Export Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/export/{{exportUid}}"
+          }
+        },
+        {
+          "name": "Download Export File",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/export/{{exportUid}}/download"
+          }
+        }
+      ]
+    }
+  ]
+}

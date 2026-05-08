@@ -1,0 +1,4 @@
+OPTIONS(passes=2,failFast=false)
+
+UPSERT com.coredeux.demo.domain.Product | sku(unique=true) | name                | price | documentationUrl(handler=demoUriImportHandler)      | active | category | tags
+                                      | FILE-TEXT-1001   | Text Import Product | 19.99 | https://docs.coredeux.dev/demo/import/file-text-1001 | true   | SOFTWARE | file,text,demo

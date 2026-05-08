@@ -1,0 +1,55 @@
+{
+  "options": {
+    "passes": 1,
+    "failFast": false
+  },
+  "statements": [
+    {
+      "operation": "MODIFY",
+      "entity": "com.coredeux.impex.service.impl.DefaultCoredeuxImportServiceTest$Product",
+      "query": {
+        "text": "sku = :sku",
+        "params": {
+          "sku": {}
+        }
+      },
+      "columns": [
+        {
+          "name": "sku",
+          "unique": true
+        },
+        {
+          "name": "price"
+        }
+      ],
+      "rows": [
+        {
+          "values": {
+            "sku": "raw-conflict",
+            "price": "1"
+          }
+        }
+      ]
+    },
+    {
+      "operation": "MODIFY",
+      "entity": "com.coredeux.impex.service.impl.DefaultCoredeuxImportServiceTest$Product",
+      "columns": [
+        {
+          "name": "sku"
+        },
+        {
+          "name": "price"
+        }
+      ],
+      "rows": [
+        {
+          "values": {
+            "sku": "raw-missing-strategy",
+            "price": "1"
+          }
+        }
+      ]
+    }
+  ]
+}

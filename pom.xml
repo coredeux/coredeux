@@ -1,0 +1,69 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.coredeux</groupId>
+    <artifactId>coredeux-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Coredeux Parent</name>
+    <description>Enterprise Java framework suite for rapidly building cloud-native, multi-tenant, agentic AI and LLM-driven platforms</description>
+    <url>https://github.com/coredeux/coredeux</url>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring.boot.version>3.3.0</spring.boot.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <modules>
+        <module>modules/coredeux-core</module>
+        <module>modules/coredeux-core-jpa</module>
+        <module>modules/coredeux-core-jdbc</module>
+        <module>modules/coredeux-core-elasticsearch</module>
+        <module>modules/coredeux-core-mongodb</module>
+        <module>modules/coredeux-core-redis</module>
+        <module>modules/coredeux-import</module>
+        <module>modules/coredeux-import-parser</module>
+        <module>modules/coredeux-export</module>
+        <module>examples/coredeux-demo</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <release>${java.version}</release>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>2.17.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>

@@ -1,0 +1,77 @@
+{
+  "options": {
+    "passes": 1,
+    "failFast": false
+  },
+  "statements": [
+    {
+      "operation": "MODIFY",
+      "entity": "com.coredeux.impex.service.impl.DefaultCoredeuxImportServiceTest$Product",
+      "lookup": [
+        {
+          "field": "normalizedSku",
+          "column": "sku",
+          "comparator": "EQUALS",
+          "metadata": {
+            "derived": true
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "sku",
+          "handler": "uppercaseHandler",
+          "metadata": {
+            "normalization": "upper"
+          }
+        },
+        {
+          "name": "price"
+        }
+      ],
+      "rows": [
+        {
+          "values": {
+            "sku": "raw-query",
+            "price": "25"
+          }
+        }
+      ]
+    },
+    {
+      "operation": "MODIFY",
+      "entity": "com.coredeux.impex.service.impl.DefaultCoredeuxImportServiceTest$Product",
+      "query": {
+        "text": "normalizedSku = :normalizedSku",
+        "params": {
+          "normalizedSku": {
+            "column": "sku",
+            "metadata": {
+              "derived": true
+            }
+          }
+        },
+        "metadata": {
+          "backend": "test"
+        }
+      },
+      "columns": [
+        {
+          "name": "sku",
+          "handler": "uppercaseHandler"
+        },
+        {
+          "name": "price"
+        }
+      ],
+      "rows": [
+        {
+          "values": {
+            "sku": "raw-query-2",
+            "price": "35"
+          }
+        }
+      ]
+    }
+  ]
+}

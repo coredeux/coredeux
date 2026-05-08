@@ -1,0 +1,52 @@
+# Tutorial-style import file based only on docs/modules/import-parser/guide.md.
+OPTIONS(passes=2,failFast=false,validateOnly=true)
+IMPORT(failFast=true)
+
+&Category=com.example.Category(metadata.source=seed,metadata.version=1)
+&Product=com.example.Product
+&Customer=com.example.Customer
+&User=com.example.User
+&Price=com.example.Price
+
+CREATE &Category(metadata.batch=base,metadata.priority=10) | code(metadata.source=feed,metadata.enabled=true) | name(default=Unnamed)
+&catFruit(sheet=Categories,line=8)                         | fruit                                             | Fruit
+&catDairy(sheet=Categories,line=9)                         | dairy                                             | Dairy
+
+UPSERT &Product | sku(unique=true) | variant(unique=true,nullSearch=true) | name(default=Unnamed) | category(reference=code) | tags(mode=replace)       | active(default=true)
+                | P-1              |                                      | Apple                 | fruit                    | red\, green,featured     |
+                | P\|2             | retail                               | "Milk Product"        | dairy                    | chilled                  | false
+
+UPSERT &Price | product(reference=sku,unique=true) | currency(unique=true) | amount
+              | P-1                                | AUD                   | 19.99
+
+MODIFY &Product(lookup=sku:sku:STARTSWITH:false,lookup.metadata.reason=prefix,lookup.meta.pass=1)
+               | sku | name
+               | P   | Prefix Product
+
+MODIFY &Customer(lookup.1.field=emailHash,lookup.1.column=email,lookup.1.comparator=EQUALS,lookup.1.metadata.derived=true,lookup.2.field=status,lookup.2.comparator=EQUALS)
+                | email(handler=emailHashHandler,metadata.case=lower) | status | name
+                | john@example.com                                    | ACTIVE | John
+
+MODIFY &Customer | emailHash(lookup.field=emailHash,lookup.comparator=EQUALS,handler=emailHashHandler,lookup.metadata.derived=true) | name
+                 | jane@example.com                                                                                    | Jane
+
+MODIFY &Product(query="lower(sku) = :sku and status = :status",query.params="sku,status:state",query.metadata.backend=jpa,query.param.sku.metadata.normalized=true)
+               | sku(handler=lowercaseHandler) | state | name
+               | P-1                           | LIVE  | Query Product
+
+MODIFY &Product(query="sku = :sku",query.param.sku=sku,query.param.sku.meta.source=explicit)
+               | sku | name
+               | P-2 | Explicit Query Product
+
+DELETE &Product(lookup.field=sku,lookup.comparator=EQUALS)
+               | sku
+               | obsolete
+
+FETCH &Customer | email(unique=true) | name
+&existingUser   | support@example.com | Support
+
+MODIFY &User | email(unique=true) | roles(reference=code,mode=append) | preferences(mode=clear)
+             | support@example.com | admin,buyer                       |
+
+CREATE &User | email | manager(reference=*) | displayName
+             | new@example.com | &existingUser | New User

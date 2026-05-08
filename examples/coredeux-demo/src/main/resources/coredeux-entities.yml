@@ -1,0 +1,152 @@
+coredeux:
+  entities:
+    - full-class-name: com.coredeux.demo.domain.Customer
+      name: customer
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
+      modules:
+        - name: validators
+          enabled: true
+          handlers:
+            - customerEmailValidator
+        - name: hooks
+          enabled: true
+          handlers:
+            - demoLifecycleHook
+        - name: audit
+          enabled: true
+          handlers:
+            - demoAuditHandler
+          config:
+            operations:
+              - SAVE
+              - UPDATE
+              - DELETE
+        - name: workflows
+          enabled: true
+          handlers:
+            - customerApprovalWorkflow
+          config:
+            phases:
+              - after-save
+    - full-class-name: com.coredeux.demo.domain.Product
+      name: product
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
+      modules:
+        - name: hooks
+          enabled: true
+          handlers:
+            - demoLifecycleHook
+        - name: audit
+          enabled: true
+          handlers:
+            - demoAuditHandler
+          config:
+            operations:
+              - SAVE
+              - UPDATE
+              - DELETE
+    - full-class-name: com.coredeux.demo.domain.CustomerOrder
+      name: customerOrder
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
+      modules:
+        - name: hooks
+          enabled: true
+          handlers:
+            - demoLifecycleHook
+        - name: audit
+          enabled: true
+          handlers:
+            - demoAuditHandler
+          config:
+            operations:
+              - SAVE
+              - UPDATE
+              - DELETE
+    - full-class-name: com.coredeux.demo.domain.Role
+      name: role
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
+      modules:
+        - name: audit
+          enabled: true
+          handlers:
+            - demoAuditHandler
+          config:
+            operations:
+              - SAVE
+              - DELETE
+    - full-class-name: com.coredeux.demo.domain.Address
+      name: address
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
+    - full-class-name: com.coredeux.demo.domain.CustomerProfile
+      name: customerProfile
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
+    - full-class-name: com.coredeux.demo.domain.jdbc.JdbcInventoryItem
+      name: jdbcInventoryItem
+      identifier: id
+      storage:
+        data-access-service: defaultCoredeuxJdbcDataAccessService
+    - full-class-name: com.coredeux.demo.domain.mongodb.MongoAuditTrail
+      name: mongoAuditTrail
+      identifier: id
+      storage:
+        data-access-service: defaultCoredeuxMongoDataAccessService
+    - full-class-name: com.coredeux.demo.domain.elasticsearch.ElasticsearchCatalogEntry
+      name: elasticsearchCatalogEntry
+      identifier: id
+      storage:
+        data-access-service: defaultCoredeuxElasticsearchDataAccessService
+    - full-class-name: com.coredeux.demo.domain.redis.RedisSessionSnapshot
+      name: redisSessionSnapshot
+      identifier: id
+      storage:
+        data-access-service: defaultCoredeuxRedisDataAccessService
+    - full-class-name: com.coredeux.demo.domain.OrderItem
+      name: orderItem
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
+      modules:
+        - name: hooks
+          enabled: true
+          handlers:
+            - demoLifecycleHook
+        - name: audit
+          enabled: true
+          handlers:
+            - demoAuditHandler
+          config:
+            operations:
+              - SAVE
+              - UPDATE
+              - DELETE
+    - full-class-name: com.coredeux.demo.export.ExportStorageRecord
+      name: exportStorageRecord
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
+      modules:
+        - name: hooks
+          enabled: true
+          handlers:
+            - exportStorageCleanupHook
+        - name: audit
+          enabled: true
+          handlers:
+            - demoAuditHandler
+          config:
+            operations:
+              - SAVE
+              - UPDATE
+              - DELETE
