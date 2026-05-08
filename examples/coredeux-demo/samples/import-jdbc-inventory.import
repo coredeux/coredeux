@@ -1,0 +1,6 @@
+OPTIONS(passes=1,failFast=false)
+
+UPSERT com.coredeux.demo.domain.jdbc.JdbcInventoryItem | sku(unique=true) | name                  | quantity | unitPrice | warehouse
+                                                       | JDC-DEMO-1001    | Demo Scanner Battery  | 42       | 19.95     | SYD-A1
+                                                       | JDC-DEMO-1002    | Demo Packing Labels   | 250      | 4.50      | MEL-B2
+                                                       | JDC-DEMO-1003    | Demo Tablet Stand     | 18       | 39.00     | BNE-C3

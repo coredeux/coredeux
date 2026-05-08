@@ -1,0 +1,6 @@
+OPTIONS(passes=1,failFast=false)
+
+UPSERT com.coredeux.demo.domain.elasticsearch.ElasticsearchCatalogEntry | id(unique=true) | name                   | category    | description                                  | price | tags                         | attributes(handler=jsonMapImportHandler)
+                                                                       | es-demo-1001    | Demo Field Tablet      | HARDWARE    | Rugged tablet for field operations           | 899.00 | rugged,tablet,field          | "{\"memoryGb\":16,\"waterResistant\":true,\"region\":\"APAC\"}"
+                                                                       | es-demo-1002    | Demo Audit Connector   | SOFTWARE    | Connector package for audit event indexing   | 149.00 | connector,audit,indexing     | "{\"tier\":\"standard\",\"monthly\":true,\"retentionDays\":90}"
+                                                                       | es-demo-1003    | Demo Support Bundle    | SERVICES    | Assisted onboarding bundle for demo tenants  | 499.00 | onboarding,support,tenant    | "{\"hours\":8,\"remote\":true,\"priority\":\"normal\"}"

@@ -1,0 +1,6 @@
+OPTIONS(passes=1,failFast=false)
+
+UPSERT com.coredeux.demo.domain.redis.RedisSessionSnapshot | id(unique=true)       | username      | state    | lastSeenAt               | attributes(handler=jsonMapImportHandler)
+                                                          | redis-demo-session-1  | alex.demo     | ACTIVE   | 2026-05-08T09:40:00Z     | "{\"tenant\":\"alpha\",\"ip\":\"10.0.0.11\",\"mfa\":true}"
+                                                          | redis-demo-session-2  | blair.demo    | IDLE     | 2026-05-08T09:35:00Z     | "{\"tenant\":\"beta\",\"ip\":\"10.0.0.27\",\"openTabs\":3}"
+                                                          | redis-demo-session-3  | casey.demo    | EXPIRED  | 2026-05-08T08:55:00Z     | "{\"tenant\":\"alpha\",\"ip\":\"10.0.0.39\",\"reason\":\"timeout\"}"

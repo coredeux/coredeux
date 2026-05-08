@@ -2,7 +2,7 @@
   "info": {
     "name": "Coredeux Demo Import API",
     "_postman_id": "e5fe6c95-92db-4c88-a58d-142cb7d3f9d5",
-    "description": "Sample and adversarial JSON/file import requests for the Coredeux demo import endpoints. File requests use samples under examples/coredeux-demo/postman/samples.",
+    "description": "Sample and adversarial JSON/file import requests for the Coredeux demo import endpoints. File requests use samples under examples/coredeux-demo/samples.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -190,7 +190,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "src": "samples/import-products.import"
+                  "src": "../samples/import-products.import"
                 }
               ]
             },
@@ -220,7 +220,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "src": "samples/import-products.import"
+                  "src": "../samples/import-products.import"
                 }
               ]
             },
@@ -250,7 +250,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "src": "samples/import-products.xlsx"
+                  "src": "../samples/import-products.xlsx"
                 },
                 {
                   "key": "sheetName",
@@ -285,7 +285,7 @@
                 {
                   "key": "file",
                   "type": "file",
-                  "src": "samples/import-products.xlsx"
+                  "src": "../samples/import-products.xlsx"
                 },
                 {
                   "key": "sheetName",

@@ -196,7 +196,8 @@ Each definition tells Coredeux:
 - the data access service strategy
 - optional modules such as validators, hooks, audit, or workflows
 
-The demo also seeds sample data during startup.
+The demo seeds a small PostgreSQL dataset at startup through `DemoDataRunner`.
+Additional import-file samples live under `examples/coredeux-demo/samples`.
 
 ## 6. Try CRUD Through Swagger
 
@@ -320,13 +321,17 @@ POST /api/import/file
 Sample files are included in:
 
 ```text
-examples/coredeux-demo/postman/samples/
+examples/coredeux-demo/samples/
 ```
 
 Available samples:
 
 - `import-products.import`
 - `import-products.xlsx`
+- `import-jdbc-inventory.import`
+- `import-mongodb-audit-trails.import`
+- `import-elasticsearch-catalog.import`
+- `import-redis-sessions.import`
 
 Text import files compile into the same `ImportRequest` model:
 
