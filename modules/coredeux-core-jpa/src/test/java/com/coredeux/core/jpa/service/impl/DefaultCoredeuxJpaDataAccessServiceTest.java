@@ -117,6 +117,21 @@ class DefaultCoredeuxJpaDataAccessServiceTest {
                 SampleJpaEntity.class, 10, 1);
         assertEquals(1, anywhereResult.getResults().size());
 
+        SearchResult<SampleJpaEntity> notEqualsResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("name").comparator("NOTEQUALS").value("Alpha").build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(2, notEqualsResult.getResults().size());
+
+        SearchResult<SampleJpaEntity> startsWithResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("name").comparator("STARTSWITH").value("Al").build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(1, startsWithResult.getResults().size());
+
+        SearchResult<SampleJpaEntity> anywhereCaseSensitiveResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("name").comparator("ANYWHERECS").value("am").build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(1, anywhereCaseSensitiveResult.getResults().size());
+
         SearchResult<SampleJpaEntity> rangeResult = dataAccessService.loadAll(
                 List.of(SearchParams.builder().field("age").comparator("GREATERTHAN").value(10).build()),
                 SampleJpaEntity.class, 1, 1);
@@ -124,10 +139,40 @@ class DefaultCoredeuxJpaDataAccessServiceTest {
         assertEquals(2L, rangeResult.getPagination().getResultSize());
         assertEquals(2L, rangeResult.getPagination().getTotalPages());
 
+        SearchResult<SampleJpaEntity> lessThanResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("age").comparator("LESSTHAN").value(20).build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(1, lessThanResult.getResults().size());
+
+        SearchResult<SampleJpaEntity> lessThanOrEqualResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("age").comparator("LESSTHANOREQUAL").value(20).build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(2, lessThanOrEqualResult.getResults().size());
+
+        SearchResult<SampleJpaEntity> greaterThanOrEqualResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("age").comparator("GREATERTHANOREQUAL").value(20).build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(2, greaterThanOrEqualResult.getResults().size());
+
+        SearchResult<SampleJpaEntity> notContainsResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("tags").comparator("NOTCONTAINS").value("one").build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(2, notContainsResult.getResults().size());
+
         SearchResult<SampleJpaEntity> emptyResult = dataAccessService.loadAll(
                 List.of(SearchParams.builder().field("tags").comparator("ISEMPTY").build()),
                 SampleJpaEntity.class, 10, 1);
         assertEquals(1, emptyResult.getResults().size());
+
+        SearchResult<SampleJpaEntity> notEmptyResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("tags").comparator("ISNOTEMPTY").build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(2, notEmptyResult.getResults().size());
+
+        SearchResult<SampleJpaEntity> notNullResult = dataAccessService.loadAll(
+                List.of(SearchParams.builder().field("name").comparator("ISNOTNULL").build()),
+                SampleJpaEntity.class, 10, 1);
+        assertEquals(3, notNullResult.getResults().size());
     }
 
     @Test
@@ -167,6 +212,12 @@ class DefaultCoredeuxJpaDataAccessServiceTest {
                         SampleJpaEntity.class, 10, 1));
         assertThrows(CoredeuxValidationException.class,
                 () -> dataAccessService.loadAll(List.of(SearchParams.builder().field(" ").comparator("EQUALS").value("x").build()),
+                        SampleJpaEntity.class, 10, 1));
+        assertThrows(CoredeuxValidationException.class,
+                () -> dataAccessService.loadAll(List.of(SearchParams.builder().field("name").comparator("CONTAINS").value("x").build()),
+                        SampleJpaEntity.class, 10, 1));
+        assertThrows(CoredeuxValidationException.class,
+                () -> dataAccessService.loadAll(List.of(SearchParams.builder().field("age").comparator("GREATERTHAN").value(new Object()).build()),
                         SampleJpaEntity.class, 10, 1));
         assertThrows(CoredeuxValidationException.class,
                 () -> dataAccessService.query(" ", Map.of(), SampleJpaEntity.class, 10, 1));
