@@ -16,6 +16,8 @@ Coredeux standardizes how an entity is:
 - validated
 - enriched by lifecycle hooks
 - audited
+- imported
+- exported
 - delegated to the correct persistence implementation
 
 The framework is intentionally designed so application developers do not need to manually orchestrate these concerns for each persistence technology.
@@ -67,8 +69,14 @@ Different implementations can exist for different entity/storage combinations, f
 
 - generic JPA
 - PostgreSQL-specific JPA with JSONB support
-- future MongoDB adapter
-- future other store-specific adapters
+- direct JDBC
+- MongoDB
+- Elasticsearch
+- Redis
+
+The storage adapter is selected from the entity definition. That keeps the
+service API stable while allowing different entities to use different backing
+stores.
 
 ## Lifecycle Model
 
@@ -148,6 +156,41 @@ Provides:
 - PostgreSQL-specific JPA `CoredeuxDataAccessService`
 - JSONB-aware native-query handling for PostgreSQL scenarios
 
+### coredeux-core-jdbc
+
+Provides:
+
+- direct SQL/JDBC `CoredeuxDataAccessService`
+- table and column mapping from entity metadata
+- structured search translated into SQL conditions
+- CRUD and query support for relational paths that do not need JPA
+
+### coredeux-core-mongodb
+
+Provides:
+
+- MongoDB-backed `CoredeuxDataAccessService`
+- MongoTemplate-based CRUD, query, and structured search support
+- mapping from Coredeux entity operations to MongoDB document operations
+
+### coredeux-core-elasticsearch
+
+Provides:
+
+- Elasticsearch-backed `CoredeuxDataAccessService`
+- index-based document CRUD
+- structured search translated into Elasticsearch query criteria
+- paging and query support for catalog/search-oriented entity paths
+
+### coredeux-core-redis
+
+Provides:
+
+- Redis-backed `CoredeuxDataAccessService`
+- JSON-backed entity storage
+- CRUD, query, and in-memory structured search support
+- storage-oriented Redis usage rather than a cache abstraction
+
 ### coredeux-import
 
 Provides:
@@ -176,6 +219,17 @@ Provides:
 - text and Excel writers
 - value handlers, logs, and storage service extension points
 
+### examples/coredeux-demo
+
+Provides:
+
+- a Spring Boot application that wires the framework modules together
+- Docker Compose setup for PostgreSQL, MongoDB, Redis, Elasticsearch, and the
+  demo application
+- Postman collections for CRUD, import, file import, and export flows
+- sample import files for PostgreSQL/JPA, JDBC, MongoDB, Elasticsearch, and
+  Redis-backed paths
+
 ## Extension Model
 
 The framework is designed so new capabilities can be added in separate modules.
@@ -183,6 +237,7 @@ The framework is designed so new capabilities can be added in separate modules.
 Current extension points include:
 
 - data access services
+- backend adapter modules
 - module handlers
 - validators
 - hooks
