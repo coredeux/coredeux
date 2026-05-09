@@ -88,6 +88,36 @@ Module execution works in three steps:
 
 The handler then resolves the configured Spring beans and executes them.
 
+## Phase-Controlled Execution
+
+The strategy layer keeps module dispatch generic. If a module is enabled for an
+entity and a matching `CoredeuxEntityModuleHandler` exists, the strategy calls
+that handler for the current phase.
+
+The handler decides whether any real work should happen for that phase. This is
+how module behavior stays configurable without adding module-specific branches
+to `DefaultCoredeuxStrategy`.
+
+The demo `workflows` module shows the pattern:
+
+```yaml
+- name: workflows
+  enabled: true
+  handlers:
+    - customerApprovalWorkflow
+  config:
+    phases:
+      - after-save
+```
+
+The workflow module handler reads `config.phases`. If the current phase is not
+listed, it returns without resolving or executing the configured workflow
+handlers. If `config.phases` is omitted, the handler can choose to run for every
+phase, or it can enforce a stricter module-specific default.
+
+Use this pattern when a custom module should be available across the framework
+but only execute at selected lifecycle points.
+
 ## Module Configuration Shape
 
 Each module entry can define:

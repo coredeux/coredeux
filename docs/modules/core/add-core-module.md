@@ -120,9 +120,13 @@ Example:
 ```java
 package com.coredeux.core.module.impl;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
@@ -192,10 +196,37 @@ public class WorkflowsModuleHandler implements CoredeuxEntityModuleHandler {
     }
 
     private boolean shouldRun(CoredeuxModuleDefinition moduleDefinition, String phase) {
-        return true;
+        Map<String, Object> configMap = moduleDefinition.getConfigMap();
+        Object configuredPhases = configMap.get("phases");
+        if (configuredPhases == null) {
+            return true;
+        }
+        if (!(configuredPhases instanceof List<?> phases) || CollectionUtils.isEmpty(phases)) {
+            throw new CoredeuxStrategyException("Workflows module requires config.phases to be a non-empty list");
+        }
+        return phases.stream()
+                .map(String::valueOf)
+                .map(String::trim)
+                .anyMatch(configuredPhase -> configuredPhase.equals(phase));
     }
 }
 ```
+
+The demo application's
+[WorkflowsModuleHandler.java](../../../examples/coredeux-demo/src/main/java/com/coredeux/demo/workflow/WorkflowsModuleHandler.java)
+uses this pattern. The strategy will call every enabled module for each
+framework phase; the module handler decides whether the configured module is
+relevant for that phase.
+
+That distinction is important:
+
+- `AbstractCoredeuxStrategy` selects enabled module definitions and dispatches
+  them by module name.
+- `DefaultCoredeuxStrategy` decides which phase is currently running, such as
+  `before-save`, `after-save`, `before-update`, or `load`.
+- the module handler owns module-specific execution rules, such as reading
+  `config.phases` and returning immediately when the current phase is not
+  configured.
 
 Use the existing built-in handlers as the implementation style guide:
 
@@ -218,8 +249,28 @@ Common patterns:
 - validators run on `BEFORE_SAVE` and `BEFORE_UPDATE`
 - hooks dispatch directly by phase
 - audit maps framework phases to business operations
+- custom modules can expose `config.phases` so each entity decides when the
+  module's configured handlers should run
 
 Return without doing work when the current phase is not relevant. Throw a `CoredeuxStrategyException` or `CoredeuxValidationException` only when the module is configured incorrectly or cannot safely execute.
+
+For example, a workflow module can be configured only for `after-save`:
+
+```yaml
+modules:
+  - name: workflows
+    enabled: true
+    handlers:
+      - customerApprovalWorkflow
+    config:
+      phases:
+        - after-save
+```
+
+With that configuration, Coredeux may still dispatch the `workflows` module
+during other phases, but the handler's `shouldRun(...)` method returns without
+executing the workflow beans. This lets the framework keep module dispatch
+generic while the module keeps control over its own phase policy.
 
 ## 7. Register Through Spring
 
