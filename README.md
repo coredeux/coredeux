@@ -109,10 +109,10 @@ as "add a new entity module using this pattern."
 If you are new to Coredeux, these are the two fastest paths into the project:
 
 - [First 10 Minutes With Coredeux](docs/guides/first-10-minutes.md): the quick,
-  hands-on guide for running `coredeux-demo`, understanding the prerequisites,
-  and getting the framework running locally.
-- [Docker Demo Setup](docs/guides/docker-demo.md): the easiest way to run the
-  demo stack locally with Docker.
+  Docker-first path for running `coredeux-demo` and trying CRUD, import, file
+  import, and export.
+- [Docker Demo Setup](docs/guides/docker-demo.md): the stack details for
+  PostgreSQL, MongoDB, Redis, Elasticsearch, and the demo application.
 - [Coredeux Demo Tour](docs/guides/demo-tour.md): a guided walk through the demo
   app so you can see what was customized and how to extend the framework.
 

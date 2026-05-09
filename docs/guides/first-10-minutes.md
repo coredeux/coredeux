@@ -4,204 +4,93 @@
 [Previous: Guides](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Docker Demo Setup](docker-demo.md)
 <!-- docs-nav-end -->
 
-This guide gets the `coredeux-demo` application running locally and shows the
-fastest path through the framework: start the demo, open Swagger UI, create an
-entity, validate an import, parse an import file, and queue an export.
+This guide is the fastest way to feel what Coredeux is trying to do.
 
-If you prefer Docker, use the dedicated [Docker Demo Setup](docker-demo.md)
-guide first. It starts the demo app together with PostgreSQL, MongoDB, Redis,
-and Elasticsearch.
+You are going to start the demo stack, open the API, run a few prepared
+requests, import real sample files, and watch the same framework path handle
+CRUD, import, file parsing, validation, persistence, and export.
 
-Use this as the first hands-on tutorial. The next guide, [Adding A New
-Entity](add-new-entity.md), explains how to add your own managed entity after
-the demo is running.
+The goal is not to configure every detail by hand. The goal is to see the shape
+of the framework quickly.
 
-## What You Will Run
+## The Story
 
-`examples/coredeux-demo` is a Spring Boot application that wires together:
+Imagine you have an enterprise application with a normal product catalog, some
+relational data, an audit trail in MongoDB, catalog search in Elasticsearch, and
+session-like data in Redis.
 
-- `coredeux-core`
-- `coredeux-core-jpa`
-- `coredeux-import`
-- `coredeux-import-parser`
-- `coredeux-export`
+Usually, each of those paths grows its own controller style, validation style,
+import format, persistence code, and operational rules.
 
-The demo uses PostgreSQL and the `postgresCoredeuxJpaDataAccessService`
-strategy so JSONB-aware search behavior is exercised against the same database
-type the demo is designed for.
-
-The demo exposes:
-
-- generic CRUD endpoints at `/api/entities/{entityName}`
-- raw JSON import endpoints at `/api/import`
-- text and Excel import-file endpoints at `/api/import/file`
-- export queue/status/download endpoints at `/api/export`
-- Swagger UI at `/swagger-ui.html`
-
-## Prerequisites
-
-Install:
-
-- Java 17
-- Maven 3.9 or a compatible Maven 3.x version
-- PostgreSQL 14 or newer
-
-The project is built with Java 17 and Spring Boot 3.3.0. PostgreSQL is required
-for running the demo application because the demo is intentionally configured
-with the PostgreSQL data access strategy.
-
-If you use Docker instead of local services, you only need Docker Desktop or
-the Docker Engine plus Docker Compose. The container stack provides the
-database services for you.
-
-Tests use Testcontainers for PostgreSQL, but the running demo expects a real
-PostgreSQL database reachable from the application.
-
-## 1. Create The Demo Database
-
-Create a PostgreSQL database for the demo.
-
-Default database name:
+Coredeux gives those paths one shared framework shape:
 
 ```text
-coredeux_oss
+entity definition -> lifecycle context -> modules -> backend adapter
 ```
 
-Using `psql`:
+In this tutorial, the demo app lets you touch that shape without building it
+from scratch.
 
-```sql
-CREATE DATABASE coredeux_oss;
-```
+## What You Need
 
-The default local connection expected by the demo is:
+Install Docker Desktop, or Docker Engine with Docker Compose.
 
-```text
-host: localhost
-port: 5432
-database: coredeux_oss
-username: postgres
-password: root
-```
+That is enough for the quick start. The Docker build creates the demo
+application image, and Docker Compose starts the backing services:
 
-You can either create/use a matching local PostgreSQL user, or override the
-connection values with environment variables in the next step.
+- PostgreSQL
+- MongoDB
+- Redis
+- Elasticsearch
+- `coredeux-demo`
 
-Important: the demo uses Hibernate `ddl-auto: create-drop`, so tables are
-created when the application starts and dropped when it stops. Use a disposable
-database.
+Install Java 17 and Maven only when you want to run tests from your host
+machine or work directly on the source.
 
-## 2. Configure Database Credentials
-
-The demo reads database settings from
-`examples/coredeux-demo/src/main/resources/application.yml`.
-
-The relevant configuration is:
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://${COREDEUX_DEMO_DB_HOST:localhost}:${COREDEUX_DEMO_DB_PORT:5432}/${COREDEUX_DEMO_DB_NAME:coredeux_oss}
-    username: ${COREDEUX_DEMO_DB_USER:postgres}
-    password: ${COREDEUX_DEMO_DB_PASSWORD:root}
-```
-
-Prefer environment variables over editing `application.yml`:
-
-```powershell
-$env:COREDEUX_DEMO_DB_HOST = "localhost"
-$env:COREDEUX_DEMO_DB_PORT = "5432"
-$env:COREDEUX_DEMO_DB_NAME = "coredeux_oss"
-$env:COREDEUX_DEMO_DB_USER = "postgres"
-$env:COREDEUX_DEMO_DB_PASSWORD = "root"
-```
-
-For Bash:
-
-```bash
-export COREDEUX_DEMO_DB_HOST=localhost
-export COREDEUX_DEMO_DB_PORT=5432
-export COREDEUX_DEMO_DB_NAME=coredeux_oss
-export COREDEUX_DEMO_DB_USER=postgres
-export COREDEUX_DEMO_DB_PASSWORD=root
-```
-
-## 3. Understand The Data Access Strategy
-
-The demo entity definitions live in:
-
-```text
-examples/coredeux-demo/src/main/resources/coredeux-entities.yml
-```
-
-Demo entities use:
-
-```yaml
-storage:
-  data-access-service: postgresCoredeuxJpaDataAccessService
-```
-
-That means Coredeux resolves persistence through the PostgreSQL JPA adapter.
-This is the right strategy for the demo because it includes JSONB-aware query
-support.
-
-For your own application:
-
-- use `postgresCoredeuxJpaDataAccessService` for PostgreSQL JSONB/native-query
-  scenarios
-- use `defaultCoredeuxJpaDataAccessService` for generic JPA/Criteria scenarios
-
-## 4. Start The Demo
+## 1. Start The Demo
 
 From the repository root:
 
 ```powershell
-mvn -pl examples/coredeux-demo -am spring-boot:run
+docker compose -f examples/coredeux-demo/docker-compose.yml up --build
 ```
 
-The `-am` flag builds required Coredeux modules first.
-
-When startup completes, open:
+Wait until the `coredeux-demo` service has started. Then open:
 
 ```text
 http://localhost:8080/swagger-ui.html
 ```
 
-The OpenAPI document is available at:
+You now have a running Coredeux application backed by PostgreSQL, MongoDB,
+Redis, and Elasticsearch.
+
+For Docker-specific notes, shutdown commands, and troubleshooting, see
+[Docker Demo Setup](docker-demo.md).
+
+## 2. Look At The API
+
+In Swagger UI, notice the main groups:
+
+- `Coredeux Demo CRUD`
+- `Coredeux Demo Import`
+- `Coredeux Demo File Import`
+- `Coredeux Demo Export`
+
+Those are not separate frameworks. They are different ways into the same
+Coredeux model.
+
+The demo registers entities from:
 
 ```text
-http://localhost:8080/v3/api-docs
+examples/coredeux-demo/src/main/resources/coredeux-entities.yml
 ```
 
-The application enables scheduling so the export worker can process queued
-export jobs in the background.
+That file tells Coredeux which Java class is managed, which field is the
+identifier, which backend adapter is used, and which modules should run.
 
-## 5. Check The Managed Entities
+## 3. Try One CRUD Request
 
-The demo registers entities in `coredeux-entities.yml`, including:
-
-- `com.coredeux.demo.domain.Customer`
-- `com.coredeux.demo.domain.Product`
-- `com.coredeux.demo.domain.CustomerOrder`
-- `com.coredeux.demo.domain.Role`
-- `com.coredeux.demo.domain.Address`
-- `com.coredeux.demo.domain.CustomerProfile`
-- `com.coredeux.demo.domain.OrderItem`
-- `com.coredeux.demo.export.ExportStorageRecord`
-
-Each definition tells Coredeux:
-
-- the Java class
-- the entity name
-- the identifier field
-- the data access service strategy
-- optional modules such as validators, hooks, audit, or workflows
-
-The demo seeds a small PostgreSQL dataset at startup through `DemoDataRunner`.
-Additional import-file samples live under `examples/coredeux-demo/samples`.
-
-## 6. Try CRUD Through Swagger
-
-In Swagger UI, open the `Coredeux Demo CRUD` group.
+In Swagger UI, open `Coredeux Demo CRUD`.
 
 List products:
 
@@ -209,13 +98,15 @@ List products:
 GET /api/entities/com.coredeux.demo.domain.Product
 ```
 
-Create a product:
+The demo seeds product data on startup, so you should see records immediately.
+
+Create another product:
 
 ```text
 POST /api/entities/com.coredeux.demo.domain.Product
 ```
 
-Example body:
+Use this body:
 
 ```json
 {
@@ -228,103 +119,82 @@ Example body:
 }
 ```
 
-Update and delete use the same fully qualified entity class name:
+From the outside, this looks like a generic CRUD call. Inside Coredeux, the
+request goes through entity definition resolution, lifecycle context creation,
+module execution, and the configured backend adapter.
+
+That is the first little spark: the endpoint is generic, but the behavior is
+still governed.
+
+## 4. Import The Postman Collections
+
+Swagger is good for discovering the API. Postman is better for running the
+prepared demo flows.
+
+Import these two collections into Postman:
 
 ```text
-PUT /api/entities/com.coredeux.demo.domain.Product/{id}
-DELETE /api/entities/com.coredeux.demo.domain.Product/{id}
+examples/coredeux-demo/postman/coredeux-demo.postman_collection.json
+examples/coredeux-demo/postman/coredeux-demo-import.postman_collection.json
 ```
 
-From the outside this looks like generic CRUD. Inside Coredeux, the request goes
-through `CoredeuxService`, entity definition resolution, lifecycle context,
-modules, and the configured data access strategy.
-
-## 7. Validate A Raw JSON Import
-
-Open the `Coredeux Demo Import` group.
-
-If you want the import language behind this walkthrough, jump straight to
-[Coredeux Raw JSON Import Tutorial](../modules/import/guide.md).
-
-Validate only:
+Both collections define:
 
 ```text
-POST /api/import/validate
+baseUrl = http://localhost:8080
 ```
 
-Execute:
+That matches the Docker stack.
+
+Start with the `Coredeux Demo Import API` collection. It has two folders worth
+running first:
+
+- `Happy Path`
+- `File Imports`
+
+The `Happy Path` folder shows JSON import requests. The `File Imports` folder
+shows multipart uploads using the sample files in the repository.
+
+## 5. Run A JSON Import
+
+In Postman, open:
 
 ```text
-POST /api/import
+Coredeux Demo Import API / Happy Path / Import Complete Graph
 ```
 
-Example request:
+Run it.
 
-```json
-{
-  "options": {
-    "passes": 1,
-    "failFast": false,
-    "validateOnly": false
-  },
-  "statements": [
-    {
-      "operation": "UPSERT",
-      "entity": "com.coredeux.demo.domain.Product",
-      "columns": [
-        { "name": "sku", "unique": true },
-        { "name": "name" },
-        { "name": "price" },
-        { "name": "documentationUrl", "handler": "demoUriImportHandler" },
-        { "name": "category" },
-        { "name": "active", "defaultValue": "true" }
-      ],
-      "rows": [
-        {
-          "values": {
-            "sku": "IMPORT-PRODUCT-100",
-            "name": "Imported Product 100",
-            "price": "59.95",
-            "documentationUrl": "https://docs.coredeux.dev/demo/products/import-product-100",
-            "category": "SOFTWARE"
-          }
-        }
-      ]
-    }
-  ]
-}
-```
+This single request imports a small graph of related data: roles, products,
+customers, addresses, profiles, orders, and order items. It also demonstrates
+things that usually become custom one-off code:
 
-The import module validates the request, resolves existing entities using the
-`unique` column, converts values, and then uses the same entity lifecycle path
-as normal Coredeux service operations.
+- row references
+- unique lookup
+- custom import value handlers
+- collection conversion
+- map conversion
+- multi-pass import
 
-## 8. Validate A Text Or Excel Import File
-
-Open the `Coredeux Demo File Import` group.
-
-If you want the file syntax behind this walkthrough, jump straight to
-[Coredeux Import File Tutorial](../modules/import-parser/guide.md).
-
-Validate only:
+Then go back to Swagger or Postman and list products again:
 
 ```text
-POST /api/import/file/validate
+GET /api/entities/com.coredeux.demo.domain.Product
 ```
 
-Execute:
+You should see imported data alongside the startup data.
+
+## 6. Run A File Import
+
+Now use the import-file path.
+
+Sample files live here:
 
 ```text
-POST /api/import/file
+examples/coredeux-demo/samples
 ```
 
-Sample files are included in:
-
-```text
-examples/coredeux-demo/samples/
-```
-
-Available samples:
+Included samples:
 
 - `import-products.import`
 - `import-products.xlsx`
@@ -333,25 +203,92 @@ Available samples:
 - `import-elasticsearch-catalog.import`
 - `import-redis-sessions.import`
 
-Text import files compile into the same `ImportRequest` model:
+In Postman, open:
 
 ```text
-OPTIONS(passes=1,failFast=false)
-
-&Product=com.coredeux.demo.domain.Product
-
-UPSERT &Product | sku(unique=true) | name             | price | documentationUrl(handler=demoUriImportHandler)      | category | active(default=true)
-                | FILE-PRODUCT-100 | File Product 100 | 69.95 | https://docs.coredeux.dev/demo/products/file-product | SOFTWARE |
+Coredeux Demo Import API / File Imports / Validate Text Import File
 ```
 
-For Excel uploads, use the optional `sheetName` parameter only when you want to
-parse a named sheet. If it is omitted, the first workbook sheet is used.
+Run it first. Validation parses the file and checks the import without writing
+data.
+
+Then run:
+
+```text
+Coredeux Demo Import API / File Imports / Import Text Import File
+```
+
+The request uploads:
+
+```text
+../samples/import-products.import
+```
+
+That relative path works when the collection is imported from
+`examples/coredeux-demo/postman`. If Postman cannot resolve it, edit the
+request body, choose the `file` form-data field again, and select:
+
+```text
+examples/coredeux-demo/samples/import-products.import
+```
+
+Run the product list again:
+
+```text
+GET /api/entities/com.coredeux.demo.domain.Product
+```
+
+You just imported data from a text file through the same Coredeux import model.
+
+## 7. Try The Excel Import
+
+In Postman, run:
+
+```text
+Coredeux Demo Import API / File Imports / Validate Excel Import File
+Coredeux Demo Import API / File Imports / Import Excel Import File
+```
+
+The request uploads:
+
+```text
+../samples/import-products.xlsx
+```
+
+It also sends:
+
+```text
+sheetName = Products
+```
+
+This shows the same import model fed by an Excel workbook instead of a text
+`.import` file.
+
+## 8. Swap In The Backend Samples
+
+The other sample files show how the same file-import endpoint can feed
+different demo paths:
+
+```text
+import-jdbc-inventory.import
+import-mongodb-audit-trails.import
+import-elasticsearch-catalog.import
+import-redis-sessions.import
+```
+
+To try one, duplicate a Postman file-import request and replace the `file`
+form-data value with one of those files.
+
+This is the second spark: the import parser does not need to become a separate
+mini-application for every backend. The sample file declares the entity and
+columns; Coredeux routes the work through the configured entity definition and
+backend adapter.
 
 ## 9. Queue An Export
 
-Open the `Coredeux Demo Export` group.
+Now close the loop by exporting data.
 
-Queue an export:
+In Swagger UI or Postman, call:
 
 ```text
 POST /api/export
@@ -378,7 +315,7 @@ Example request:
 }
 ```
 
-Read status:
+Check status:
 
 ```text
 GET /api/export/{uid}
@@ -390,63 +327,54 @@ Download when complete:
 GET /api/export/{uid}/download
 ```
 
-The demo uses `databaseCoredeuxExportStorageService` as the default export
-storage backend. Filesystem storage is also available in the export module, and
-its base directory can be configured with:
+The export worker runs in the demo application process. If an export stays in
+`NEW` or `IN_PROGRESS`, make sure the Docker stack is still running.
 
-```text
-COREDEUX_EXPORT_FILESYSTEM_BASE_DIRECTORY
-```
+## What Just Happened
 
-Export logging is configurable too. The demo selects
-`defaultCoredeuxExportLogService` by default, which writes logs to a file, but
-you can switch to `consoleCoredeuxExportLogService` through
-`coredeux.export.log.default-service` when you want the log output to stay in
-the application console.
+In a few minutes, you used:
 
-If you want the export module details behind this walkthrough, see
-[Coredeux Export Guide](../modules/export/guide.md).
+- generic CRUD
+- JSON import
+- text import-file parsing
+- Excel import-file parsing
+- multiple backend sample files
+- export queueing and download
 
-## 10. Run Tests
+The important part is not the endpoints themselves. The important part is that
+they all lean on the same Coredeux ideas:
 
-Run the demo tests:
+- entity definitions describe managed classes
+- lifecycle context travels through the framework
+- modules add validation, hooks, audit, workflow, or other behavior
+- backend adapters handle storage-specific work
+- import and export use the same governed application model
 
-```powershell
-mvn -pl examples/coredeux-demo -am test
-```
-
-Run the full build:
-
-```powershell
-mvn test
-```
-
-Demo tests use Testcontainers for PostgreSQL. That means Docker must be running
-for tests that need a PostgreSQL container.
+That is why Coredeux is useful: the application can grow new capabilities
+without every capability inventing its own rules.
 
 ## Troubleshooting
 
-If the application cannot connect to PostgreSQL, check:
+If the app is not reachable:
 
-- PostgreSQL is running
-- the `coredeux_oss` database exists
-- `COREDEUX_DEMO_DB_*` values match your local database
-- port `5432` is reachable
+- make sure Docker is running
+- make sure the compose stack is still up
+- check that port `8080` is free
+- check that ports `5432`, `27017`, `6379`, and `9200` are free for the backing
+  services
 
-If port `8080` is already in use, pass a different server port:
+If Postman cannot find a sample file:
 
-```powershell
-mvn -pl examples/coredeux-demo -am spring-boot:run -Dspring-boot.run.arguments="--server.port=8081"
-```
+- open the request body
+- find the `file` form-data field
+- manually select the file from `examples/coredeux-demo/samples`
 
 If import validation fails, read the response logs. They identify statement,
 row, field, and resolution issues where possible.
 
-If export stays in `NEW` or `IN_PROGRESS`, make sure the application is still
-running. The scheduled export worker is part of the demo application process.
-
 ## What To Read Next
 
+- [Docker Demo Setup](docker-demo.md)
 - [Coredeux Demo Tour](demo-tour.md)
 - [Adding A New Entity](add-new-entity.md)
 - [Entity Definitions](../configuration/entity-definitions.md)

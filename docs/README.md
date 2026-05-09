@@ -13,9 +13,10 @@ application, use a module, extend the platform, or maintain the project.
 - [Tutorial Order](SUMMARY.md): the canonical previous/next sequence for
   generated HTML documentation.
 - [First 10 Minutes With Coredeux](guides/first-10-minutes.md): the shortest
-  useful path from entity definition to CRUD, modules, import, and export.
-- [Docker Demo Setup](guides/docker-demo.md): the containerized path for the
-  demo stack.
+  Docker-first path from a running demo stack to CRUD, modules, import, and
+  export.
+- [Docker Demo Setup](guides/docker-demo.md): the containerized stack details
+  for the demo application and its backing services.
 - [Vision](overview/vision.md): why Coredeux exists and what it is trying to
   become.
 - [Architecture Overview](architecture/overview.md): framework model, core
