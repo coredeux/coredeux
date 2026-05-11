@@ -42,7 +42,8 @@ Important areas:
 - `src/main/java/com/coredeux/demo/hooks`: lifecycle hook examples
 - `src/main/java/com/coredeux/demo/audit`: audit handler example
 - `src/main/java/com/coredeux/demo/imports`: custom import value handlers
-- `src/main/java/com/coredeux/demo/export`: custom export storage backend
+- `src/main/java/com/coredeux/demo/export`: custom export value handler and
+  storage backend
 - `src/main/java/com/coredeux/demo/workflow`: demo custom module
 - `src/main/java/com/coredeux/demo/bootstrap`: startup data and JSONB search
   examples
@@ -270,9 +271,31 @@ owns validation and execution.
 
 ## Export Storage Extension
 
-The demo uses a custom database-backed export storage service:
+The demo includes two export extension examples.
 
 For the broader export module, see [Coredeux Export Guide](../modules/export/guide.md).
+
+[DateFormatExportHandler.java](../../examples/coredeux-demo/src/main/java/com/coredeux/demo/export/DateFormatExportHandler.java)
+implements `CoredeuxExportValueHandler`.
+
+It formats `java.util.Date` values using field metadata:
+
+```json
+{
+  "path": "profile:legacySignupDate",
+  "handler": "dateFormatExportHandler",
+  "metadata": {
+    "dateFormat": "dd/MM/yyyy HH:mm",
+    "timezone": "Australia/Sydney"
+  }
+}
+```
+
+This mirrors the export guide's custom handler pattern. Coredeux resolves the
+field path first, then passes the resolved value and field metadata to the
+handler.
+
+The demo also uses a custom database-backed export storage service:
 
 [DatabaseCoredeuxExportStorageService.java](../../examples/coredeux-demo/src/main/java/com/coredeux/demo/export/DatabaseCoredeuxExportStorageService.java)
 
@@ -366,7 +389,7 @@ Use this order when studying the code:
 4. Read the validator, hook, and audit handlers.
 5. Read the workflow module to understand how new modules are added.
 6. Read the import handlers and import controllers.
-7. Read the export storage service and export controller.
+7. Read the export value handler, export storage service, and export controller.
 8. Finish with `DemoDataRunner` to see startup data and JSONB search in action,
    then read the sample import files to see import-pipeline data.
 
@@ -381,6 +404,7 @@ Copy the patterns, not necessarily the exact classes:
 - audit handlers for operation capture
 - custom modules for domain-specific framework behavior
 - import value handlers for type conversion
+- export value handlers for field formatting
 - export storage services for artifact persistence
 - generic controllers or agent tools when your application needs dynamic
   entity access

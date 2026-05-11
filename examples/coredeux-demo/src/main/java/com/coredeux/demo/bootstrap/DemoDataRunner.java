@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -106,6 +107,7 @@ public class DemoDataRunner implements CommandLineRunner {
                 .customer(customer)
                 .biography("Sample customer used by the Coredeux demo application")
                 .marketingOptIn(true)
+                .legacySignupDate(Date.from(Instant.parse("2026-05-01T10:15:00Z")))
                 .favoriteTags(new LinkedHashSet<>(List.of("starter", "jsonb")))
                 .build();
         customer.setProfile(profile);

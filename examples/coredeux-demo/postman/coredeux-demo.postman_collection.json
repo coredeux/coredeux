@@ -666,6 +666,36 @@
           }
         },
         {
+          "name": "Queue Customer Export With Date Handler",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('export with handler is accepted or completed', function () { pm.expect([200, 202]).to.include(pm.response.code); });",
+                  "const body = pm.response.json();",
+                  "if (body.uid) { pm.collectionVariables.set('exportUid', body.uid); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entity\": \"{{customerEntity}}\",\n  \"fieldList\": [\n    {\n      \"path\": \"name\"\n    },\n    {\n      \"path\": \"email\"\n    },\n    {\n      \"path\": \"profile:legacySignupDate\",\n      \"handler\": \"dateFormatExportHandler\",\n      \"metadata\": {\n        \"dateFormat\": \"dd/MM/yyyy HH:mm\",\n        \"timezone\": \"Australia/Sydney\"\n      }\n    }\n  ],\n  \"options\": {\n    \"format\": \"XLSX\",\n    \"includeHeader\": true,\n    \"fileName\": \"customers-with-signup-date.xlsx\",\n    \"storageService\": \"databaseCoredeuxExportStorageService\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/export"
+          }
+        },
+        {
           "name": "Get Export Status",
           "request": {
             "method": "GET",
