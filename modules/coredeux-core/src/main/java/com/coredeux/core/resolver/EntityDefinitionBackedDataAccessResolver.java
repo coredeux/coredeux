@@ -2,8 +2,6 @@ package com.coredeux.core.resolver;
 
 import java.util.Objects;
 
-import org.springframework.stereotype.Service;
-
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 
@@ -11,7 +9,6 @@ import com.coredeux.core.exceptions.CoredeuxValidationException;
  * Default resolver that reads the data access service name directly from the
  * entity definition storage section.
  */
-@Service
 public class EntityDefinitionBackedDataAccessResolver implements EntityDataAccessResolver {
 
     @Override

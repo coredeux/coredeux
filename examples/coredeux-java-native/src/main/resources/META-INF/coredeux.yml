@@ -1,0 +1,11 @@
+coredeux:
+  entities:
+    config-location: classpath:coredeux-postgres-entities.yml
+  import:
+    default-parser: text
+  export:
+    default-format: TEXT
+    worker:
+      enabled: true
+      delay-ms: 5000
+      max-parallel: 2

@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.stereotype.Service;
-
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
@@ -15,7 +13,6 @@ import com.coredeux.core.strategy.CoredeuxStrategy;
  * Default public service implementation that delegates entity operations to the
  * configured strategy.
  */
-@Service
 public class DefaultCoredeuxService implements CoredeuxService {
 
     private final CoredeuxStrategy coredeuxStrategy;

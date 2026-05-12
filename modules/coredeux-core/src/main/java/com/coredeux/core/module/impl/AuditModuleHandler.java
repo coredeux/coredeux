@@ -5,11 +5,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.ResolvableType;
-import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-
 import com.coredeux.core.audit.CoredeuxEntityAuditHandler;
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
@@ -17,12 +12,13 @@ import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
+import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
+import com.coredeux.core.util.CoredeuxGenericTypeResolver;
 
 /**
  * Executes configured audit handlers for the configured write operations.
  */
-@Component
 public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
 
     private static final String MODULE_NAME = "audit";
@@ -32,10 +28,10 @@ public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
     private static final String DELETE = "DELETE";
     private static final List<String> SUPPORTED_OPERATIONS = List.of(ALL, SAVE, UPDATE, DELETE);
 
-    private final ApplicationContext applicationContext;
+    private final CoredeuxComponentRegistry componentRegistry;
 
-    public AuditModuleHandler(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+    public AuditModuleHandler(CoredeuxComponentRegistry componentRegistry) {
+        this.componentRegistry = componentRegistry;
     }
 
     @Override
@@ -80,7 +76,7 @@ public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
     @SuppressWarnings("unchecked")
     private <T> CoredeuxEntityAuditHandler<T> resolveAuditHandler(String auditHandlerName, T entity,
             CoredeuxEntityDefinition definition) {
-        CoredeuxEntityAuditHandler<?> auditHandler = applicationContext.getBean(auditHandlerName,
+        CoredeuxEntityAuditHandler<?> auditHandler = componentRegistry.getComponent(auditHandlerName,
                 CoredeuxEntityAuditHandler.class);
         validateSupportedType(auditHandlerName, auditHandler.getClass(), entity, definition);
         return (CoredeuxEntityAuditHandler<T>) auditHandler;
@@ -88,9 +84,8 @@ public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
 
     private <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
             CoredeuxEntityDefinition definition) {
-        Class<?> supportedType = ResolvableType.forClass(beanType)
-                .as(CoredeuxEntityAuditHandler.class)
-                .resolveGeneric(0);
+        Class<?> supportedType = CoredeuxGenericTypeResolver.resolveFirstGeneric(beanType,
+                CoredeuxEntityAuditHandler.class);
         if (supportedType == null || entity == null || supportedType.isAssignableFrom(entity.getClass())) {
             return;
         }
@@ -102,7 +97,7 @@ public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
     private List<String> resolveOperations(CoredeuxModuleDefinition moduleDefinition, CoredeuxEntityDefinition definition) {
         Map<String, Object> configMap = moduleDefinition.getConfigMap();
         Object configured = configMap.get("operations");
-        if (!(configured instanceof List<?> rawOperations) || CollectionUtils.isEmpty(rawOperations)) {
+        if (!(configured instanceof List<?> rawOperations) || rawOperations.isEmpty()) {
             throw new CoredeuxValidationException(
                     "Audit module requires config.operations for class: " + definition.getFullClassName());
         }

@@ -5,12 +5,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.springframework.stereotype.Service;
-
 import com.coredeux.export.log.CoredeuxExportLogService;
 import com.coredeux.export.model.ExportLogEntry;
 
-@Service("consoleCoredeuxExportLogService")
 public class ConsoleCoredeuxExportLogService implements CoredeuxExportLogService {
 
     private static final Logger LOG = Logger.getLogger(ConsoleCoredeuxExportLogService.class.getName());

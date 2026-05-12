@@ -7,12 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.springframework.stereotype.Component;
-
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.model.ExportOptions;
 
-@Component
 public class TextExportWriter implements ExportWriter {
 
     @Override

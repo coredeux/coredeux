@@ -5,9 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.CollectionUtils;
-
 import com.coredeux.core.context.EntityLifecycleContext;
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
@@ -17,6 +14,7 @@ import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
+import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
@@ -30,19 +28,19 @@ public abstract class AbstractCoredeuxStrategy {
 
     private final EntityDefinitionRegistry entityDefinitionRegistry;
     private final EntityDataAccessResolver entityDataAccessResolver;
-    private final ApplicationContext applicationContext;
+    private final CoredeuxComponentRegistry componentRegistry;
     private final CoredeuxReflectionHelperService reflectionHelperService;
     private final CoredeuxRequestContextResolver requestContextResolver;
     private final Map<String, CoredeuxEntityModuleHandler> moduleHandlers;
 
     protected AbstractCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
-            EntityDataAccessResolver entityDataAccessResolver, ApplicationContext applicationContext,
+            EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         this.entityDefinitionRegistry = entityDefinitionRegistry;
         this.entityDataAccessResolver = entityDataAccessResolver;
-        this.applicationContext = applicationContext;
+        this.componentRegistry = componentRegistry;
         this.reflectionHelperService = reflectionHelperService;
         this.requestContextResolver = requestContextResolver;
         this.moduleHandlers = toModuleHandlerMap(moduleHandlers);
@@ -63,7 +61,7 @@ public abstract class AbstractCoredeuxStrategy {
         CoredeuxEntityDefinition definition = getDefinition(entityType);
         String beanName = entityDataAccessResolver.resolveDataAccessService(definition);
         try {
-            return applicationContext.getBean(beanName, CoredeuxDataAccessService.class);
+            return componentRegistry.getComponent(beanName, CoredeuxDataAccessService.class);
         } catch (Exception exception) {
             throw new CoredeuxStrategyException(
                     "Unable to resolve CoredeuxDataAccessService bean: " + beanName + " for class: "
@@ -74,7 +72,7 @@ public abstract class AbstractCoredeuxStrategy {
 
     protected <T> void executeModules(T entity, CoredeuxEntityDefinition definition, String phase,
             OperationContext context) {
-        if (definition == null || CollectionUtils.isEmpty(definition.getModules())) {
+        if (definition == null || definition.getModules() == null || definition.getModules().isEmpty()) {
             return;
         }
 

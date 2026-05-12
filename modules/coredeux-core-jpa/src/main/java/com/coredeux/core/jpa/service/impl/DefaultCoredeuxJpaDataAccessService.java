@@ -5,11 +5,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
+import java.util.function.Function;
 
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
@@ -20,7 +18,8 @@ import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -34,8 +33,7 @@ import jakarta.persistence.metamodel.PluralAttribute;
 /**
  * Default JPA-backed implementation of {@link CoredeuxDataAccessService}.
  */
-@Service("defaultCoredeuxJpaDataAccessService")
-public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessService {
+public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessService, AutoCloseable {
 
     protected static final String EQUALS = "EQUALS";
     protected static final String NOTEQUALS = "NOTEQUALS";
@@ -57,69 +55,70 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
             ANYWHERE, LESSTHANOREQUAL, LESSTHAN, GREATERTHANOREQUAL, GREATERTHAN, ISNULL, ISNOTNULL, ISEMPTY,
             ISNOTEMPTY, CONTAINS, NOTCONTAINS);
 
-    @PersistenceContext
     private EntityManager entityManager;
+    private EntityManagerFactory entityManagerFactory;
+    private final ThreadLocal<EntityManager> activeEntityManager = new ThreadLocal<>();
+
+    public DefaultCoredeuxJpaDataAccessService() {
+    }
+
+    public DefaultCoredeuxJpaDataAccessService(EntityManager entityManager) {
+        this.entityManager = Objects.requireNonNull(entityManager, "entityManager must not be null");
+    }
+
+    public DefaultCoredeuxJpaDataAccessService(EntityManagerFactory entityManagerFactory) {
+        this.entityManagerFactory = Objects.requireNonNull(entityManagerFactory, "entityManagerFactory must not be null");
+    }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> T load(String id, Class<T> type) {
         validateLoadInput(id, type);
-        try {
+        return read(entityManager -> {
             Object identifier = JpaIdentifierConverter.convert(id, resolveIdentifierType(type));
             T entity = entityManager.find(type, identifier);
             if (entity != null) {
                 entityManager.detach(entity);
             }
             return entity;
-        } catch (RuntimeException exception) {
-            throw wrap("Unable to load entity of type " + type.getName() + " for identifier '" + id + "'", exception);
-        }
+        }, "Unable to load entity of type " + type.getName() + " for identifier '" + id + "'");
     }
 
     @Override
-    @Transactional
     public <T> String save(T entity) {
         validateEntity(entity, "save");
-        try {
+        return write(entityManager -> {
             entityManager.persist(entity);
             entityManager.flush();
             Object identifier = entityManager.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
             return identifier != null ? String.valueOf(identifier) : null;
-        } catch (RuntimeException exception) {
-            throw wrap("Unable to save entity of type " + entity.getClass().getName(), exception);
-        }
+        }, "Unable to save entity of type " + entity.getClass().getName());
     }
 
     @Override
-    @Transactional
     public <T> void update(T entity) {
         validateEntity(entity, "update");
-        try {
+        write(entityManager -> {
             entityManager.merge(entity);
             entityManager.flush();
-        } catch (RuntimeException exception) {
-            throw wrap("Unable to update entity of type " + entity.getClass().getName(), exception);
-        }
+            return null;
+        }, "Unable to update entity of type " + entity.getClass().getName());
     }
 
     @Override
-    @Transactional
     public <T> void remove(T entity) {
         validateEntity(entity, "remove");
-        try {
+        write(entityManager -> {
             T managedEntity = entityManager.contains(entity) ? entity : entityManager.merge(entity);
             entityManager.remove(managedEntity);
             entityManager.flush();
-        } catch (RuntimeException exception) {
-            throw wrap("Unable to remove entity of type " + entity.getClass().getName(), exception);
-        }
+            return null;
+        }, "Unable to remove entity of type " + entity.getClass().getName());
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> loadAll(List<SearchParams> params, Class<T> type, int pageSize, int currentPage) {
         validateSearchType(type);
-        try {
+        return read(entityManager -> {
             CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
             CriteriaQuery<T> dataQuery = criteriaBuilder.createQuery(type);
             Root<T> root = dataQuery.from(type);
@@ -139,9 +138,7 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
                     .results(defaultResults(results))
                     .pagination(buildPagination(totalResults, filteredResults, pageSize, currentPage))
                     .build();
-        } catch (RuntimeException exception) {
-            throw wrap("Unable to load entities for type " + type.getName(), exception);
-        }
+        }, "Unable to load entities for type " + type.getName());
     }
 
     @Override
@@ -150,11 +147,10 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
             int currentPage) {
         validateQueryInput(query, type);
-        try {
+        return read(entityManager -> {
             TypedQuery<T> countQuery = entityManager.createQuery(query, type);
             bindParameters(countQuery, params);
             long totalResults = countQuery.getResultList().size();
@@ -169,20 +165,23 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
                     .results(defaultResults(results))
                     .pagination(buildPagination(totalResults, totalResults, pageSize, currentPage))
                     .build();
-        } catch (RuntimeException exception) {
-            throw wrap("Unable to execute query for type " + type.getName(), exception);
-        }
+        }, "Unable to execute query for type " + type.getName());
     }
 
     @Override
-    @Transactional
     public <T> void refresh(T entity) {
         validateEntity(entity, "refresh");
-        try {
+        write(entityManager -> {
             T managedEntity = entityManager.contains(entity) ? entity : entityManager.merge(entity);
             entityManager.refresh(managedEntity);
-        } catch (RuntimeException exception) {
-            throw wrap("Unable to refresh entity of type " + entity.getClass().getName(), exception);
+            return null;
+        }, "Unable to refresh entity of type " + entity.getClass().getName());
+    }
+
+    @Override
+    public void close() {
+        if (entityManagerFactory != null && entityManagerFactory.isOpen()) {
+            entityManagerFactory.close();
         }
     }
 
@@ -191,7 +190,14 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
     }
 
     protected EntityManager getEntityManager() {
-        return entityManager;
+        if (entityManager != null) {
+            return entityManager;
+        }
+        EntityManager currentEntityManager = activeEntityManager.get();
+        if (currentEntityManager == null) {
+            throw new CoredeuxDataAccessException("EntityManager is not configured");
+        }
+        return currentEntityManager;
     }
 
     protected void validateLoadInput(String id, Class<?> type) {
@@ -221,7 +227,7 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
     }
 
     protected <T> Class<?> resolveIdentifierType(Class<T> type) {
-        EntityType<T> entityType = entityManager.getMetamodel().entity(type);
+        EntityType<T> entityType = getEntityManager().getMetamodel().entity(type);
         if (!entityType.hasSingleIdAttribute()) {
             throw new CoredeuxValidationException(
                     "Composite identifiers are not supported by DefaultCoredeuxJpaDataAccessService for class: "
@@ -262,30 +268,33 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
     }
 
     protected <T> List<T> defaultResults(List<T> results) {
-        return CollectionUtils.isEmpty(results) ? List.of() : results;
+        return results == null || results.isEmpty() ? List.of() : results;
     }
 
     protected <T> void detachResults(List<T> results) {
         if (results == null) {
             return;
         }
+        EntityManager currentEntityManager = getEntityManager();
         for (T result : results) {
-            if (result != null && entityManager.contains(result)) {
-                entityManager.detach(result);
+            if (result != null && currentEntityManager.contains(result)) {
+                currentEntityManager.detach(result);
             }
         }
     }
 
     protected <T> long countAll(Class<T> type) {
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        EntityManager currentEntityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = currentEntityManager.getCriteriaBuilder();
         CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
         Root<T> root = query.from(type);
         query.select(criteriaBuilder.count(root));
-        return entityManager.createQuery(query).getSingleResult();
+        return currentEntityManager.createQuery(query).getSingleResult();
     }
 
     protected <T> long countFiltered(Class<T> type, List<SearchParams> params) {
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        EntityManager currentEntityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = currentEntityManager.getCriteriaBuilder();
         CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
         Root<T> root = query.from(type);
         List<Predicate> predicates = buildPredicates(params, criteriaBuilder, root);
@@ -293,12 +302,12 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
         if (!predicates.isEmpty()) {
             query.where(predicates.toArray(Predicate[]::new));
         }
-        return entityManager.createQuery(query).getSingleResult();
+        return currentEntityManager.createQuery(query).getSingleResult();
     }
 
     protected <T> List<Predicate> buildPredicates(List<SearchParams> params, CriteriaBuilder criteriaBuilder,
             Root<T> root) {
-        if (CollectionUtils.isEmpty(params)) {
+        if (params == null || params.isEmpty()) {
             return List.of();
         }
         List<Predicate> predicates = new ArrayList<>();
@@ -405,6 +414,55 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
             throw validationException;
         }
         return new CoredeuxDataAccessException(message, exception);
+    }
+
+    protected <T> T read(Function<EntityManager, T> callback, String errorMessage) {
+        if (entityManagerFactory == null) {
+            try {
+                return callback.apply(getEntityManager());
+            } catch (RuntimeException exception) {
+                throw wrap(errorMessage, exception);
+            }
+        }
+
+        EntityManager currentEntityManager = entityManagerFactory.createEntityManager();
+        activeEntityManager.set(currentEntityManager);
+        try {
+            return callback.apply(currentEntityManager);
+        } catch (RuntimeException exception) {
+            throw wrap(errorMessage, exception);
+        } finally {
+            activeEntityManager.remove();
+            currentEntityManager.close();
+        }
+    }
+
+    protected <T> T write(Function<EntityManager, T> callback, String errorMessage) {
+        if (entityManagerFactory == null) {
+            try {
+                return callback.apply(getEntityManager());
+            } catch (RuntimeException exception) {
+                throw wrap(errorMessage, exception);
+            }
+        }
+
+        EntityManager currentEntityManager = entityManagerFactory.createEntityManager();
+        activeEntityManager.set(currentEntityManager);
+        EntityTransaction transaction = currentEntityManager.getTransaction();
+        try {
+            transaction.begin();
+            T result = callback.apply(currentEntityManager);
+            transaction.commit();
+            return result;
+        } catch (RuntimeException exception) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw wrap(errorMessage, exception);
+        } finally {
+            activeEntityManager.remove();
+            currentEntityManager.close();
+        }
     }
 
     protected enum ComparisonType {

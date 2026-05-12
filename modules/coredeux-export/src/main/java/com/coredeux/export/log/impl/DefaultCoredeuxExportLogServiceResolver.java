@@ -2,23 +2,27 @@ package com.coredeux.export.log.impl;
 
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.log.CoredeuxExportLogService;
 import com.coredeux.export.log.CoredeuxExportLogServiceResolver;
 
-@Component
 public class DefaultCoredeuxExportLogServiceResolver implements CoredeuxExportLogServiceResolver {
+
+    public static final String DEFAULT_LOG_SERVICE = "defaultCoredeuxExportLogService";
 
     private final Map<String, CoredeuxExportLogService> services;
     private final String defaultLogService;
 
+    public DefaultCoredeuxExportLogServiceResolver(Map<String, CoredeuxExportLogService> services) {
+        this(services, DEFAULT_LOG_SERVICE);
+    }
+
     public DefaultCoredeuxExportLogServiceResolver(Map<String, CoredeuxExportLogService> services,
-            @Value("${coredeux.export.log.default-service:defaultCoredeuxExportLogService}") String defaultLogService) {
+            String defaultLogService) {
         this.services = services;
-        this.defaultLogService = defaultLogService;
+        this.defaultLogService = defaultLogService == null || defaultLogService.isBlank()
+                ? DEFAULT_LOG_SERVICE
+                : defaultLogService;
     }
 
     @Override

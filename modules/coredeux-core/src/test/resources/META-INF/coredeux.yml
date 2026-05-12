@@ -1,0 +1,3 @@
+coredeux:
+  entities:
+    config-location: classpath:test-entities.yml

@@ -1,0 +1,39 @@
+coredeux:
+  entities:
+    - full-class-name: com.coredeux.examples.nativejava.domain.Customer
+      name: customer
+      identifier: id
+      storage:
+        store: postgres
+        data-access-service: postgresCustomerDataAccess
+      modules:
+        - name: attributes
+          enabled: true
+          config:
+            - name: id
+              type: string
+              required: false
+              searchable: true
+            - name: name
+              type: string
+              required: true
+              searchable: true
+            - name: email
+              type: string
+              required: true
+              searchable: true
+        - name: validators
+          enabled: true
+          handlers:
+            - customerNameValidator
+        - name: hooks
+          enabled: true
+          handlers:
+            - customerLifecycleHook
+        - name: audit
+          enabled: true
+          handlers:
+            - customerAuditHandler
+          config:
+            operations:
+              - ALL

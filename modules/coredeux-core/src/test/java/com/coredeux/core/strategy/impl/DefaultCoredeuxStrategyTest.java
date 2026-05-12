@@ -14,13 +14,10 @@ import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.StaticApplicationContext;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.coredeux.core.context.EntityLifecycleContext;
 import com.coredeux.core.context.OperationContext;
+import com.coredeux.core.context.RequestContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.definition.CoredeuxStorageDefinition;
@@ -33,28 +30,28 @@ import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDefinitionBackedDataAccessResolver;
-import com.coredeux.core.resolver.context.DefaultCoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
 import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
+import com.coredeux.core.testsupport.TestComponentRegistry;
 import com.coredeux.core.validation.CoredeuxEntityValidator;
 import com.coredeux.core.validation.ValidationError;
 
 class DefaultCoredeuxStrategyTest {
 
+    private RequestContext requestContext;
+
     @AfterEach
     void clearRequestContext() {
-        RequestContextHolder.resetRequestAttributes();
+        requestContext = null;
     }
 
     @Test
     void shouldInvokeEnabledValidatorAndHookModulesDuringSaveWithFrameworkManagedLifecycleState() {
-        MockHttpServletRequest request = request("req-1", "corr-1", "user-1", "site-1");
-        request.setPreferredLocales(List.of(Locale.ENGLISH));
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        requestContext = request("req-1", "corr-1", "user-1", "site-1", Locale.ENGLISH);
 
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingValidator validator = new RecordingValidator();
         RecordingHook hook = new RecordingHook();
@@ -97,7 +94,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldFallbackToOriginalIdentifierWhenSaveReturnsBlankIdentifier() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         dataAccessService.persistedIdentifier = " ";
         RecordingHook hook = new RecordingHook();
@@ -117,9 +114,9 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldApplyFetchLifecycleContextDuringLoad() {
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request("req-fetch", null, null, null)));
+        requestContext = request("req-fetch", null, null, null, null);
 
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         SampleEntity existing = new SampleEntity("11", "loaded");
@@ -148,7 +145,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldUseRequestedIdWhenLoadedEntityIdentifierIsNull() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         SampleEntity existing = new SampleEntity(null, "loaded");
@@ -167,7 +164,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldReturnNullWithoutInvokingLoadModulesWhenEntityNotFound() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         registerBeans(applicationContext, dataAccessService, new RecordingValidator(), hook);
@@ -184,7 +181,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldInvokeLoadModulesForQueryAndLoadAllResults() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         SampleEntity entityOne = new SampleEntity("1", "one");
@@ -207,7 +204,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldIgnoreNullQueryAndNullEntitiesDuringLoadModuleInvocation() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         dataAccessService.queryResult = null;
@@ -228,7 +225,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldIgnoreSearchResultWithNullResults() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         dataAccessService.loadAllResult = SearchResult.<SampleEntity>builder().results(null).build();
@@ -247,7 +244,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldInvokeDeleteFlowForRemoveByIdAndEntity() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         SampleEntity existing = new SampleEntity("7", "stored");
@@ -269,7 +266,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldInvokeRefreshModulesAroundDataAccessRefresh() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         registerBeans(applicationContext, dataAccessService, new RecordingValidator(), hook);
@@ -290,7 +287,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldUpdateExistingEntityAndInvokeUpdateModules() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         SampleEntity existing = new SampleEntity("15", "old");
@@ -315,7 +312,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldFailUpdateWhenExistingEntityCannotBeResolved() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         registerBeans(applicationContext, dataAccessService, new RecordingValidator(), new RecordingHook());
 
@@ -329,7 +326,7 @@ class DefaultCoredeuxStrategyTest {
 
     @Test
     void shouldFailRemoveWhenExistingEntityCannotBeResolved() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         registerBeans(applicationContext, dataAccessService, new RecordingValidator(), new RecordingHook());
 
@@ -341,36 +338,29 @@ class DefaultCoredeuxStrategyTest {
         assertTrue(exception.getMessage().contains("DELETE"));
     }
 
-    private DefaultCoredeuxStrategy strategy(StaticApplicationContext applicationContext,
+    private DefaultCoredeuxStrategy strategy(TestComponentRegistry applicationContext,
             CoredeuxModuleDefinition... modules) {
         return new DefaultCoredeuxStrategy(registryWithModules(modules),
                 new EntityDefinitionBackedDataAccessResolver(), applicationContext,
-                new DefaultCoredeuxReflectionHelperService(), new DefaultCoredeuxRequestContextResolver(),
+                new DefaultCoredeuxReflectionHelperService(), () -> requestContext,
                 moduleHandlers(applicationContext));
     }
 
-    private void registerBeans(StaticApplicationContext applicationContext, RecordingDataAccessService dataAccessService,
+    private void registerBeans(TestComponentRegistry applicationContext, RecordingDataAccessService dataAccessService,
             RecordingValidator validator, RecordingHook hook) {
-        applicationContext.getBeanFactory().registerSingleton("customerDataAccess", dataAccessService);
-        applicationContext.getBeanFactory().registerSingleton("customerValidator", validator);
-        applicationContext.getBeanFactory().registerSingleton("customerLifecycleHook", hook);
+        applicationContext.registerSingleton("customerDataAccess", dataAccessService);
+        applicationContext.registerSingleton("customerValidator", validator);
+        applicationContext.registerSingleton("customerLifecycleHook", hook);
     }
 
-    private MockHttpServletRequest request(String requestId, String correlationId, String userId, String siteId) {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        if (requestId != null) {
-            request.addHeader("X-Request-Id", requestId);
-        }
-        if (correlationId != null) {
-            request.addHeader("X-Correlation-Id", correlationId);
-        }
-        if (userId != null) {
-            request.addHeader("X-User-Id", userId);
-        }
-        if (siteId != null) {
-            request.addHeader("X-Site-Id", siteId);
-        }
-        return request;
+    private RequestContext request(String requestId, String correlationId, String userId, String siteId, Locale locale) {
+        return RequestContext.builder()
+                .requestId(requestId)
+                .correlationId(correlationId)
+                .userId(userId)
+                .tenantId(siteId)
+                .locale(locale)
+                .build();
     }
 
     private EntityDefinitionRegistry registryWithModules(CoredeuxModuleDefinition... modules) {
@@ -384,7 +374,7 @@ class DefaultCoredeuxStrategyTest {
         return new InMemoryEntityDefinitionRegistry(List.of(definition));
     }
 
-    private List<CoredeuxEntityModuleHandler> moduleHandlers(StaticApplicationContext applicationContext) {
+    private List<CoredeuxEntityModuleHandler> moduleHandlers(TestComponentRegistry applicationContext) {
         return List.of(new ValidatorsModuleHandler(applicationContext), new HooksModuleHandler(applicationContext));
     }
 

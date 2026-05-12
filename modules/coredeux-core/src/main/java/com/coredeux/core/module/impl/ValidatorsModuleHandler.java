@@ -3,31 +3,27 @@ package com.coredeux.core.module.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.ResolvableType;
-import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
+import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
+import com.coredeux.core.util.CoredeuxGenericTypeResolver;
 import com.coredeux.core.validation.CoredeuxEntityValidator;
 import com.coredeux.core.validation.ValidationError;
 
 /**
  * Executes configured validators for write operations.
  */
-@Component
 public class ValidatorsModuleHandler implements CoredeuxEntityModuleHandler {
 
-    private final ApplicationContext applicationContext;
+    private final CoredeuxComponentRegistry componentRegistry;
 
-    public ValidatorsModuleHandler(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+    public ValidatorsModuleHandler(CoredeuxComponentRegistry componentRegistry) {
+        this.componentRegistry = componentRegistry;
     }
 
     @Override
@@ -59,7 +55,7 @@ public class ValidatorsModuleHandler implements CoredeuxEntityModuleHandler {
             }
 
             List<ValidationError> errors = validator.validate(entity, definition, context);
-            if (!CollectionUtils.isEmpty(errors)) {
+            if (errors != null && !errors.isEmpty()) {
                 validationErrors.addAll(errors);
             }
         }
@@ -73,16 +69,16 @@ public class ValidatorsModuleHandler implements CoredeuxEntityModuleHandler {
     @SuppressWarnings("unchecked")
     private <T> CoredeuxEntityValidator<T> resolveValidator(String validatorName, T entity,
             CoredeuxEntityDefinition definition) {
-        CoredeuxEntityValidator<?> validator = applicationContext.getBean(validatorName, CoredeuxEntityValidator.class);
+        CoredeuxEntityValidator<?> validator = componentRegistry.getComponent(validatorName,
+                CoredeuxEntityValidator.class);
         validateSupportedType(validatorName, validator.getClass(), entity, definition, "validator");
         return (CoredeuxEntityValidator<T>) validator;
     }
 
     private <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
             CoredeuxEntityDefinition definition, String contractName) {
-        Class<?> supportedType = ResolvableType.forClass(beanType)
-                .as(CoredeuxEntityValidator.class)
-                .resolveGeneric(0);
+        Class<?> supportedType = CoredeuxGenericTypeResolver.resolveFirstGeneric(beanType,
+                CoredeuxEntityValidator.class);
         if (supportedType == null || entity == null || supportedType.isAssignableFrom(entity.getClass())) {
             return;
         }

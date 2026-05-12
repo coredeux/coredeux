@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.stereotype.Service;
-
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
@@ -34,7 +32,6 @@ import com.coredeux.impex.model.ImportSeverity;
 import com.coredeux.impex.model.ImportStatement;
 import com.coredeux.impex.service.CoredeuxImportService;
 
-@Service
 public class DefaultCoredeuxImportService implements CoredeuxImportService {
 
     private static final String EQUALS = "EQUALS";

@@ -13,8 +13,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import org.springframework.stereotype.Service;
-
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.model.ExportJob;
 import com.coredeux.export.model.ExportOptions;
@@ -26,15 +24,23 @@ import com.coredeux.export.support.ExportJsonSupport;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Service("defaultCoredeuxExportQueueService")
 public class FileCoredeuxExportQueueService implements CoredeuxExportQueueService {
+
+    public static final String DEFAULT_QUEUE_SERVICE = "defaultCoredeuxExportQueueService";
+    public static final String DEFAULT_BASE_DIRECTORY = Path.of(System.getProperty("java.io.tmpdir"),
+            "coredeux-export", "queue").toString();
 
     private final ObjectMapper objectMapper = ExportJsonSupport.objectMapper();
     private final Path queueFile;
 
     public FileCoredeuxExportQueueService() {
-        Path baseDirectory = Path.of(System.getProperty("java.io.tmpdir"), "coredeux-export", "queue");
-        this.queueFile = baseDirectory.resolve("export-queue.json");
+        this(DEFAULT_BASE_DIRECTORY);
+    }
+
+    public FileCoredeuxExportQueueService(String baseDirectory) {
+        Path resolvedBaseDirectory = Path.of(baseDirectory == null || baseDirectory.isBlank() ? DEFAULT_BASE_DIRECTORY
+                : baseDirectory);
+        this.queueFile = resolvedBaseDirectory.resolve("export-queue.json");
     }
 
     @Override

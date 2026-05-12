@@ -5,29 +5,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.stereotype.Component;
-
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.handler.ExportValueContext;
 import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.model.ExportRequest;
 
-@Component
-class ExportValueResolver {
+public class ExportValueResolver {
 
     private final CoredeuxReflectionHelperService reflectionHelperService;
     private final ExportValueFormatter formatter;
     private final ExportValueHandlerResolver handlerResolver;
 
-    ExportValueResolver(CoredeuxReflectionHelperService reflectionHelperService, ExportValueFormatter formatter,
+    public ExportValueResolver(CoredeuxReflectionHelperService reflectionHelperService, ExportValueFormatter formatter,
             ExportValueHandlerResolver handlerResolver) {
         this.reflectionHelperService = reflectionHelperService;
         this.formatter = formatter;
         this.handlerResolver = handlerResolver;
     }
 
-    String resolve(Object root, Class<?> entityType, ExportFieldPath path, String collectionSeparator,
+    public String resolve(Object root, Class<?> entityType, ExportFieldPath path, String collectionSeparator,
             ExportRequest request) {
         Object value = resolveValue(root, root == null ? null : root.getClass(), path.segments(), 0, false,
                 collectionSeparator);

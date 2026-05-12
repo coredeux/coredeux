@@ -4,12 +4,9 @@ import java.math.BigDecimal;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 
-import org.springframework.stereotype.Component;
-
 import com.coredeux.export.handler.CoredeuxExportValueHandler;
 import com.coredeux.export.handler.ExportValueContext;
 
-@Component("defaultCoredeuxExportValueHandler")
 public class DefaultCoredeuxExportValueHandler implements CoredeuxExportValueHandler {
 
     @Override

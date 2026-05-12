@@ -4,13 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Service;
-
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
+import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
@@ -25,15 +23,14 @@ import com.coredeux.core.strategy.CoredeuxStrategy;
  * Default strategy implementation that resolves the configured data access
  * service from the entity definition registry and applies enabled modules.
  */
-@Service
 public class DefaultCoredeuxStrategy extends AbstractCoredeuxStrategy implements CoredeuxStrategy {
 
     public DefaultCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
-            EntityDataAccessResolver entityDataAccessResolver, ApplicationContext applicationContext,
+            EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
-        super(entityDefinitionRegistry, entityDataAccessResolver, applicationContext, reflectionHelperService,
+        super(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry, reflectionHelperService,
                 requestContextResolver, moduleHandlers);
     }
 

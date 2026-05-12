@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.stereotype.Component;
-
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
@@ -24,7 +22,6 @@ import com.coredeux.impex.exception.CoredeuxImportException;
 import com.coredeux.impex.handler.CoredeuxImportValueHandler;
 import com.coredeux.impex.handler.ImportValueContext;
 
-@Component("coredeuxDefaultImportValueHandler")
 public class DefaultCoredeuxImportValueHandler implements CoredeuxImportValueHandler {
 
     private static final String EQUALS = "EQUALS";

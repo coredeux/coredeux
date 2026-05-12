@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.StaticApplicationContext;
+import com.coredeux.core.testsupport.TestComponentRegistry;
 
 import com.coredeux.core.audit.CoredeuxEntityAuditHandler;
 import com.coredeux.core.context.EntityLifecycleContext;
@@ -23,7 +23,6 @@ import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDefinitionBackedDataAccessResolver;
-import com.coredeux.core.resolver.context.DefaultCoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
@@ -33,17 +32,17 @@ class DefaultCoredeuxStrategyAuditTest {
 
     @Test
     void shouldInvokeAuditHandlerForConfiguredSaveUpdateAndDeleteOperations() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingAuditHandler auditHandler = new RecordingAuditHandler();
         SampleEntity existing = new SampleEntity("1", "old-value");
         dataAccessService.existingEntities.put("1", existing);
-        applicationContext.getBeanFactory().registerSingleton("customerDataAccess", dataAccessService);
-        applicationContext.getBeanFactory().registerSingleton("defaultAuditHandler", auditHandler);
+        applicationContext.registerSingleton("customerDataAccess", dataAccessService);
+        applicationContext.registerSingleton("defaultAuditHandler", auditHandler);
 
         DefaultCoredeuxStrategy strategy = new DefaultCoredeuxStrategy(registryWithAuditModule(),
                 new EntityDefinitionBackedDataAccessResolver(), applicationContext,
-                new DefaultCoredeuxReflectionHelperService(), new DefaultCoredeuxRequestContextResolver(),
+                new DefaultCoredeuxReflectionHelperService(), () -> null,
                 moduleHandlers(applicationContext));
 
         strategy.save(new SampleEntity("1", "new-save"));
@@ -74,7 +73,7 @@ class DefaultCoredeuxStrategyAuditTest {
         return new InMemoryEntityDefinitionRegistry(List.of(definition));
     }
 
-    private List<CoredeuxEntityModuleHandler> moduleHandlers(StaticApplicationContext applicationContext) {
+    private List<CoredeuxEntityModuleHandler> moduleHandlers(TestComponentRegistry applicationContext) {
         return List.of(new ValidatorsModuleHandler(applicationContext), new HooksModuleHandler(applicationContext),
                 new AuditModuleHandler(applicationContext));
     }

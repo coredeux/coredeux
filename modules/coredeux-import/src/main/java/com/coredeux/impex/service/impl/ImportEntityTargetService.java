@@ -8,8 +8,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.stereotype.Component;
-
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
@@ -21,7 +19,6 @@ import com.coredeux.impex.model.ImportQueryParam;
 import com.coredeux.impex.model.ImportRow;
 import com.coredeux.impex.model.ImportStatement;
 
-@Component
 public class ImportEntityTargetService {
 
     private final CoredeuxReflectionHelperService reflectionHelperService;

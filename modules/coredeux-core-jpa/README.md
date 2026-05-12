@@ -10,12 +10,31 @@ Detailed reference:
 
 ## What This Module Provides
 
-This module currently provides two Spring beans implementing `CoredeuxDataAccessService`:
+This module provides two Java-native `CoredeuxDataAccessService` implementations:
 
-- `defaultCoredeuxJpaDataAccessService`
+- `DefaultCoredeuxJpaDataAccessService`
   generic JPA/Criteria-based implementation
-- `postgresCoredeuxJpaDataAccessService`
+- `PostgresCoredeuxJpaDataAccessService`
   PostgreSQL-specific implementation with JSONB/native-query support
+
+The classes are not Spring components. Applications can instantiate them
+directly or register them as beans in their own framework configuration.
+
+Plain Java usage:
+
+```java
+EntityManagerFactory factory = Persistence.createEntityManagerFactory("app");
+CoredeuxDataAccessService dataAccess = new PostgresCoredeuxJpaDataAccessService(factory);
+```
+
+Spring usage:
+
+```java
+@Bean("postgresCustomerDataAccess")
+CoredeuxDataAccessService postgresCustomerDataAccess(EntityManager entityManager) {
+    return new PostgresCoredeuxJpaDataAccessService(entityManager);
+}
+```
 
 ## Why There Are Two Implementations
 

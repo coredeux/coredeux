@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.StaticApplicationContext;
+import com.coredeux.core.testsupport.TestComponentRegistry;
 
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
@@ -20,9 +20,9 @@ class HooksModuleHandlerTest {
 
     @Test
     void shouldInvokeSupportedHookPhases() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingHook hook = new RecordingHook();
-        applicationContext.getBeanFactory().registerSingleton("lifecycleHook", hook);
+        applicationContext.registerSingleton("lifecycleHook", hook);
         HooksModuleHandler handler = new HooksModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("hooks").enabled(true)
@@ -44,8 +44,8 @@ class HooksModuleHandlerTest {
 
     @Test
     void shouldFailForUnsupportedPhase() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
-        applicationContext.getBeanFactory().registerSingleton("lifecycleHook", new RecordingHook());
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        applicationContext.registerSingleton("lifecycleHook", new RecordingHook());
         HooksModuleHandler handler = new HooksModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("hooks").enabled(true)
@@ -59,7 +59,7 @@ class HooksModuleHandlerTest {
 
     @Test
     void shouldFailWhenHookBeanCannotBeResolved() {
-        HooksModuleHandler handler = new HooksModuleHandler(new StaticApplicationContext());
+        HooksModuleHandler handler = new HooksModuleHandler(new TestComponentRegistry());
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("hooks").enabled(true)
                 .handlers(List.of("missingHook")).build();
@@ -73,8 +73,8 @@ class HooksModuleHandlerTest {
 
     @Test
     void shouldFailWhenHookDoesNotSupportEntityType() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
-        applicationContext.getBeanFactory().registerSingleton("typedHook", new TypedHook());
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        applicationContext.registerSingleton("typedHook", new TypedHook());
         HooksModuleHandler handler = new HooksModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("hooks").enabled(true)

@@ -1,0 +1,13 @@
+coredeux:
+  entities:
+    - full-class-name: com.coredeux.spring.boot.autoconfigure.CoredeuxAutoConfigurationTest$SampleEntity
+      entity-name: sample
+      identifier:
+        field: id
+      storage:
+        type: memory
+        data-access-service: sampleDataAccess
+      modules:
+        - name: validators
+          enabled: true
+          handlers: []

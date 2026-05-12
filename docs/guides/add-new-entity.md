@@ -176,7 +176,6 @@ Useful module-level test commands:
 ```powershell
 mvn -pl modules/coredeux-core -am test
 mvn -pl modules/coredeux-import -am test
-mvn -pl modules/coredeux-import-parser -am test
 mvn -pl modules/coredeux-export -am test
 mvn -pl examples/coredeux-demo -am test
 ```

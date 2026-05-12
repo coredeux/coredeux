@@ -1,0 +1,8 @@
+# Plain Java import sample for examples/coredeux-java-native.
+# Re-running this file is safe because UPSERT resolves customers by the unique id column.
+OPTIONS(passes=1,failFast=false,validateOnly=false)
+
+UPSERT com.coredeux.examples.nativejava.domain.Customer | id(unique=true) | name | email
+                                                        | IMP-ADA         | Imported Ada Lovelace | imported.ada@example.test
+                                                        | IMP-GRACE       | Imported Grace Hopper | imported.grace@example.test
+                                                        | IMP-BLANK       |      | imported.blank@example.test

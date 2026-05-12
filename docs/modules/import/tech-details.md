@@ -35,14 +35,13 @@ Not supported directly by `coredeux-import` today:
 The intended architecture is:
 
 ```text
-coredeux-import-parser
-  file/text parsing: PSV-style text now, CSV/XLSX later
+coredeux-import
+  file/text parsing: PSV-style text and XLS/XLSX
         -> ImportRequest JSON/DTO contract
-        -> coredeux-import
-             validation + execution through Coredeux core services
+        -> validation + execution through Coredeux core services
 ```
 
-See [Import Parser Module](../import-parser/guide.md) for the text parser that
+See [Import File Tutorial](../import-parser/guide.md) for the text parser that
 converts PSV-style import files into `ImportRequest`.
 
 ## Module Location

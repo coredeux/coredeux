@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.StaticApplicationContext;
+import com.coredeux.core.testsupport.TestComponentRegistry;
 
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
@@ -22,7 +22,7 @@ class ValidatorsModuleHandlerTest {
 
     @Test
     void shouldSkipNonWritePhases() {
-        ValidatorsModuleHandler handler = new ValidatorsModuleHandler(new StaticApplicationContext());
+        ValidatorsModuleHandler handler = new ValidatorsModuleHandler(new TestComponentRegistry());
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("validators").enabled(true)
                 .handlers(List.of("ignoredValidator")).build();
@@ -32,10 +32,10 @@ class ValidatorsModuleHandlerTest {
 
     @Test
     void shouldAggregateValidationErrors() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
-        applicationContext.getBeanFactory().registerSingleton("validatorOne",
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        applicationContext.registerSingleton("validatorOne",
                 new RecordingValidator(List.of(ValidationError.builder().field("name").message("required").build())));
-        applicationContext.getBeanFactory().registerSingleton("validatorTwo",
+        applicationContext.registerSingleton("validatorTwo",
                 new RecordingValidator(List.of(ValidationError.builder().field("code").message("invalid").build())));
 
         ValidatorsModuleHandler handler = new ValidatorsModuleHandler(applicationContext);
@@ -52,7 +52,7 @@ class ValidatorsModuleHandlerTest {
 
     @Test
     void shouldFailWhenValidatorBeanCannotBeResolved() {
-        ValidatorsModuleHandler handler = new ValidatorsModuleHandler(new StaticApplicationContext());
+        ValidatorsModuleHandler handler = new ValidatorsModuleHandler(new TestComponentRegistry());
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("validators").enabled(true)
                 .handlers(List.of("missingValidator")).build();
@@ -66,8 +66,8 @@ class ValidatorsModuleHandlerTest {
 
     @Test
     void shouldFailWhenValidatorDoesNotSupportEntityType() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
-        applicationContext.getBeanFactory().registerSingleton("typedValidator", new TypedValidator());
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        applicationContext.registerSingleton("typedValidator", new TypedValidator());
         ValidatorsModuleHandler handler = new ValidatorsModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("validators").enabled(true)

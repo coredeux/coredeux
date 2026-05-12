@@ -14,15 +14,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.stereotype.Component;
-
 import com.coredeux.impex.exception.CoredeuxImportException;
 import com.coredeux.impex.handler.CoredeuxImportValueHandler;
 import com.coredeux.impex.handler.ImportValueContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Component("jsonMapImportHandler")
 public class JsonMapImportHandler implements CoredeuxImportValueHandler {
 
     private final ObjectMapper mapper = new ObjectMapper();

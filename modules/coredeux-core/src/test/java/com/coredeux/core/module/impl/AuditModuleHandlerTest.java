@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.StaticApplicationContext;
+import com.coredeux.core.testsupport.TestComponentRegistry;
 
 import com.coredeux.core.audit.CoredeuxEntityAuditHandler;
 import com.coredeux.core.context.EntityLifecycleContext;
@@ -24,9 +24,9 @@ class AuditModuleHandlerTest {
 
     @Test
     void shouldExecuteAuditHandlerForConfiguredSaveOperation() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingAuditHandler auditHandler = new RecordingAuditHandler();
-        applicationContext.getBeanFactory().registerSingleton("entityAuditHandler", auditHandler);
+        applicationContext.registerSingleton("entityAuditHandler", auditHandler);
         AuditModuleHandler handler = new AuditModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("audit").enabled(true)
@@ -45,9 +45,9 @@ class AuditModuleHandlerTest {
 
     @Test
     void shouldExecuteAuditHandlerForAllOperations() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingAuditHandler auditHandler = new RecordingAuditHandler();
-        applicationContext.getBeanFactory().registerSingleton("entityAuditHandler", auditHandler);
+        applicationContext.registerSingleton("entityAuditHandler", auditHandler);
         AuditModuleHandler handler = new AuditModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("audit").enabled(true)
@@ -62,9 +62,9 @@ class AuditModuleHandlerTest {
 
     @Test
     void shouldSkipWhenPhaseDoesNotMapToAuditOperation() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingAuditHandler auditHandler = new RecordingAuditHandler();
-        applicationContext.getBeanFactory().registerSingleton("entityAuditHandler", auditHandler);
+        applicationContext.registerSingleton("entityAuditHandler", auditHandler);
         AuditModuleHandler handler = new AuditModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("audit").enabled(true)
@@ -79,9 +79,9 @@ class AuditModuleHandlerTest {
 
     @Test
     void shouldSkipWhenOperationIsNotConfigured() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingAuditHandler auditHandler = new RecordingAuditHandler();
-        applicationContext.getBeanFactory().registerSingleton("entityAuditHandler", auditHandler);
+        applicationContext.registerSingleton("entityAuditHandler", auditHandler);
         AuditModuleHandler handler = new AuditModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("audit").enabled(true)
@@ -96,7 +96,7 @@ class AuditModuleHandlerTest {
 
     @Test
     void shouldFailWhenAuditHandlerBeanCannotBeResolved() {
-        AuditModuleHandler handler = new AuditModuleHandler(new StaticApplicationContext());
+        AuditModuleHandler handler = new AuditModuleHandler(new TestComponentRegistry());
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("audit").enabled(true)
                 .handlers(List.of("missingAuditHandler"))
@@ -112,7 +112,7 @@ class AuditModuleHandlerTest {
 
     @Test
     void shouldFailWhenAuditOperationsAreMissing() {
-        AuditModuleHandler handler = new AuditModuleHandler(new StaticApplicationContext());
+        AuditModuleHandler handler = new AuditModuleHandler(new TestComponentRegistry());
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("audit").enabled(true)
                 .handlers(List.of("entityAuditHandler"))
@@ -128,7 +128,7 @@ class AuditModuleHandlerTest {
 
     @Test
     void shouldFailWhenAuditOperationIsInvalid() {
-        AuditModuleHandler handler = new AuditModuleHandler(new StaticApplicationContext());
+        AuditModuleHandler handler = new AuditModuleHandler(new TestComponentRegistry());
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("audit").enabled(true)
                 .handlers(List.of("entityAuditHandler"))
@@ -144,8 +144,8 @@ class AuditModuleHandlerTest {
 
     @Test
     void shouldFailWhenAuditHandlerDoesNotSupportEntityType() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
-        applicationContext.getBeanFactory().registerSingleton("typedAuditHandler", new TypedAuditHandler());
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        applicationContext.registerSingleton("typedAuditHandler", new TypedAuditHandler());
         AuditModuleHandler handler = new AuditModuleHandler(applicationContext);
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("audit").enabled(true)

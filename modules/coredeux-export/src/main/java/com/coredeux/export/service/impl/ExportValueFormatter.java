@@ -4,12 +4,9 @@ import java.math.BigDecimal;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 
-import org.springframework.stereotype.Component;
+public class ExportValueFormatter {
 
-@Component
-class ExportValueFormatter {
-
-    String format(Object value) {
+    public String format(Object value) {
         if (value == null) {
             return "";
         }

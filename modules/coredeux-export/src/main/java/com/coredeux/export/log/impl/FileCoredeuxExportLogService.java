@@ -10,21 +10,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.stereotype.Service;
-
 import com.coredeux.export.log.CoredeuxExportLogService;
 import com.coredeux.export.model.ExportLogEntry;
 import com.coredeux.export.support.ExportJsonSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Service("defaultCoredeuxExportLogService")
 public class FileCoredeuxExportLogService implements CoredeuxExportLogService {
+
+    public static final String DEFAULT_BASE_DIRECTORY = Path.of(System.getProperty("java.io.tmpdir"), "coredeux-export",
+            "logs").toString();
 
     private final ObjectMapper objectMapper = ExportJsonSupport.objectMapper();
     private final Path baseDirectory;
 
     public FileCoredeuxExportLogService() {
-        this.baseDirectory = Path.of(System.getProperty("java.io.tmpdir"), "coredeux-export", "logs");
+        this(DEFAULT_BASE_DIRECTORY);
+    }
+
+    public FileCoredeuxExportLogService(String baseDirectory) {
+        String resolvedBaseDirectory = baseDirectory == null || baseDirectory.isBlank() ? DEFAULT_BASE_DIRECTORY
+                : baseDirectory;
+        this.baseDirectory = Path.of(resolvedBaseDirectory);
     }
 
     @Override

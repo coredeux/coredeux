@@ -6,7 +6,6 @@ current Coredeux framework modules together:
 - `coredeux-core`
 - `coredeux-core-jpa`
 - `coredeux-import`
-- `coredeux-import-parser`
 - `coredeux-export`
 
 The repository also includes JDBC, Elasticsearch, MongoDB, and Redis backend

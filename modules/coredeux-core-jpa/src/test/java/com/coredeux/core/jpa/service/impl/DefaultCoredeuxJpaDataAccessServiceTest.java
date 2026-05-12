@@ -97,6 +97,26 @@ class DefaultCoredeuxJpaDataAccessServiceTest {
     }
 
     @Test
+    void shouldManageResourceLocalTransactionsWhenCreatedWithEntityManagerFactory() {
+        DefaultCoredeuxJpaDataAccessService factoryBackedService =
+                new DefaultCoredeuxJpaDataAccessService(entityManagerFactory);
+
+        SampleJpaEntity created = sample("Factory Backed", 42, "native");
+        String id = factoryBackedService.save(created);
+
+        assertNotNull(id);
+        SampleJpaEntity loaded = factoryBackedService.load(id, SampleJpaEntity.class);
+        assertEquals("Factory Backed", loaded.getName());
+
+        loaded.setName("Factory Updated");
+        factoryBackedService.update(loaded);
+        assertEquals("Factory Updated", factoryBackedService.load(id, SampleJpaEntity.class).getName());
+
+        factoryBackedService.remove(loaded);
+        assertNull(factoryBackedService.load(id, SampleJpaEntity.class));
+    }
+
+    @Test
     void shouldLoadAllUsingSupportedComparatorsAndPagination() {
         persistSamples();
 

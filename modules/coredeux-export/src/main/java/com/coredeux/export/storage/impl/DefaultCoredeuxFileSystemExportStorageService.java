@@ -7,25 +7,26 @@ import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.model.ExportStorageArtifact;
 import com.coredeux.export.model.ExportStorageRequest;
 import com.coredeux.export.storage.CoredeuxExportStorageService;
 
-@Service("defaultCoredeuxExportStorageService")
 public class DefaultCoredeuxFileSystemExportStorageService implements CoredeuxExportStorageService {
 
-    private static final String DEFAULT_BASE_DIRECTORY = "${java.io.tmpdir}/coredeux-export";
+    public static final String DEFAULT_BASE_DIRECTORY = System.getProperty("java.io.tmpdir") + "/coredeux-export";
 
     private final Path baseDirectory;
 
-    public DefaultCoredeuxFileSystemExportStorageService(
-            @Value("${coredeux.export.storage.filesystem.base-directory:" + DEFAULT_BASE_DIRECTORY + "}")
-            String baseDirectory) {
-        this.baseDirectory = Path.of(baseDirectory);
+    public DefaultCoredeuxFileSystemExportStorageService() {
+        this(DEFAULT_BASE_DIRECTORY);
+    }
+
+    public DefaultCoredeuxFileSystemExportStorageService(String baseDirectory) {
+        String resolvedBaseDirectory = baseDirectory == null || baseDirectory.isBlank()
+                ? DEFAULT_BASE_DIRECTORY
+                : baseDirectory;
+        this.baseDirectory = Path.of(resolvedBaseDirectory);
     }
 
     @Override

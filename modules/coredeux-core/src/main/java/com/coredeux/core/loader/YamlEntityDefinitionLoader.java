@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -27,7 +26,6 @@ import com.coredeux.core.exceptions.CoredeuxValidationException;
 /**
  * SnakeYAML-based loader for Coredeux entity definitions.
  */
-@Component
 public class YamlEntityDefinitionLoader implements EntityDefinitionLoader {
 
     private static final String ROOT_KEY = "coredeux";

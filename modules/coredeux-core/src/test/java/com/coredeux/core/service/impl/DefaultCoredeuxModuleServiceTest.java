@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.StaticApplicationContext;
+import com.coredeux.core.testsupport.TestComponentRegistry;
 
 import com.coredeux.core.context.EntityLifecycleContext;
 import com.coredeux.core.context.OperationContext;
@@ -28,7 +28,6 @@ import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDefinitionBackedDataAccessResolver;
-import com.coredeux.core.resolver.context.DefaultCoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
@@ -42,7 +41,7 @@ class DefaultCoredeuxModuleServiceTest {
 
     @Test
     void shouldExecuteAllConfiguredModules() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingValidator validator = new RecordingValidator();
         RecordingHook hook = new RecordingHook();
@@ -70,7 +69,7 @@ class DefaultCoredeuxModuleServiceTest {
 
     @Test
     void shouldExecuteOnlyRequestedModule() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingValidator validator = new RecordingValidator();
         RecordingHook hook = new RecordingHook();
@@ -94,7 +93,7 @@ class DefaultCoredeuxModuleServiceTest {
 
     @Test
     void shouldExecuteDeleteModulesAgainstExistingSnapshot() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingHook hook = new RecordingHook();
         SampleEntity existing = new SampleEntity("1", "old-value");
@@ -117,7 +116,7 @@ class DefaultCoredeuxModuleServiceTest {
 
     @Test
     void shouldAllowCreateExecutionWithoutExistingState() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         RecordingValidator validator = new RecordingValidator();
         registerBeans(applicationContext, dataAccessService, validator, new RecordingHook());
@@ -137,7 +136,7 @@ class DefaultCoredeuxModuleServiceTest {
 
     @Test
     void shouldFailWhenRequestedModuleIsNotConfigured() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         registerBeans(applicationContext, dataAccessService, new RecordingValidator(), new RecordingHook());
 
@@ -152,7 +151,7 @@ class DefaultCoredeuxModuleServiceTest {
 
     @Test
     void shouldFailStrictOperationsWhenExistingEntityCannotBeResolved() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         registerBeans(applicationContext, dataAccessService, new RecordingValidator(), new RecordingHook());
 
@@ -167,7 +166,7 @@ class DefaultCoredeuxModuleServiceTest {
 
     @Test
     void shouldFailForInvalidExternalExecutionRequests() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
         registerBeans(applicationContext, dataAccessService, new RecordingValidator(), new RecordingHook());
 
@@ -184,19 +183,19 @@ class DefaultCoredeuxModuleServiceTest {
                         CoredeuxLifecycleOperations.CREATE));
     }
 
-    private CoredeuxModuleService moduleService(StaticApplicationContext applicationContext,
+    private CoredeuxModuleService moduleService(TestComponentRegistry applicationContext,
             CoredeuxModuleDefinition... modules) {
         return new DefaultCoredeuxModuleService(registryWithModules(modules),
                 new EntityDefinitionBackedDataAccessResolver(), applicationContext,
-                new DefaultCoredeuxReflectionHelperService(), new DefaultCoredeuxRequestContextResolver(),
+                new DefaultCoredeuxReflectionHelperService(), () -> null,
                 moduleHandlers(applicationContext));
     }
 
-    private void registerBeans(StaticApplicationContext applicationContext, RecordingDataAccessService dataAccessService,
+    private void registerBeans(TestComponentRegistry applicationContext, RecordingDataAccessService dataAccessService,
             RecordingValidator validator, RecordingHook hook) {
-        applicationContext.getBeanFactory().registerSingleton("customerDataAccess", dataAccessService);
-        applicationContext.getBeanFactory().registerSingleton("customerValidator", validator);
-        applicationContext.getBeanFactory().registerSingleton("customerLifecycleHook", hook);
+        applicationContext.registerSingleton("customerDataAccess", dataAccessService);
+        applicationContext.registerSingleton("customerValidator", validator);
+        applicationContext.registerSingleton("customerLifecycleHook", hook);
     }
 
     private EntityDefinitionRegistry registryWithModules(CoredeuxModuleDefinition... modules) {
@@ -210,7 +209,7 @@ class DefaultCoredeuxModuleServiceTest {
         return new InMemoryEntityDefinitionRegistry(List.of(definition));
     }
 
-    private List<CoredeuxEntityModuleHandler> moduleHandlers(StaticApplicationContext applicationContext) {
+    private List<CoredeuxEntityModuleHandler> moduleHandlers(TestComponentRegistry applicationContext) {
         return List.of(new ValidatorsModuleHandler(applicationContext), new HooksModuleHandler(applicationContext));
     }
 

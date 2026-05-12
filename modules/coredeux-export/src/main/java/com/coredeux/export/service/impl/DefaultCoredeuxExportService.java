@@ -7,10 +7,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
@@ -39,7 +37,6 @@ import com.coredeux.export.writer.ExportWriteSession;
 import com.coredeux.export.writer.ExportWriter;
 import com.coredeux.export.writer.TextExportWriter;
 
-@Service
 public class DefaultCoredeuxExportService implements CoredeuxExportService, CoredeuxExportExecutionService {
 
     private static final int DEFAULT_BATCH_SIZE = 100;
@@ -182,11 +179,10 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
         if (request.getEntity() == null || request.getEntity().isBlank()) {
             throw new CoredeuxExportException("Export entity must not be blank");
         }
-        boolean hasFieldList = !CollectionUtils.isEmpty(request.getFieldList());
-        if (!hasFieldList) {
+        if (request.getFieldList() == null || request.getFieldList().isEmpty()) {
             throw new CoredeuxExportException("Export fieldList must not be empty");
         }
-        boolean hasSearchParams = !CollectionUtils.isEmpty(request.getSearchParams());
+        boolean hasSearchParams = request.getSearchParams() != null && !request.getSearchParams().isEmpty();
         boolean hasQuery = request.getQuery() != null && request.getQuery().getText() != null
                 && !request.getQuery().getText().isBlank();
         if (hasSearchParams && hasQuery) {

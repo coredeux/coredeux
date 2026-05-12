@@ -9,12 +9,10 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.springframework.stereotype.Component;
 
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.model.ExportOptions;
 
-@Component
 public class ExcelExportWriter implements ExportWriter {
 
     @Override

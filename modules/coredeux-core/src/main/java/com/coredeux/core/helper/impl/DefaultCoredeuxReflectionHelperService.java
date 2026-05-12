@@ -9,15 +9,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-
 import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 
 /**
  * Default reflection helper used by the framework for entity/property access.
  */
-@Service
 public class DefaultCoredeuxReflectionHelperService implements CoredeuxReflectionHelperService {
 
     @Override

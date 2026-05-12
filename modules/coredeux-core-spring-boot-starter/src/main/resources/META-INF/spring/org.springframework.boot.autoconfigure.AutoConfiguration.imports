@@ -1,0 +1,3 @@
+com.coredeux.spring.boot.autoconfigure.CoredeuxAutoConfiguration
+com.coredeux.spring.boot.autoconfigure.CoredeuxWebAutoConfiguration
+com.coredeux.spring.boot.autoconfigure.CoredeuxRequestContextAutoConfiguration

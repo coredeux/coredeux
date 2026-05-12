@@ -2,23 +2,27 @@ package com.coredeux.export.storage.impl;
 
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.storage.CoredeuxExportStorageService;
 import com.coredeux.export.storage.CoredeuxExportStorageServiceResolver;
 
-@Component
 public class DefaultCoredeuxExportStorageServiceResolver implements CoredeuxExportStorageServiceResolver {
+
+    public static final String DEFAULT_STORAGE_SERVICE = "defaultCoredeuxExportStorageService";
 
     private final Map<String, CoredeuxExportStorageService> services;
     private final String defaultStorageService;
 
+    public DefaultCoredeuxExportStorageServiceResolver(Map<String, CoredeuxExportStorageService> services) {
+        this(services, DEFAULT_STORAGE_SERVICE);
+    }
+
     public DefaultCoredeuxExportStorageServiceResolver(Map<String, CoredeuxExportStorageService> services,
-            @Value("${coredeux.export.storage.default-service:defaultCoredeuxExportStorageService}") String defaultStorageService) {
+            String defaultStorageService) {
         this.services = services;
-        this.defaultStorageService = defaultStorageService;
+        this.defaultStorageService = defaultStorageService == null || defaultStorageService.isBlank()
+                ? DEFAULT_STORAGE_SERVICE
+                : defaultStorageService;
     }
 
     @Override

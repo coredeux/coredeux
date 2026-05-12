@@ -138,9 +138,7 @@ This repository includes the building blocks for that model:
   - `defaultCoredeuxRedisDataAccessService` for JSON-backed storage, CRUD, search, and query usage
   - storage-oriented, not a cache abstraction
 - `coredeux-import`
-  raw JSON import support
-- `coredeux-import-parser`
-  text and Excel import-file parsing
+  raw JSON import support plus text and Excel import-file parsing
 - `coredeux-export`
   export queueing, file generation, logs, and storage services
 - `examples/coredeux-demo`

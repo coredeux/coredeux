@@ -2,11 +2,8 @@ package com.coredeux.impex.handler;
 
 import java.util.Map;
 
-import org.springframework.stereotype.Component;
-
 import com.coredeux.impex.exception.CoredeuxImportException;
 
-@Component
 public class ImportValueHandlerResolver {
 
     public static final String DEFAULT_HANDLER = "coredeuxDefaultImportValueHandler";
@@ -14,11 +11,12 @@ public class ImportValueHandlerResolver {
     private final Map<String, CoredeuxImportValueHandler> handlers;
 
     /**
-     * Captures Spring-discovered import handlers by bean name.
+     * Captures import handlers by component name.
      *
      * <p>
      * The import service uses this resolver so JSON payloads and parsed files can
-     * reference handlers by name without directly coupling to Spring internals.
+     * reference handlers by name without coupling to a dependency injection
+     * container.
      */
     public ImportValueHandlerResolver(Map<String, CoredeuxImportValueHandler> handlers) {
         this.handlers = handlers == null ? Map.of() : handlers;

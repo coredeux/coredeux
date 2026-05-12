@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.context.support.StaticApplicationContext;
+import com.coredeux.core.testsupport.TestComponentRegistry;
 
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
@@ -36,7 +36,7 @@ class AbstractCoredeuxStrategyCoverageTest {
         CoredeuxEntityModuleHandler handlerTwo = new NamedHandler("hooks");
 
         CoredeuxValidationException exception = assertThrows(CoredeuxValidationException.class,
-                () -> new ExposedStrategy(registryWithDefinition(), new FixedResolver(), new StaticApplicationContext(),
+                () -> new ExposedStrategy(registryWithDefinition(), new FixedResolver(), new TestComponentRegistry(),
                         new DefaultCoredeuxReflectionHelperService(), () -> null, List.of(handlerOne, handlerTwo)));
 
         assertTrue(exception.getMessage().contains("Duplicate Coredeux module handler"));
@@ -45,7 +45,7 @@ class AbstractCoredeuxStrategyCoverageTest {
     @Test
     void shouldResolveDefinitionAndCreateContext() {
         ExposedStrategy strategy = new ExposedStrategy(registryWithDefinition(), new FixedResolver(),
-                new StaticApplicationContext(), new DefaultCoredeuxReflectionHelperService(),
+                new TestComponentRegistry(), new DefaultCoredeuxReflectionHelperService(),
                 () -> null, List.of());
         SampleEntity entity = new SampleEntity("1", "value");
 
@@ -61,7 +61,7 @@ class AbstractCoredeuxStrategyCoverageTest {
     @Test
     void shouldFailWhenDefinitionIsMissing() {
         ExposedStrategy strategy = new ExposedStrategy(emptyRegistry(), new FixedResolver(),
-                new StaticApplicationContext(), new DefaultCoredeuxReflectionHelperService(),
+                new TestComponentRegistry(), new DefaultCoredeuxReflectionHelperService(),
                 () -> null, List.of());
 
         CoredeuxValidationException exception = assertThrows(CoredeuxValidationException.class,
@@ -73,7 +73,7 @@ class AbstractCoredeuxStrategyCoverageTest {
     @Test
     void shouldFailWhenDataAccessBeanCannotBeResolved() {
         ExposedStrategy strategy = new ExposedStrategy(registryWithDefinition(), new FixedResolver(),
-                new StaticApplicationContext(), new DefaultCoredeuxReflectionHelperService(),
+                new TestComponentRegistry(), new DefaultCoredeuxReflectionHelperService(),
                 () -> null, List.of());
 
         CoredeuxStrategyException exception = assertThrows(CoredeuxStrategyException.class,
@@ -84,7 +84,7 @@ class AbstractCoredeuxStrategyCoverageTest {
 
     @Test
     void shouldSkipModuleExecutionWhenNoModulesOrHandlersApply() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
         RecordingModuleHandler handler = new RecordingModuleHandler("hooks");
         ExposedStrategy strategy = new ExposedStrategy(registryWithDefinition(), new FixedResolver(),
                 applicationContext, new DefaultCoredeuxReflectionHelperService(), () -> null, List.of(handler));
@@ -109,7 +109,7 @@ class AbstractCoredeuxStrategyCoverageTest {
     void shouldExecuteMatchingModuleHandler() {
         RecordingModuleHandler handler = new RecordingModuleHandler("hooks");
         ExposedStrategy strategy = new ExposedStrategy(registryWithDefinition(), new FixedResolver(),
-                new StaticApplicationContext(), new DefaultCoredeuxReflectionHelperService(), () -> null, List.of(handler));
+                new TestComponentRegistry(), new DefaultCoredeuxReflectionHelperService(), () -> null, List.of(handler));
         CoredeuxEntityDefinition definition = registryWithDefinition().findByFullClassName(SampleEntity.class.getName()).orElseThrow();
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("hooks").enabled(true).handlers(List.of("hookBean")).build();
         SampleEntity entity = new SampleEntity("1", "value");
@@ -122,8 +122,8 @@ class AbstractCoredeuxStrategyCoverageTest {
 
     @Test
     void shouldExtractAndRequireIdentifiersAndExistingState() {
-        StaticApplicationContext applicationContext = new StaticApplicationContext();
-        applicationContext.getBeanFactory().registerSingleton("customerDataAccess", new RecordingDataAccessService());
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        applicationContext.registerSingleton("customerDataAccess", new RecordingDataAccessService());
         ExposedStrategy strategy = new ExposedStrategy(registryWithDefinition(), new FixedResolver(), applicationContext,
                 new DefaultCoredeuxReflectionHelperService(), () -> null, List.of());
         CoredeuxEntityDefinition definition = registryWithDefinition().findByFullClassName(SampleEntity.class.getName()).orElseThrow();
@@ -164,7 +164,7 @@ class AbstractCoredeuxStrategyCoverageTest {
     private static final class ExposedStrategy extends AbstractCoredeuxStrategy {
 
         private ExposedStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
-                EntityDataAccessResolver entityDataAccessResolver, StaticApplicationContext applicationContext,
+                EntityDataAccessResolver entityDataAccessResolver, TestComponentRegistry applicationContext,
                 DefaultCoredeuxReflectionHelperService reflectionHelperService,
                 CoredeuxRequestContextResolver requestContextResolver,
                 List<CoredeuxEntityModuleHandler> moduleHandlers) {

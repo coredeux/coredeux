@@ -10,14 +10,12 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.StringJoiner;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Column;
 import jakarta.persistence.Query;
 import jakarta.persistence.Table;
@@ -25,26 +23,35 @@ import jakarta.persistence.Table;
 /**
  * PostgreSQL-specific JPA implementation that adds JSONB/native-query support.
  */
-@Service("postgresCoredeuxJpaDataAccessService")
 public class PostgresCoredeuxJpaDataAccessService extends DefaultCoredeuxJpaDataAccessService {
 
     static final String JSONB_TEXT = "JSONB(TEXT)";
     static final String JSONB_NUMERIC = "JSONB(NUMERIC)";
     private static final String DEFAULT_ALIAS = "entity_alias";
 
+    public PostgresCoredeuxJpaDataAccessService() {
+    }
+
+    public PostgresCoredeuxJpaDataAccessService(EntityManager entityManager) {
+        super(entityManager);
+    }
+
+    public PostgresCoredeuxJpaDataAccessService(EntityManagerFactory entityManagerFactory) {
+        super(entityManagerFactory);
+    }
+
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> loadAll(List<SearchParams> params, Class<T> type, int pageSize, int currentPage) {
         if (!containsJsonComparators(params)) {
             return super.loadAll(params, type, pageSize, currentPage);
         }
 
         validateSearchType(type);
-        try {
+        return read(entityManager -> {
             NativeQuerySpec querySpec = buildNativeQuerySpec(params, type);
             String dataSql = "select " + DEFAULT_ALIAS + ".* from " + querySpec.tableName + " " + DEFAULT_ALIAS
                     + querySpec.whereClause;
-            Query dataQuery = getEntityManager().createNativeQuery(dataSql, type);
+            Query dataQuery = entityManager.createNativeQuery(dataSql, type);
             bindParameters(dataQuery, querySpec.parameters);
             applyPaging(dataQuery, pageSize, currentPage);
             @SuppressWarnings("unchecked")
@@ -57,10 +64,7 @@ public class PostgresCoredeuxJpaDataAccessService extends DefaultCoredeuxJpaData
                     .results(defaultResults(results))
                     .pagination(buildPagination(totalResults, filteredResults, pageSize, currentPage))
                     .build();
-        } catch (RuntimeException exception) {
-            throw wrap("Unable to load entities for type " + type.getName() + " using PostgreSQL JSONB support",
-                    exception);
-        }
+        }, "Unable to load entities for type " + type.getName() + " using PostgreSQL JSONB support");
     }
 
     @Override
@@ -72,7 +76,7 @@ public class PostgresCoredeuxJpaDataAccessService extends DefaultCoredeuxJpaData
     }
 
     boolean containsJsonComparators(List<SearchParams> params) {
-        if (CollectionUtils.isEmpty(params)) {
+        if (params == null || params.isEmpty()) {
             return false;
         }
         return params.stream()
@@ -85,7 +89,7 @@ public class PostgresCoredeuxJpaDataAccessService extends DefaultCoredeuxJpaData
 
     <T> NativeQuerySpec buildNativeQuerySpec(List<SearchParams> params, Class<T> type) {
         String tableName = resolveTableName(type);
-        if (CollectionUtils.isEmpty(params)) {
+        if (params == null || params.isEmpty()) {
             return new NativeQuerySpec(tableName, "", List.of());
         }
 

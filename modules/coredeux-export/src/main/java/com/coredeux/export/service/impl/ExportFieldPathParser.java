@@ -3,17 +3,13 @@ package com.coredeux.export.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.model.ExportField;
 
-@Component
-class ExportFieldPathParser {
+public class ExportFieldPathParser {
 
-    List<ExportFieldPath> parse(List<ExportField> fields) {
-        if (CollectionUtils.isEmpty(fields)) {
+    public List<ExportFieldPath> parse(List<ExportField> fields) {
+        if (fields == null || fields.isEmpty()) {
             throw new CoredeuxExportException("Export field list must not be empty");
         }
         List<ExportFieldPath> paths = new ArrayList<>();

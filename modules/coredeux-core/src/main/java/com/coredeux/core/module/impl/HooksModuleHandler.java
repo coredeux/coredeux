@@ -1,27 +1,24 @@
 package com.coredeux.core.module.impl;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.ResolvableType;
-import org.springframework.stereotype.Component;
-
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.hooks.CoredeuxEntityHook;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
+import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
+import com.coredeux.core.util.CoredeuxGenericTypeResolver;
 
 /**
  * Executes configured lifecycle hook beans for the current strategy phase.
  */
-@Component
 public class HooksModuleHandler implements CoredeuxEntityModuleHandler {
 
-    private final ApplicationContext applicationContext;
+    private final CoredeuxComponentRegistry componentRegistry;
 
-    public HooksModuleHandler(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+    public HooksModuleHandler(CoredeuxComponentRegistry componentRegistry) {
+        this.componentRegistry = componentRegistry;
     }
 
     @Override
@@ -54,16 +51,14 @@ public class HooksModuleHandler implements CoredeuxEntityModuleHandler {
 
     @SuppressWarnings("unchecked")
     private <T> CoredeuxEntityHook<T> resolveHook(String hookName, T entity, CoredeuxEntityDefinition definition) {
-        CoredeuxEntityHook<?> hook = applicationContext.getBean(hookName, CoredeuxEntityHook.class);
+        CoredeuxEntityHook<?> hook = componentRegistry.getComponent(hookName, CoredeuxEntityHook.class);
         validateSupportedType(hookName, hook.getClass(), entity, definition);
         return (CoredeuxEntityHook<T>) hook;
     }
 
     private <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
             CoredeuxEntityDefinition definition) {
-        Class<?> supportedType = ResolvableType.forClass(beanType)
-                .as(CoredeuxEntityHook.class)
-                .resolveGeneric(0);
+        Class<?> supportedType = CoredeuxGenericTypeResolver.resolveFirstGeneric(beanType, CoredeuxEntityHook.class);
         if (supportedType == null || entity == null || supportedType.isAssignableFrom(entity.getClass())) {
             return;
         }

@@ -103,6 +103,30 @@ coredeux:
 
 If `name` is not provided, it defaults to `fullClassName` during YAML loading.
 
+## Coredeux Properties
+
+`coredeux-core` also loads a generic `META-INF/coredeux.yml` file for runtime
+configuration.
+
+The loader keeps the YAML as a nested property map so the core module does not
+need to know anything about feature-module keys such as import or export.
+
+Typical usage in a native Java app is:
+
+```yaml
+coredeux:
+  entities:
+    config-location: classpath:coredeux-postgres-entities.yml
+  import:
+    default-parser: text
+  export:
+    default-format: TEXT
+```
+
+Applications and feature modules can read the map and decide how to interpret
+their own keys. Spring-based starters can merge this map with environment or
+application properties before handing it to the framework.
+
 ## Built-In Module Types
 
 ### `validators`
