@@ -1,10 +1,7 @@
 package com.coredeux.core.elasticsearch.testentity;
 
-import org.springframework.data.annotation.Id;
-
 public class SampleElasticsearchEntity {
 
-    @Id
     private String id;
 
     private String name;

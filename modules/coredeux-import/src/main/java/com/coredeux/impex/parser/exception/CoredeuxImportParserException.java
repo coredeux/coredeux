@@ -2,7 +2,9 @@ package com.coredeux.impex.parser.exception;
 
 public class CoredeuxImportParserException extends RuntimeException {
 
-    /**
+    private static final long serialVersionUID = 1L;
+
+	/**
      * Creates a parser exception for syntax or shape errors that can be explained
      * directly to the import-file author.
      */

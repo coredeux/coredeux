@@ -2,11 +2,14 @@ package com.coredeux.demo.config;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -16,8 +19,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
 
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 @Configuration
@@ -40,17 +41,17 @@ public class DemoBackendClientConfiguration {
 
     @Bean(destroyMethod = "close")
     @Lazy
-    public RestHighLevelClient demoElasticsearchClient(
+    public RestClient demoElasticsearchRestClient(
             @Value("${coredeux.demo.elasticsearch.host:localhost}") String host,
             @Value("${coredeux.demo.elasticsearch.port:9200}") int port,
             @Value("${coredeux.demo.elasticsearch.scheme:http}") String scheme) {
-        return new RestHighLevelClient(RestClient.builder(new HttpHost(host, port, scheme)));
+        return RestClient.builder(new HttpHost(host, port, scheme)).build();
     }
 
     @Bean
     @Lazy
-    public ElasticsearchOperations demoElasticsearchOperations(RestHighLevelClient demoElasticsearchClient) {
-        return new ElasticsearchRestTemplate(demoElasticsearchClient);
+    public ElasticsearchClient demoElasticsearchClient(RestClient demoElasticsearchRestClient) {
+        return new ElasticsearchClient(new RestClientTransport(demoElasticsearchRestClient, new JacksonJsonpMapper()));
     }
 
     @Bean(destroyMethod = "shutdown")

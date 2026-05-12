@@ -29,7 +29,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.coredeux.impex.model.ImportRequest;
 import com.coredeux.impex.model.ImportResponse;
+import com.coredeux.impex.parser.excel.CoredeuxExcelImportParser;
+import com.coredeux.impex.parser.text.CoredeuxTextImportParser;
 import com.coredeux.impex.service.CoredeuxImportService;
+import com.coredeux.spring.boot.autoconfigure.CoredeuxImportProperties;
 
 @WebMvcTest(CoredeuxImportFileController.class)
 @Import({CoredeuxDemoExceptionHandler.class, CoredeuxImportFileControllerTest.TestConfig.class})
@@ -41,8 +44,27 @@ class CoredeuxImportFileControllerTest {
     @MockBean
     private CoredeuxImportService coredeuxImportService;
 
+    @MockBean
+    private CoredeuxImportProperties coredeuxImportProperties;
+
+    @MockBean
+    private CoredeuxTextImportParser textImportParser;
+
+    @MockBean
+    private CoredeuxExcelImportParser excelImportParser;
+
+    @org.junit.jupiter.api.BeforeEach
+    void configureProperties() {
+        when(coredeuxImportProperties.defaultParser()).thenReturn("text");
+    }
+
     @Test
     void shouldImportTextFile() throws Exception {
+        ImportRequest parsedRequest = new CoredeuxTextImportParser().parse("""
+                CREATE com.example.Product | sku | name
+                                   | T-1 | Text Product
+                """);
+        when(textImportParser.parse(any(String.class))).thenReturn(parsedRequest);
         when(coredeuxImportService.importData(any(ImportRequest.class)))
                 .thenReturn(ImportResponse.builder().build());
 
@@ -65,6 +87,21 @@ class CoredeuxImportFileControllerTest {
 
     @Test
     void shouldValidateExcelFileUsingNamedSheet() throws Exception {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            Sheet ignored = workbook.createSheet("Ignored");
+            strings(ignored.createRow(0), "CREATE com.example.Ignored", "code");
+            strings(ignored.createRow(1), "", "I-1");
+
+            Sheet products = workbook.createSheet("Products");
+            strings(products.createRow(0), "CREATE com.example.Product", "sku", "name");
+            strings(products.createRow(1), "", "X-1", "Excel Product");
+            workbook.write(output);
+
+            ImportRequest request = new CoredeuxExcelImportParser()
+                    .parse(new java.io.ByteArrayInputStream(output.toByteArray()), "Products");
+            when(excelImportParser.parse(any(java.io.InputStream.class), org.mockito.ArgumentMatchers.eq("Products")))
+                    .thenReturn(request);
+        }
         when(coredeuxImportService.validateData(any(ImportRequest.class)))
                 .thenReturn(ImportResponse.builder().build());
 

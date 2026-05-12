@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -19,12 +19,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
-import org.springframework.data.elasticsearch.core.query.Query;
-import org.springframework.data.elasticsearch.core.query.StringQuery;
+
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 
 import com.coredeux.core.elasticsearch.testentity.SampleElasticsearchEntity;
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
@@ -34,25 +30,24 @@ import com.coredeux.core.search.SearchResult;
 
 class DefaultCoredeuxElasticsearchDataAccessServiceTest {
 
-    private ElasticsearchOperations elasticsearchOperations;
+    private ElasticsearchGateway gateway;
     private DefaultCoredeuxElasticsearchDataAccessService dataAccessService;
 
     @BeforeEach
     void setUp() {
-        elasticsearchOperations = mock(ElasticsearchOperations.class);
-        dataAccessService = new DefaultCoredeuxElasticsearchDataAccessService(elasticsearchOperations, "");
+        gateway = mock(ElasticsearchGateway.class);
+        dataAccessService = new DefaultCoredeuxElasticsearchDataAccessService(gateway, "");
     }
 
     @Test
     void shouldSaveLoadUpdateRemoveAndRefreshEntity() {
         SampleElasticsearchEntity saved = sample(null, "Alpha", 10, "one");
-        when(elasticsearchOperations.save(any(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenAnswer(invocation -> {
-                    SampleElasticsearchEntity entity = invocation.getArgument(0);
-                    entity.setId("entity-1");
-                    return entity;
-                });
-        when(elasticsearchOperations.get(anyString(), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
+        when(gateway.index(anyString(), any(), any())).thenAnswer(invocation -> {
+            SampleElasticsearchEntity entity = invocation.getArgument(2);
+            entity.setId("entity-1");
+            return "entity-1";
+        });
+        when(gateway.get(anyString(), anyString(), eq(SampleElasticsearchEntity.class)))
                 .thenReturn(sample("entity-1", "Alpha", 10, "one"));
 
         String id = dataAccessService.save(saved);
@@ -65,7 +60,7 @@ class DefaultCoredeuxElasticsearchDataAccessServiceTest {
         dataAccessService.update(saved);
         dataAccessService.remove(saved);
 
-        when(elasticsearchOperations.get(anyString(), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
+        when(gateway.get(anyString(), anyString(), eq(SampleElasticsearchEntity.class)))
                 .thenReturn(sample("entity-1", "Mutated", 15, "two"));
         dataAccessService.refresh(saved);
 
@@ -75,17 +70,10 @@ class DefaultCoredeuxElasticsearchDataAccessServiceTest {
 
     @Test
     void shouldLoadAllUsingSupportedComparatorsAndPagination() {
-        SearchHits<SampleElasticsearchEntity> hits = mock(SearchHits.class);
-        SearchHit<SampleElasticsearchEntity> hit = mock(SearchHit.class);
-        when(hit.getContent()).thenReturn(sample("entity-1", "Alpha", 10, "one"));
-        when(hits.getSearchHits()).thenReturn(List.of(hit));
-        when(hits.getTotalHits()).thenReturn(3L);
-
-        when(elasticsearchOperations.count(any(Query.class), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenReturn(3L, 1L);
+        when(gateway.count(anyString(), any(Query.class))).thenReturn(3L, 1L);
         ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-        when(elasticsearchOperations.search(queryCaptor.capture(), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenReturn(hits);
+        when(gateway.search(anyString(), queryCaptor.capture(), eq(SampleElasticsearchEntity.class), eq(2), eq(2)))
+                .thenReturn(List.of(sample("entity-1", "Alpha", 10, "one")));
 
         SearchResult<SampleElasticsearchEntity> result = dataAccessService.loadAll(
                 List.of(SearchParams.builder().field("name").comparator("EQUALS").value("Alpha").build()),
@@ -95,23 +83,14 @@ class DefaultCoredeuxElasticsearchDataAccessServiceTest {
         assertEquals(3L, result.getPagination().getTotalResults());
         assertEquals(1L, result.getPagination().getResultSize());
         assertEquals(2L, result.getPagination().getCurrentPage());
-        assertNotNull(queryCaptor.getValue().getPageable());
-        assertEquals(1, queryCaptor.getValue().getPageable().getPageNumber());
-        assertEquals(2, queryCaptor.getValue().getPageable().getPageSize());
+        assertNotNull(queryCaptor.getValue());
     }
 
     @Test
     void shouldQueryWithNamedParametersAndPagination() {
-        SearchHits<SampleElasticsearchEntity> hits = mock(SearchHits.class);
-        SearchHit<SampleElasticsearchEntity> hit = mock(SearchHit.class);
-        when(hit.getContent()).thenReturn(sample("entity-1", "Alpha", 10, "one"));
-        when(hits.getSearchHits()).thenReturn(List.of(hit));
-        when(hits.getTotalHits()).thenReturn(3L);
-
-        when(elasticsearchOperations.count(any(StringQuery.class), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenReturn(3L);
-        when(elasticsearchOperations.search(any(Query.class), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenReturn(hits);
+        when(gateway.count(anyString(), any(Query.class))).thenReturn(3L);
+        when(gateway.search(anyString(), any(Query.class), eq(SampleElasticsearchEntity.class), eq(1), eq(1)))
+                .thenReturn(List.of(sample("entity-1", "Alpha", 10, "one")));
 
         SearchResult<SampleElasticsearchEntity> result = dataAccessService.query(
                 """
@@ -148,7 +127,7 @@ class DefaultCoredeuxElasticsearchDataAccessServiceTest {
 
     @Test
     void shouldWrapRuntimeFailures() {
-        when(elasticsearchOperations.get(anyString(), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
+        when(gateway.get(anyString(), anyString(), eq(SampleElasticsearchEntity.class)))
                 .thenThrow(new IllegalStateException("boom"));
 
         assertThrows(CoredeuxDataAccessException.class,
@@ -157,34 +136,22 @@ class DefaultCoredeuxElasticsearchDataAccessServiceTest {
 
     @Test
     void shouldApplyPagingToSearchQuery() {
-        when(elasticsearchOperations.count(any(Query.class), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenReturn(1L, 1L);
-        SearchHits<SampleElasticsearchEntity> hits = mock(SearchHits.class);
-        when(hits.getSearchHits()).thenReturn(List.of());
-        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-        when(elasticsearchOperations.search(queryCaptor.capture(), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenReturn(hits);
+        when(gateway.count(anyString(), any(Query.class))).thenReturn(1L, 1L);
+        when(gateway.search(anyString(), any(Query.class), eq(SampleElasticsearchEntity.class), eq(5), eq(2)))
+                .thenReturn(List.of());
 
         assertDoesNotThrow(() -> dataAccessService.loadAll(List.of(), SampleElasticsearchEntity.class, 5, 2));
-        assertNotNull(queryCaptor.getValue().getPageable());
-        assertEquals(1, queryCaptor.getValue().getPageable().getPageNumber());
-        assertEquals(5, queryCaptor.getValue().getPageable().getPageSize());
+        verify(gateway).search(anyString(), any(Query.class), eq(SampleElasticsearchEntity.class), eq(5), eq(2));
     }
 
     @Test
     void shouldApplyNoPagingForInvalidWindow() {
-        when(elasticsearchOperations.count(any(Query.class), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenReturn(1L, 1L);
-        SearchHits<SampleElasticsearchEntity> hits = mock(SearchHits.class);
-        when(hits.getSearchHits()).thenReturn(List.of());
-        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
-        when(elasticsearchOperations.search(queryCaptor.capture(), eq(SampleElasticsearchEntity.class), any(IndexCoordinates.class)))
-                .thenReturn(hits);
+        when(gateway.count(anyString(), any(Query.class))).thenReturn(1L, 1L);
+        when(gateway.search(anyString(), any(Query.class), eq(SampleElasticsearchEntity.class), eq(-1), eq(-1)))
+                .thenReturn(List.of());
 
         assertDoesNotThrow(() -> dataAccessService.loadAll(List.of(), SampleElasticsearchEntity.class, -1, -1));
-        assertNotNull(queryCaptor.getValue().getPageable());
-        assertEquals(0, queryCaptor.getValue().getPageable().getPageNumber());
-        assertEquals(10, queryCaptor.getValue().getPageable().getPageSize());
+        verify(gateway).search(anyString(), any(Query.class), eq(SampleElasticsearchEntity.class), eq(-1), eq(-1));
     }
 
     private SampleElasticsearchEntity sample(String id, String name, Integer age, String payload) {

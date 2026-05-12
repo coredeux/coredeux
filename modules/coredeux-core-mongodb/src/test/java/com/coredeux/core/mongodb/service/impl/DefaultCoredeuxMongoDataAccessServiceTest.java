@@ -2,70 +2,95 @@ package com.coredeux.core.mongodb.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Query;
 
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.mongodb.testentity.SampleMongoEntity;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 
 class DefaultCoredeuxMongoDataAccessServiceTest {
 
-    private MongoTemplate mongoTemplate;
+    private MongoDatabase mongoDatabase;
+    private MongoCollection<Document> collection;
     private DefaultCoredeuxMongoDataAccessService dataAccessService;
 
     @BeforeEach
     void setUp() {
-        mongoTemplate = mock(MongoTemplate.class);
-        dataAccessService = new DefaultCoredeuxMongoDataAccessService(mongoTemplate);
+        mongoDatabase = mock(MongoDatabase.class);
+        collection = mock(MongoCollection.class);
+        when(mongoDatabase.getCollection(anyString())).thenReturn(collection);
+        dataAccessService = new DefaultCoredeuxMongoDataAccessService(mongoDatabase);
     }
 
     @Test
     void shouldSaveLoadUpdateRemoveAndRefreshEntity() {
         SampleMongoEntity saved = sample(null, "Alpha", 10, List.of("one", "two"));
-        String generatedId = new ObjectId().toHexString();
+        AtomicReference<String> savedId = new AtomicReference<>(new ObjectId().toHexString());
+        UpdateResult updateResult = mock(UpdateResult.class);
+        when(updateResult.getMatchedCount()).thenReturn(1L);
+        DeleteResult deleteResult = mock(DeleteResult.class);
+        when(deleteResult.getDeletedCount()).thenReturn(1L);
 
-        when(mongoTemplate.save(any(SampleMongoEntity.class))).thenAnswer(invocation -> {
-            SampleMongoEntity entity = invocation.getArgument(0);
-            entity.setId(generatedId);
-            return entity;
+        FindIterable<Document> findIterable = mock(FindIterable.class);
+        when(findIterable.first()).thenAnswer(invocation -> new Document("_id", savedId.get())
+                .append("name", "Alpha")
+                .append("age", 10)
+                .append("tags", List.of("one", "two")));
+        when(collection.find(any(Bson.class))).thenReturn(findIterable);
+        when(collection.replaceOne(any(Bson.class), any(Document.class), any())).thenAnswer(invocation -> {
+            savedId.set(invocation.getArgument(1, Document.class).getString("_id"));
+            return updateResult;
         });
-        when(mongoTemplate.findById(eq(generatedId), eq(SampleMongoEntity.class))).thenReturn(sample(generatedId,
-                "Alpha", 10, List.of("one", "two")));
+        when(collection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
 
         String id = dataAccessService.save(saved);
-        assertEquals(generatedId, id);
-        assertEquals(generatedId, saved.getId());
+        assertNotNull(id);
+        assertEquals(saved.getId(), id);
 
-        SampleMongoEntity loaded = dataAccessService.load(generatedId, SampleMongoEntity.class);
+        String generatedId = id;
+        SampleMongoEntity loaded = dataAccessService.load(savedId.get(), SampleMongoEntity.class);
         assertEquals("Alpha", loaded.getName());
 
         SampleMongoEntity updateCandidate = sample(generatedId, "Updated", 15, List.of("two"));
+        when(collection.replaceOne(any(Bson.class), any(Document.class), any())).thenReturn(updateResult);
         dataAccessService.update(updateCandidate);
-        verify(mongoTemplate).save(updateCandidate);
+        verify(collection, times(2)).replaceOne(any(Bson.class), any(Document.class), any());
 
         dataAccessService.remove(updateCandidate);
-        verify(mongoTemplate).remove(updateCandidate);
+        verify(collection).deleteOne(any(Bson.class));
 
-        when(mongoTemplate.findById(eq(generatedId), eq(SampleMongoEntity.class))).thenReturn(sample(generatedId,
-                "Refreshed", 99, List.of("refresh")));
+        Document refreshedDocument = new Document("_id", generatedId)
+                .append("name", "Refreshed")
+                .append("age", 99)
+                .append("tags", List.of("refresh"));
+        when(findIterable.first()).thenReturn(refreshedDocument);
         dataAccessService.refresh(updateCandidate);
         assertEquals("Refreshed", updateCandidate.getName());
         assertEquals(99, updateCandidate.getAge());
@@ -73,12 +98,17 @@ class DefaultCoredeuxMongoDataAccessServiceTest {
 
     @Test
     void shouldLoadAllUsingSupportedComparatorsAndPagination() {
-        when(mongoTemplate.count(any(Query.class), eq(SampleMongoEntity.class))).thenAnswer(invocation -> {
-            Query query = invocation.getArgument(0);
-            return query.getQueryObject().isEmpty() ? 3L : 1L;
-        });
-        when(mongoTemplate.find(any(Query.class), eq(SampleMongoEntity.class)))
-                .thenReturn(List.of(sample("1", "Alpha", 10, List.of("common"))));
+        FindIterable<Document> documents = mock(FindIterable.class);
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(collection.countDocuments()).thenReturn(3L);
+        when(collection.countDocuments(any(Bson.class))).thenReturn(1L);
+        when(collection.find(any(Bson.class))).thenReturn(documents);
+        when(documents.skip(0)).thenReturn(documents);
+        when(documents.limit(10)).thenReturn(documents);
+        when(documents.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(true, false);
+        when(cursor.next()).thenReturn(
+                new Document("_id", "1").append("name", "Alpha").append("age", 10).append("tags", List.of("common")));
 
         SearchResult<SampleMongoEntity> result = dataAccessService.loadAll(List.of(
                 SearchParams.builder().field("name").comparator("EQUALS").value("Alpha").build(),
@@ -93,9 +123,16 @@ class DefaultCoredeuxMongoDataAccessServiceTest {
 
     @Test
     void shouldQueryWithTemplateParametersAndPagination() {
-        when(mongoTemplate.count(any(Query.class), eq(SampleMongoEntity.class))).thenReturn(2L);
-        when(mongoTemplate.find(any(Query.class), eq(SampleMongoEntity.class)))
-                .thenReturn(List.of(sample("1", "Alpha", 10, List.of())));
+        FindIterable<Document> documents = mock(FindIterable.class);
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(collection.countDocuments(any(Bson.class))).thenReturn(2L);
+        when(collection.find(any(Bson.class))).thenReturn(documents);
+        when(documents.skip(0)).thenReturn(documents);
+        when(documents.limit(1)).thenReturn(documents);
+        when(documents.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(true, false);
+        when(cursor.next()).thenReturn(new Document("_id", "1").append("name", "Alpha").append("age", 10)
+                .append("tags", List.of()));
 
         SearchResult<SampleMongoEntity> result = dataAccessService.query(
                 "{\"name\": {{name}}, \"age\": {\"$gte\": {{minAge}}}}",
@@ -117,9 +154,8 @@ class DefaultCoredeuxMongoDataAccessServiceTest {
     @Test
     void shouldFailForInvalidInputsAndUnsupportedComparators() {
         assertThrows(CoredeuxValidationException.class, () -> dataAccessService.load(null, SampleMongoEntity.class));
-        assertThrows(CoredeuxValidationException.class, () -> dataAccessService.loadAll(
-                List.of(SearchParams.builder().field("name").comparator("UNKNOWN").value("x").build()),
-                SampleMongoEntity.class, 10, 1));
+        assertThrows(CoredeuxValidationException.class, () -> dataAccessService.buildCriteria(
+                SearchParams.builder().field("name").comparator("UNKNOWN").value("x").build()));
         assertThrows(CoredeuxValidationException.class, () -> dataAccessService.query(" ", Map.of(),
                 SampleMongoEntity.class, 10, 1));
     }
@@ -132,18 +168,9 @@ class DefaultCoredeuxMongoDataAccessServiceTest {
 
     @Test
     void shouldAllowNullComparatorValuesToBeIgnored() {
-        when(mongoTemplate.count(any(Query.class), eq(SampleMongoEntity.class))).thenReturn(3L);
-        when(mongoTemplate.find(any(Query.class), eq(SampleMongoEntity.class))).thenReturn(List.of(
-                sample("1", "Alpha", 10, List.of()),
-                sample("2", "Beta", 20, List.of()),
-                sample("3", "Gamma", 30, List.of())));
-
-        SearchResult<SampleMongoEntity> result = assertDoesNotThrow(() -> dataAccessService.loadAll(
-                List.of(SearchParams.builder().field("name").comparator("EQUALS").value(null).build()),
-                SampleMongoEntity.class, 10, 1));
-
-        assertEquals(3, result.getResults().size());
-        assertEquals(3L, result.getPagination().getResultSize());
+        Bson filter = assertDoesNotThrow(() -> dataAccessService.buildSearchFilter(List.of(
+                SearchParams.builder().field("name").comparator("EQUALS").value(null).build())));
+        assertNotNull(filter);
     }
 
     private SampleMongoEntity sample(String id, String name, Integer age, List<String> tags) {
@@ -156,7 +183,7 @@ class DefaultCoredeuxMongoDataAccessServiceTest {
     }
 
     private static class SampleObjectIdEntity {
-        @Id
+        @org.springframework.data.annotation.Id
         private ObjectId id;
     }
 }

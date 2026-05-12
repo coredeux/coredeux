@@ -1,30 +1,34 @@
 package com.coredeux.core.jdbc.service.impl;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.StringJoiner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ReflectionUtils;
+import javax.sql.DataSource;
 
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
@@ -40,7 +44,6 @@ import jakarta.persistence.Table;
 /**
  * JDBC-based implementation of {@link CoredeuxDataAccessService}.
  */
-@Service("defaultCoredeuxJdbcDataAccessService")
 public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessService {
 
     private static final Set<String> SUPPORTED_COMPARATORS = Set.of(
@@ -60,35 +63,40 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             "CONTAINS",
             "NOTCONTAINS");
 
-    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private static final Pattern NAMED_PARAMETER_PATTERN = Pattern.compile(":([A-Za-z_][A-Za-z0-9_]*)");
+
+    private final DataSource dataSource;
     private final ConcurrentMap<Class<?>, JdbcEntityMetadata> metadataCache = new ConcurrentHashMap<>();
     private final String defaultSchema;
 
-    public DefaultCoredeuxJdbcDataAccessService(NamedParameterJdbcTemplate namedParameterJdbcTemplate,
-            @Value("${coredeux.jdbc.default-schema:}") String defaultSchema) {
-        this.namedParameterJdbcTemplate = Objects.requireNonNull(namedParameterJdbcTemplate, "namedParameterJdbcTemplate");
+    public DefaultCoredeuxJdbcDataAccessService(DataSource dataSource, String defaultSchema) {
+        this.dataSource = Objects.requireNonNull(dataSource, "dataSource");
         this.defaultSchema = defaultSchema == null ? "" : defaultSchema.trim();
     }
 
+    public DefaultCoredeuxJdbcDataAccessService(Object namedParameterJdbcTemplate, String defaultSchema) {
+        this(extractDataSource(namedParameterJdbcTemplate), defaultSchema);
+    }
+
+    public DefaultCoredeuxJdbcDataAccessService(java.sql.Connection connection, String defaultSchema) {
+        this(new ConnectionBackedDataSource(connection), defaultSchema);
+    }
+
     @Override
-    @Transactional(readOnly = true)
     public <T> T load(String id, Class<T> type) {
         validateLoadInput(id, type);
         try {
             JdbcEntityMetadata metadata = metadata(type);
-            MapSqlParameterSource params = new MapSqlParameterSource()
-                    .addValue(metadata.idColumn(), convertIdentifier(id, metadata.idField().getType()));
             String sql = "select " + selectList(metadata) + " from " + metadata.qualifiedTableName()
-                    + " where " + metadata.idColumn() + " = :" + metadata.idColumn();
-            List<T> results = namedParameterJdbcTemplate.query(sql, params, rowMapper(type));
-            return CollectionUtils.isEmpty(results) ? null : results.get(0);
+                    + " where " + metadata.idColumn() + " = ?";
+            List<T> results = query(sql, List.of(convertIdentifier(id, metadata.idField().getType())), type);
+            return results.isEmpty() ? null : results.get(0);
         } catch (RuntimeException exception) {
             throw wrap("Unable to load entity of type " + typeName(type) + " for identifier '" + id + "'", exception);
         }
     }
 
     @Override
-    @Transactional
     public <T> String save(T entity) {
         validateEntity(entity, "save");
         try {
@@ -96,31 +104,20 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             Map<String, Object> values = extractColumnValues(entity, metadata, true);
             Object identifier = values.get(metadata.idColumn());
 
-            if (identifier == null) {
-                String insertSql = "insert into " + metadata.qualifiedTableName() + " (" + insertColumns(metadata)
-                        + ") values (" + insertParameters(metadata, false) + ")";
-                MapSqlParameterSource params = mapParameters(values, metadata, false);
-                if (metadata.hasIdentifier()) {
-                    SimpleJdbcInsert insert = new SimpleJdbcInsert(
-                            Objects.requireNonNull(namedParameterJdbcTemplate.getJdbcTemplate().getDataSource(),
-                                    "A DataSource is required for generated-key inserts"))
-                            .withTableName(metadata.qualifiedTableName())
-                            .usingColumns(insertColumnNames(metadata, false))
-                            .usingGeneratedKeyColumns(metadata.idColumn());
-                    Number generatedKey = insert.executeAndReturnKey(params);
-                    if (generatedKey != null) {
-                        setFieldValue(entity, metadata.idField(), convertIdentifier(generatedKey.toString(),
-                                metadata.idField().getType()));
-                    }
-                    return generatedKey == null ? null : String.valueOf(generatedKey);
+            if (identifier == null || (identifier instanceof String stringIdentifier && stringIdentifier.isBlank())) {
+            String sql = "insert into " + metadata.qualifiedTableName() + " (" + insertColumns(metadata, false)
+                        + ") values (" + insertPlaceholdersSql(metadata, false) + ")";
+                Object generated = insertAndReturnKey(sql, values, metadata, false);
+                if (generated != null) {
+                    setFieldValue(entity, metadata.idField(), convertValue(generated, metadata.idField().getType()));
+                    return String.valueOf(generated);
                 }
-                namedParameterJdbcTemplate.update(insertSql, params);
                 return null;
             }
 
-            String insertSql = "insert into " + metadata.qualifiedTableName() + " (" + insertColumns(metadata)
-                    + ") values (" + insertParameters(metadata, true) + ")";
-            namedParameterJdbcTemplate.update(insertSql, mapParameters(values, metadata, true));
+            String sql = "insert into " + metadata.qualifiedTableName() + " (" + insertColumns(metadata, true)
+                    + ") values (" + insertPlaceholdersSql(metadata, true) + ")";
+            update(sql, orderedParameters(values, metadata, true));
             return String.valueOf(identifier);
         } catch (RuntimeException exception) {
             throw wrap("Unable to save entity of type " + entity.getClass().getName(), exception);
@@ -128,42 +125,37 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
     }
 
     @Override
-    @Transactional
     public <T> void update(T entity) {
         validateEntity(entity, "update");
         try {
             JdbcEntityMetadata metadata = metadata(entity.getClass());
             Object identifier = requireIdentifier(entity, metadata, "update");
             Map<String, Object> values = extractColumnValues(entity, metadata, true);
-            MapSqlParameterSource params = mapParameters(values, metadata, true);
-            params.addValue(metadata.idColumn(), identifier);
+            List<Object> parameters = orderedParameters(values, metadata, false);
+            parameters.add(identifier);
 
-            String sql = "update " + metadata.qualifiedTableName() + " set " + updateAssignments(metadata)
-                    + " where " + metadata.idColumn() + " = :" + metadata.idColumn();
-            namedParameterJdbcTemplate.update(sql, params);
+            String sql = "update " + metadata.qualifiedTableName() + " set " + updateAssignmentsSql(metadata)
+                    + " where " + metadata.idColumn() + " = ?";
+            update(sql, parameters);
         } catch (RuntimeException exception) {
             throw wrap("Unable to update entity of type " + entity.getClass().getName(), exception);
         }
     }
 
     @Override
-    @Transactional
     public <T> void remove(T entity) {
         validateEntity(entity, "remove");
         try {
             JdbcEntityMetadata metadata = metadata(entity.getClass());
             Object identifier = requireIdentifier(entity, metadata, "remove");
-            String sql = "delete from " + metadata.qualifiedTableName() + " where " + metadata.idColumn() + " = :"
-                    + metadata.idColumn();
-            namedParameterJdbcTemplate.update(sql,
-                    new MapSqlParameterSource(metadata.idColumn(), identifier));
+            String sql = "delete from " + metadata.qualifiedTableName() + " where " + metadata.idColumn() + " = ?";
+            update(sql, List.of(identifier));
         } catch (RuntimeException exception) {
             throw wrap("Unable to remove entity of type " + entity.getClass().getName(), exception);
         }
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> loadAll(List<SearchParams> params, Class<T> type, int pageSize, int currentPage) {
         validateSearchType(type);
         try {
@@ -173,12 +165,12 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             long filteredResults = countFiltered(metadata, querySpec);
 
             String sql = "select " + selectList(metadata) + " from " + metadata.qualifiedTableName()
-                    + querySpec.whereClause
+                    + querySpec.whereClause()
                     + orderByClause(metadata)
-                    + pagingClause(pageSize, currentPage);
-            MapSqlParameterSource paramsSource = new MapSqlParameterSource(querySpec.parameters.getValues());
-            addPagingParameters(paramsSource, pageSize, currentPage);
-            List<T> results = namedParameterJdbcTemplate.query(sql, paramsSource, rowMapper(type));
+                    + pagingClauseSql(pageSize, currentPage);
+            List<Object> parameters = new ArrayList<>(querySpec.parameters().getValues().values());
+            addPagingParameters(parameters, pageSize, currentPage);
+            List<T> results = query(sql, parameters, type);
 
             return SearchResult.<T>builder()
                     .results(defaultResults(results))
@@ -195,19 +187,19 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
             int currentPage) {
         validateQueryInput(query, type);
         try {
             String normalizedQuery = normalizeQuery(query);
-            MapSqlParameterSource paramsSource = mapParameters(params);
-            long totalResults = namedParameterJdbcTemplate.queryForObject(
-                    "select count(*) from (" + normalizedQuery + ") coredeux_jdbc_count", paramsSource, Long.class);
+            BoundSql countSql = prepareSql("select count(*) from (" + normalizedQuery + ") coredeux_jdbc_count", params);
+            long totalResults = queryForLong(countSql.sql(), countSql.parameters());
 
-            String dataSql = normalizedQuery + pagingClause(pageSize, currentPage);
-            addPagingParameters(paramsSource, pageSize, currentPage);
-            List<T> results = namedParameterJdbcTemplate.query(dataSql, paramsSource, rowMapper(type));
+            String dataSql = normalizedQuery + pagingClauseSql(pageSize, currentPage);
+            BoundSql dataBoundSql = prepareSql(dataSql, params);
+            List<Object> parameters = new ArrayList<>(dataBoundSql.parameters());
+            addPagingParameters(parameters, pageSize, currentPage);
+            List<T> results = query(dataBoundSql.sql(), parameters, type);
 
             return SearchResult.<T>builder()
                     .results(defaultResults(results))
@@ -219,7 +211,6 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> void refresh(T entity) {
         validateEntity(entity, "refresh");
         try {
@@ -227,7 +218,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             Object identifier = requireIdentifier(entity, metadata, "refresh");
             Object refreshed = load(String.valueOf(identifier), entity.getClass());
             if (refreshed != null) {
-                BeanUtils.copyProperties(refreshed, entity);
+                copyFields(refreshed, entity);
             }
         } catch (RuntimeException exception) {
             throw wrap("Unable to refresh entity of type " + entity.getClass().getName(), exception);
@@ -272,7 +263,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
     }
 
     protected <T> List<T> defaultResults(List<T> results) {
-        return CollectionUtils.isEmpty(results) ? List.of() : results;
+        return results == null || results.isEmpty() ? List.of() : results;
     }
 
     protected JdbcEntityMetadata metadata(Class<?> type) {
@@ -283,7 +274,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         Field idField = findIdentifierField(type);
         String tableName = resolveTableName(type);
         List<JdbcFieldMapping> mappings = new ArrayList<>();
-        ReflectionUtils.doWithFields(type, field -> {
+        doWithFields(type, field -> {
             if (shouldPersist(field)) {
                 mappings.add(new JdbcFieldMapping(field, resolveColumnName(field)));
             }
@@ -294,8 +285,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         if (idField == null) {
             throw new CoredeuxValidationException("Unable to resolve identifier field for class: " + type.getName());
         }
-        String idColumn = resolveColumnName(idField);
-        return new JdbcEntityMetadata(type, tableName, idField, idColumn, List.copyOf(mappings));
+        return new JdbcEntityMetadata(type, tableName, idField, resolveColumnName(idField), List.copyOf(mappings));
     }
 
     protected boolean shouldPersist(Field field) {
@@ -335,8 +325,15 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
     }
 
     protected String insertColumns(JdbcEntityMetadata metadata) {
+        return insertColumns(metadata, true);
+    }
+
+    protected String insertColumns(JdbcEntityMetadata metadata, boolean includeIdentifier) {
         StringJoiner joiner = new StringJoiner(", ");
         for (JdbcFieldMapping mapping : metadata.fields()) {
+            if (!includeIdentifier && mapping.isIdentifier(metadata)) {
+                continue;
+            }
             joiner.add(mapping.columnName());
         }
         return joiner.toString();
@@ -353,11 +350,23 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         return joiner.toString();
     }
 
-    protected String orderByClause(JdbcEntityMetadata metadata) {
-        if (!metadata.hasIdentifier()) {
-            return "";
+    protected String insertPlaceholders(JdbcEntityMetadata metadata, boolean includeIdentifier) {
+        StringJoiner joiner = new StringJoiner(", ");
+        for (JdbcFieldMapping mapping : metadata.fields()) {
+            if (!includeIdentifier && mapping.isIdentifier(metadata)) {
+                continue;
+            }
+            joiner.add("?");
         }
-        return " order by " + metadata.idColumn();
+        return joiner.toString();
+    }
+
+    protected String insertPlaceholdersSql(JdbcEntityMetadata metadata, boolean includeIdentifier) {
+        return insertPlaceholders(metadata, includeIdentifier);
+    }
+
+    protected String orderByClause(JdbcEntityMetadata metadata) {
+        return metadata.hasIdentifier() ? " order by " + metadata.idColumn() : "";
     }
 
     protected String[] insertColumnNames(JdbcEntityMetadata metadata, boolean includeIdentifier) {
@@ -382,30 +391,49 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         return joiner.toString();
     }
 
+    protected String updateAssignmentsSql(JdbcEntityMetadata metadata) {
+        StringJoiner joiner = new StringJoiner(", ");
+        for (JdbcFieldMapping mapping : metadata.fields()) {
+            if (mapping.isIdentifier(metadata)) {
+                continue;
+            }
+            joiner.add(mapping.columnName() + " = ?");
+        }
+        return joiner.toString();
+    }
+
     protected Map<String, Object> extractColumnValues(Object entity, JdbcEntityMetadata metadata, boolean includeIdentifier) {
-        MapSqlParameterSource params = new MapSqlParameterSource();
+        Map<String, Object> values = new LinkedHashMap<>();
         for (JdbcFieldMapping mapping : metadata.fields()) {
             if (!includeIdentifier && mapping.isIdentifier(metadata)) {
                 continue;
             }
-            params.addValue(mapping.columnName(), extractFieldValue(entity, mapping.field()));
+            values.put(mapping.columnName(), extractFieldValue(entity, mapping.field()));
         }
-        return params.getValues();
+        return values;
     }
 
     protected Object extractFieldValue(Object entity, Field field) {
-        ReflectionUtils.makeAccessible(field);
-        return ReflectionUtils.getField(field, entity);
+        try {
+            field.setAccessible(true);
+            return field.get(entity);
+        } catch (IllegalAccessException exception) {
+            throw new CoredeuxDataAccessException("Unable to read field " + field.getName(), exception);
+        }
     }
 
     protected void setFieldValue(Object entity, Field field, Object value) {
-        ReflectionUtils.makeAccessible(field);
-        ReflectionUtils.setField(field, entity, value);
+        try {
+            field.setAccessible(true);
+            field.set(entity, convertValue(value, field.getType()));
+        } catch (IllegalAccessException exception) {
+            throw new CoredeuxDataAccessException("Unable to write field " + field.getName(), exception);
+        }
     }
 
-    protected MapSqlParameterSource mapParameters(Map<String, Object> values, JdbcEntityMetadata metadata,
+    protected BoundParameters mapParameters(Map<String, Object> values, JdbcEntityMetadata metadata,
             boolean includeIdentifier) {
-        MapSqlParameterSource params = new MapSqlParameterSource();
+        BoundParameters params = new BoundParameters();
         for (JdbcFieldMapping mapping : metadata.fields()) {
             if (!includeIdentifier && mapping.isIdentifier(metadata)) {
                 continue;
@@ -415,33 +443,42 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         return params;
     }
 
-    protected MapSqlParameterSource mapParameters(Map<String, Object> values) {
-        MapSqlParameterSource params = new MapSqlParameterSource();
+    protected BoundParameters mapParameters(Map<String, Object> values) {
+        BoundParameters params = new BoundParameters();
         if (values != null) {
             values.forEach(params::addValue);
         }
         return params;
     }
 
+    protected List<Object> orderedParameters(Map<String, Object> values, JdbcEntityMetadata metadata,
+            boolean includeIdentifier) {
+        List<Object> params = new ArrayList<>();
+        for (JdbcFieldMapping mapping : metadata.fields()) {
+            if (!includeIdentifier && mapping.isIdentifier(metadata)) {
+                continue;
+            }
+            params.add(values.get(mapping.columnName()));
+        }
+        return params;
+    }
+
     protected long countAll(JdbcEntityMetadata metadata) {
-        String sql = "select count(*) from " + metadata.qualifiedTableName();
-        Long value = namedParameterJdbcTemplate.queryForObject(sql, new MapSqlParameterSource(), Long.class);
-        return value == null ? 0L : value;
+        return queryForLong("select count(*) from " + metadata.qualifiedTableName(), Collections.emptyMap());
     }
 
     protected long countFiltered(JdbcEntityMetadata metadata, SearchQuerySpec querySpec) {
-        String sql = "select count(*) from " + metadata.qualifiedTableName() + querySpec.whereClause;
-        Long value = namedParameterJdbcTemplate.queryForObject(sql, querySpec.parameters, Long.class);
-        return value == null ? 0L : value;
+        return queryForLong("select count(*) from " + metadata.qualifiedTableName() + querySpec.whereClause(),
+                new ArrayList<>(querySpec.parameters().getValues().values()));
     }
 
     protected SearchQuerySpec buildSearchQuery(List<SearchParams> params, JdbcEntityMetadata metadata) {
-        if (CollectionUtils.isEmpty(params)) {
-            return new SearchQuerySpec("", new MapSqlParameterSource());
+        if (params == null || params.isEmpty()) {
+            return new SearchQuerySpec("", new BoundParameters());
         }
 
         List<String> clauses = new ArrayList<>();
-        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        BoundParameters parameters = new BoundParameters();
         int index = 0;
         for (SearchParams searchParams : params) {
             if (searchParams == null) {
@@ -460,55 +497,55 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             switch (comparator) {
                 case "EQUALS" -> {
                     if (value != null) {
-                        clauses.add(column + " = :" + paramName);
+                        clauses.add(column + " = ?");
                         parameters.addValue(paramName, value);
                     }
                 }
                 case "NOTEQUALS" -> {
                     if (value != null) {
-                        clauses.add(column + " <> :" + paramName);
+                        clauses.add(column + " <> ?");
                         parameters.addValue(paramName, value);
                     }
                 }
                 case "STARTSWITH" -> {
                     if (value != null) {
-                        clauses.add(textExpression(column) + " like :" + paramName);
+                        clauses.add(textExpression(column) + " like ?");
                         parameters.addValue(paramName, value + "%");
                     }
                 }
                 case "ANYWHERECS" -> {
                     if (value != null) {
-                        clauses.add(textExpression(column) + " like :" + paramName);
+                        clauses.add(textExpression(column) + " like ?");
                         parameters.addValue(paramName, "%" + value + "%");
                     }
                 }
                 case "ANYWHERE" -> {
                     if (value != null) {
-                        clauses.add("lower(" + textExpression(column) + ") like :" + paramName);
+                        clauses.add("lower(" + textExpression(column) + ") like ?");
                         parameters.addValue(paramName, ("%" + value + "%").toLowerCase(Locale.ROOT));
                     }
                 }
                 case "LESSTHANOREQUAL" -> {
                     if (value != null) {
-                        clauses.add(column + " <= :" + paramName);
+                        clauses.add(column + " <= ?");
                         parameters.addValue(paramName, value);
                     }
                 }
                 case "LESSTHAN" -> {
                     if (value != null) {
-                        clauses.add(column + " < :" + paramName);
+                        clauses.add(column + " < ?");
                         parameters.addValue(paramName, value);
                     }
                 }
                 case "GREATERTHANOREQUAL" -> {
                     if (value != null) {
-                        clauses.add(column + " >= :" + paramName);
+                        clauses.add(column + " >= ?");
                         parameters.addValue(paramName, value);
                     }
                 }
                 case "GREATERTHAN" -> {
                     if (value != null) {
-                        clauses.add(column + " > :" + paramName);
+                        clauses.add(column + " > ?");
                         parameters.addValue(paramName, value);
                     }
                 }
@@ -518,13 +555,13 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
                 case "ISNOTEMPTY" -> clauses.add("coalesce(" + textExpression(column) + ", '') <> ''");
                 case "CONTAINS" -> {
                     if (value != null) {
-                        clauses.add(textExpression(column) + " like :" + paramName);
+                        clauses.add(textExpression(column) + " like ?");
                         parameters.addValue(paramName, "%" + value + "%");
                     }
                 }
                 case "NOTCONTAINS" -> {
                     if (value != null) {
-                        clauses.add(textExpression(column) + " not like :" + paramName);
+                        clauses.add(textExpression(column) + " not like ?");
                         parameters.addValue(paramName, "%" + value + "%");
                     }
                 }
@@ -546,12 +583,16 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         return isPagingEnabled(pageSize, currentPage) ? " limit :__limit offset :__offset" : "";
     }
 
-    protected void addPagingParameters(MapSqlParameterSource params, int pageSize, int currentPage) {
+    protected String pagingClauseSql(int pageSize, int currentPage) {
+        return isPagingEnabled(pageSize, currentPage) ? " limit ? offset ?" : "";
+    }
+
+    protected void addPagingParameters(List<Object> params, int pageSize, int currentPage) {
         if (!isPagingEnabled(pageSize, currentPage)) {
             return;
         }
-        params.addValue("__limit", pageSize);
-        params.addValue("__offset", Math.max(currentPage - 1, 0) * pageSize);
+        params.add(pageSize);
+        params.add(Math.max(currentPage - 1, 0) * pageSize);
     }
 
     protected boolean isPagingEnabled(int pageSize, int currentPage) {
@@ -591,12 +632,12 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         if (annotatedField != null) {
             return annotatedField;
         }
-        return ReflectionUtils.findField(type, "id");
+        return findField(type, "id");
     }
 
     protected Field findAnnotatedField(Class<?> type, Class<? extends java.lang.annotation.Annotation> annotationType) {
         final Field[] found = new Field[1];
-        ReflectionUtils.doWithFields(type, field -> {
+        doWithFields(type, field -> {
             if (field.isAnnotationPresent(annotationType)) {
                 found[0] = field;
             }
@@ -644,6 +685,58 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         throw new CoredeuxValidationException("Unsupported identifier type: " + targetType.getName());
     }
 
+    protected Object convertValue(Object value, Class<?> targetType) {
+        if (value == null || targetType == null) {
+            return value;
+        }
+        if (targetType.isInstance(value)) {
+            return value;
+        }
+        if (targetType == String.class) {
+            return String.valueOf(value);
+        }
+        if (Number.class.isAssignableFrom(targetType) || targetType.isPrimitive()) {
+            String text = String.valueOf(value);
+            if (targetType == Long.class || targetType == long.class) {
+                return Long.valueOf(text);
+            }
+            if (targetType == Integer.class || targetType == int.class) {
+                return Integer.valueOf(text);
+            }
+            if (targetType == Short.class || targetType == short.class) {
+                return Short.valueOf(text);
+            }
+            if (targetType == Byte.class || targetType == byte.class) {
+                return Byte.valueOf(text);
+            }
+            if (targetType == BigInteger.class) {
+                return new BigInteger(text);
+            }
+            if (targetType == BigDecimal.class) {
+                return new BigDecimal(text);
+            }
+            if (targetType == Double.class || targetType == double.class) {
+                return Double.valueOf(text);
+            }
+            if (targetType == Float.class || targetType == float.class) {
+                return Float.valueOf(text);
+            }
+        }
+        if (targetType == Boolean.class || targetType == boolean.class) {
+            return Boolean.valueOf(String.valueOf(value));
+        }
+        if (targetType == UUID.class) {
+            return UUID.fromString(String.valueOf(value));
+        }
+        if (targetType.isEnum()) {
+            @SuppressWarnings({ "rawtypes", "unchecked" })
+            Enum<?> enumValue = Enum.valueOf((Class<? extends Enum>) targetType, String.valueOf(value));
+            return enumValue;
+        }
+        Object factoryValue = invokeStringFactory(targetType, String.valueOf(value));
+        return factoryValue != null ? factoryValue : value;
+    }
+
     protected Object invokeStringFactory(Class<?> targetType, String value) {
         for (String methodName : List.of("valueOf", "of", "fromString")) {
             try {
@@ -653,14 +746,11 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             }
         }
         try {
-            return targetType.getConstructor(String.class).newInstance(value);
+            Constructor<?> constructor = targetType.getConstructor(String.class);
+            return constructor.newInstance(value);
         } catch (ReflectiveOperationException exception) {
             return null;
         }
-    }
-
-    protected <T> org.springframework.jdbc.core.RowMapper<T> rowMapper(Class<T> type) {
-        return new org.springframework.jdbc.core.BeanPropertyRowMapper<>(type);
     }
 
     protected CoredeuxDataAccessException wrap(String message, RuntimeException exception) {
@@ -671,6 +761,193 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             throw validationException;
         }
         return new CoredeuxDataAccessException(message, exception);
+    }
+
+    protected long queryForLong(String sql, Map<String, Object> params) {
+        BoundSql boundSql = prepareSql(sql, params);
+        return queryForLong(boundSql.sql(), boundSql.parameters());
+    }
+
+    protected long queryForLong(String sql, List<Object> parameters) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, parameters);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return 0L;
+                }
+                Object value = resultSet.getObject(1);
+                return value == null ? 0L : Long.parseLong(String.valueOf(value));
+            }
+        } catch (SQLException exception) {
+            throw new CoredeuxDataAccessException("Unable to execute count query", exception);
+        }
+    }
+
+    protected <T> List<T> query(String sql, List<Object> parameters, Class<T> type) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, parameters);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<T> results = new ArrayList<>();
+                while (resultSet.next()) {
+                    results.add(readRow(resultSet, type));
+                }
+                return results;
+            }
+        } catch (SQLException exception) {
+            throw new CoredeuxDataAccessException("Unable to execute query for type " + typeName(type), exception);
+        }
+    }
+
+    protected int update(String sql, List<Object> parameters) {
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            bind(statement, parameters);
+            return statement.executeUpdate();
+        } catch (SQLException exception) {
+            throw new CoredeuxDataAccessException("Unable to execute update", exception);
+        }
+    }
+
+    protected Object insertAndReturnKey(String sql, Map<String, Object> values, JdbcEntityMetadata metadata,
+            boolean includeIdentifier) {
+        List<Object> parameters = new ArrayList<>();
+        for (JdbcFieldMapping mapping : metadata.fields()) {
+            if (!includeIdentifier && mapping.isIdentifier(metadata)) {
+                continue;
+            }
+            parameters.add(values.get(mapping.columnName()));
+        }
+        try (Connection connection = dataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            bind(statement, parameters);
+            statement.executeUpdate();
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getObject(1);
+                }
+                return null;
+            }
+        } catch (SQLException exception) {
+            throw new CoredeuxDataAccessException("Unable to insert entity and read generated key", exception);
+        }
+    }
+
+    protected void bind(PreparedStatement statement, List<Object> parameters) throws SQLException {
+        if (parameters == null) {
+            return;
+        }
+        for (int index = 0; index < parameters.size(); index++) {
+            statement.setObject(index + 1, parameters.get(index));
+        }
+    }
+
+    protected BoundSql prepareSql(String sql, Map<String, Object> params) {
+        if (params == null || params.isEmpty()) {
+            return new BoundSql(sql, List.of());
+        }
+
+        Matcher matcher = NAMED_PARAMETER_PATTERN.matcher(sql);
+        StringBuffer buffer = new StringBuffer();
+        List<Object> parameters = new ArrayList<>();
+        while (matcher.find()) {
+            String key = matcher.group(1);
+            if (!params.containsKey(key)) {
+                throw new CoredeuxValidationException("Missing query parameter: " + key);
+            }
+            matcher.appendReplacement(buffer, "?");
+            parameters.add(params.get(key));
+        }
+        matcher.appendTail(buffer);
+        return new BoundSql(buffer.toString(), parameters);
+    }
+
+    protected <T> T readRow(ResultSet resultSet, Class<T> type) {
+        try {
+            T entity = type.getDeclaredConstructor().newInstance();
+            ResultSetMetaData metadata = resultSet.getMetaData();
+            for (int index = 1; index <= metadata.getColumnCount(); index++) {
+            String column = metadata.getColumnLabel(index).toLowerCase(Locale.ROOT);
+            Field field = findField(type, column);
+                if (field == null) {
+                    continue;
+                }
+                field.setAccessible(true);
+                Object value = resultSet.getObject(index);
+                field.set(entity, convertValue(value, field.getType()));
+            }
+            return entity;
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException
+                | NoSuchMethodException | SQLException exception) {
+            throw new CoredeuxDataAccessException("Unable to materialize entity of type " + type.getName(), exception);
+        }
+    }
+
+    protected void copyFields(Object source, Object target) {
+        Class<?> current = source.getClass();
+        while (current != null && current != Object.class) {
+            for (Field field : current.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+                    continue;
+                }
+                try {
+                    field.setAccessible(true);
+                    Object value = field.get(source);
+                    Field targetField = findField(target.getClass(), field.getName());
+                    if (targetField != null) {
+                        targetField.setAccessible(true);
+                        targetField.set(target, convertValue(value, targetField.getType()));
+                    }
+                } catch (IllegalAccessException exception) {
+                    throw new CoredeuxDataAccessException("Unable to copy field " + field.getName(), exception);
+                }
+            }
+            current = current.getSuperclass();
+        }
+    }
+
+    protected Field findField(Class<?> type, String name) {
+        Class<?> current = type;
+        while (current != null && current != Object.class) {
+            for (Field field : current.getDeclaredFields()) {
+                if (field.getName().equals(name)) {
+                    return field;
+                }
+            }
+            current = current.getSuperclass();
+        }
+        return null;
+    }
+
+    protected void doWithFields(Class<?> type, FieldConsumer consumer) {
+        Class<?> current = type;
+        while (current != null && current != Object.class) {
+            for (Field field : current.getDeclaredFields()) {
+                consumer.accept(field);
+            }
+            current = current.getSuperclass();
+        }
+    }
+
+    protected interface FieldConsumer {
+        void accept(Field field);
+    }
+
+    protected record BoundSql(String sql, List<Object> parameters) {
+    }
+
+    protected static final class BoundParameters {
+        private final Map<String, Object> values = new LinkedHashMap<>();
+
+        BoundParameters addValue(String name, Object value) {
+            values.put(name, value);
+            return this;
+        }
+
+        public Map<String, Object> getValues() {
+            return Collections.unmodifiableMap(values);
+        }
     }
 
     protected record JdbcEntityMetadata(Class<?> type, String tableName, Field idField, String idColumn,
@@ -702,6 +979,78 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         }
     }
 
-    protected record SearchQuerySpec(String whereClause, MapSqlParameterSource parameters) {
+    protected record SearchQuerySpec(String whereClause, BoundParameters parameters) {
+    }
+
+    protected static final class ConnectionBackedDataSource implements DataSource {
+        private final Connection connection;
+
+        ConnectionBackedDataSource(Connection connection) {
+            this.connection = Objects.requireNonNull(connection, "connection");
+        }
+
+        @Override
+        public Connection getConnection() {
+            return connection;
+        }
+
+        @Override
+        public Connection getConnection(String username, String password) {
+            return connection;
+        }
+
+        @Override
+        public java.io.PrintWriter getLogWriter() {
+            return null;
+        }
+
+        @Override
+        public void setLogWriter(java.io.PrintWriter out) {
+        }
+
+        @Override
+        public void setLoginTimeout(int seconds) {
+        }
+
+        @Override
+        public int getLoginTimeout() {
+            return 0;
+        }
+
+        @Override
+        public java.util.logging.Logger getParentLogger() {
+            return java.util.logging.Logger.getGlobal();
+        }
+
+        @Override
+        public <T> T unwrap(Class<T> iface) {
+            return iface.cast(this);
+        }
+
+        @Override
+        public boolean isWrapperFor(Class<?> iface) {
+            return iface.isInstance(this);
+        }
+    }
+
+    private static DataSource extractDataSource(Object namedParameterJdbcTemplate) {
+        if (namedParameterJdbcTemplate instanceof DataSource dataSource) {
+            return dataSource;
+        }
+        if (namedParameterJdbcTemplate instanceof java.sql.Connection connection) {
+            return new ConnectionBackedDataSource(connection);
+        }
+        try {
+            Object jdbcTemplate = namedParameterJdbcTemplate.getClass().getMethod("getJdbcTemplate")
+                    .invoke(namedParameterJdbcTemplate);
+            if (jdbcTemplate instanceof DataSource dataSource) {
+                return dataSource;
+            }
+            Object dataSource = jdbcTemplate.getClass().getMethod("getDataSource").invoke(jdbcTemplate);
+            return (DataSource) dataSource;
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalArgumentException("Unable to extract DataSource from " + namedParameterJdbcTemplate,
+                    exception);
+        }
     }
 }

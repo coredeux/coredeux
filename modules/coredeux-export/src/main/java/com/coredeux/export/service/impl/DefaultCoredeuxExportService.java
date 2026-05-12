@@ -51,6 +51,7 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
     private final CoredeuxExportQueueService queueService;
     private final TextExportWriter textWriter;
     private final ExcelExportWriter excelWriter;
+    private final ExportFormat defaultFormat;
 
     public DefaultCoredeuxExportService(CoredeuxService coredeuxService,
             CoredeuxReflectionHelperService reflectionHelperService, EntityDefinitionRegistry entityDefinitionRegistry,
@@ -58,6 +59,17 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             CoredeuxExportStorageServiceResolver storageServiceResolver,
             CoredeuxExportLogServiceResolver logServiceResolver, CoredeuxExportQueueService queueService,
             TextExportWriter textWriter, ExcelExportWriter excelWriter) {
+        this(coredeuxService, reflectionHelperService, entityDefinitionRegistry, fieldPathParser, valueResolver,
+                storageServiceResolver, logServiceResolver, queueService, textWriter, excelWriter,
+                ExportFormat.TEXT);
+    }
+
+    public DefaultCoredeuxExportService(CoredeuxService coredeuxService,
+            CoredeuxReflectionHelperService reflectionHelperService, EntityDefinitionRegistry entityDefinitionRegistry,
+            ExportFieldPathParser fieldPathParser, ExportValueResolver valueResolver,
+            CoredeuxExportStorageServiceResolver storageServiceResolver,
+            CoredeuxExportLogServiceResolver logServiceResolver, CoredeuxExportQueueService queueService,
+            TextExportWriter textWriter, ExcelExportWriter excelWriter, ExportFormat defaultFormat) {
         this.coredeuxService = coredeuxService;
         this.reflectionHelperService = reflectionHelperService;
         this.entityDefinitionRegistry = entityDefinitionRegistry;
@@ -68,6 +80,7 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
         this.queueService = queueService;
         this.textWriter = textWriter;
         this.excelWriter = excelWriter;
+        this.defaultFormat = defaultFormat == null ? ExportFormat.TEXT : defaultFormat;
     }
 
     @Override
@@ -196,7 +209,7 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
     private ExportOptions normalizeOptions(ExportOptions options) {
         ExportOptions normalized = options == null ? ExportOptions.builder().build() : options;
         if (normalized.getFormat() == null) {
-            normalized.setFormat(ExportFormat.TEXT);
+            normalized.setFormat(defaultFormat);
         }
         if (normalized.getBatchSize() == null || normalized.getBatchSize() <= 0) {
             normalized.setBatchSize(DEFAULT_BATCH_SIZE);

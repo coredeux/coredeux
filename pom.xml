@@ -80,19 +80,19 @@
     </dependencyManagement>
 
     <modules>
-        <module>modules/coredeux-core</module>
-        <module>modules/coredeux-core-jpa</module>
-        <module>modules/coredeux-import</module>
-        <module>modules/coredeux-core-spring-boot-starter</module>
-        <module>modules/coredeux-import-spring-boot-starter</module>
-        <module>modules/coredeux-export</module>
-        <module>modules/coredeux-export-spring-boot-starter</module>
-        <module>examples/coredeux-java-native</module>
-        <!-- <module>modules/coredeux-core-jdbc</module> -->
-        <!-- <module>modules/coredeux-core-elasticsearch</module> -->
-        <!-- <module>modules/coredeux-core-mongodb</module> -->
-        <!-- <module>modules/coredeux-core-redis</module> -->
-        <!-- <module>examples/coredeux-demo</module> -->
+		<module>modules/coredeux-core</module>
+		<module>modules/coredeux-core-jpa</module>
+		<module>modules/coredeux-import</module>
+		<module>modules/coredeux-core-spring-boot-starter</module>
+		<module>modules/coredeux-import-spring-boot-starter</module>
+		<module>modules/coredeux-export</module>
+		<module>modules/coredeux-export-spring-boot-starter</module>
+		<module>examples/coredeux-java-native</module>
+		<module>modules/coredeux-core-jdbc</module>
+		<module>modules/coredeux-core-elasticsearch</module>
+		<module>modules/coredeux-core-mongodb</module>
+		<module>modules/coredeux-core-redis</module>
+		<!-- <module>examples/coredeux-demo</module> -->
     </modules>
 
     <build>

@@ -5,8 +5,10 @@ import java.util.Map;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
 
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.service.CoredeuxService;
@@ -24,6 +26,13 @@ import org.apache.poi.EncryptedDocumentException;
 @AutoConfiguration(after = CoredeuxAutoConfiguration.class)
 @ConditionalOnClass(CoredeuxImportService.class)
 public class CoredeuxImportAutoConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean
+    CoredeuxImportProperties coredeuxImportProperties(CoredeuxProperties coredeuxProperties,
+            Environment environment) {
+        return new CoredeuxImportProperties(coredeuxProperties, environment);
+    }
 
     @Bean
     @ConditionalOnMissingBean

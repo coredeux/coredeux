@@ -323,7 +323,6 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
         return predicates;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     protected Predicate buildPredicate(SearchParams searchParam, CriteriaBuilder criteriaBuilder, Root<?> root) {
         String field = normalizeRequired(searchParam.getField(), "Search field must not be blank");
         String comparator = normalizeRequired(searchParam.getComparator(),

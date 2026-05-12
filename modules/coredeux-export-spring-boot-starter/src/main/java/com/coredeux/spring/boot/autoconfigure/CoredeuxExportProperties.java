@@ -1,8 +1,11 @@
 package com.coredeux.spring.boot.autoconfigure;
 
+import java.util.Locale;
+
 import org.springframework.core.env.Environment;
 
 import com.coredeux.core.config.CoredeuxProperties;
+import com.coredeux.export.model.ExportFormat;
 
 public final class CoredeuxExportProperties {
 
@@ -39,6 +42,15 @@ public final class CoredeuxExportProperties {
 
     public int getWorkerDelayMs() {
         return integer("worker.delay-ms", 5000);
+    }
+
+    public ExportFormat defaultFormat() {
+        String value = string("default-format", ExportFormat.TEXT.name());
+        try {
+            return ExportFormat.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            return ExportFormat.TEXT;
+        }
     }
 
     private String environmentValue(String propertyName) {

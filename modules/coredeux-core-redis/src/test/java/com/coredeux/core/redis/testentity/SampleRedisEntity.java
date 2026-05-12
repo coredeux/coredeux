@@ -1,10 +1,7 @@
 package com.coredeux.core.redis.testentity;
 
-import org.springframework.data.annotation.Id;
-
 public class SampleRedisEntity {
 
-    @Id
     private String id;
 
     private String name;

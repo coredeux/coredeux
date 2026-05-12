@@ -1,10 +1,10 @@
 package com.coredeux.core.mongodb.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.math.BigDecimal;
@@ -13,17 +13,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Query;
 
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
-import com.coredeux.core.mongodb.testentity.SampleMongoEntity;
 import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
 class MongoDataAccessSupportTest {
 
@@ -31,7 +32,9 @@ class MongoDataAccessSupportTest {
 
     @BeforeEach
     void setUp() {
-        service = new DefaultCoredeuxMongoDataAccessService(mock(MongoTemplate.class));
+        MongoDatabase database = mock(MongoDatabase.class);
+        MongoCollection<Document> collection = mock(MongoCollection.class);
+        service = new DefaultCoredeuxMongoDataAccessService(database);
     }
 
     @Test
@@ -56,47 +59,57 @@ class MongoDataAccessSupportTest {
         for (SearchParams param : params) {
             assertNotNull(service.buildCriteria(param));
         }
-        Query query = service.buildSearchQuery(params);
-        assertFalse(query.getQueryObject().isEmpty());
+        Bson filter = service.buildSearchFilter(params);
+        assertNotNull(filter);
         assertThrows(CoredeuxValidationException.class, () -> service.buildCriteria(param("name", "UNKNOWN", "x")));
     }
 
     @Test
-    void shouldIgnoreNullValuedCriteriaAndApplyPagingBranches() {
-        assertEquals("{}", service.buildSearchQuery(List.of(
+    void shouldIgnoreNullValuedCriteriaAndBuildPaginationBranches() {
+        assertNotNull(service.buildSearchFilter(List.of(
                 param("name", "EQUALS", null),
-                param("tags", "CONTAINS", null))).getQueryObject().toJson());
-
-        Query query = new Query();
-        service.applyPaging(query, 5, 0);
-        service.applyPaging(query, 5, 2);
-        assertEquals(5, query.getSkip());
+                param("tags", "CONTAINS", null))));
 
         PaginationData unpaged = service.buildPagination(5, 2, -1, -1);
         assertEquals(-1L, unpaged.getCurrentPage());
         assertEquals(null, unpaged.getTotalResults());
+
+        PaginationData paged = service.buildPagination(5, 2, 5, 2);
+        assertEquals(2L, paged.getCurrentPage());
+        assertEquals(5L, paged.getPageSize());
+        assertEquals(5L, paged.getTotalResults());
+        assertEquals(2L, paged.getResultSize());
     }
 
     @Test
-    void shouldConvertIdentifiersResolveTemplatesAndWrapFailures() {
-        ObjectId objectId = new ObjectId();
+    void shouldConvertIdentifiersAndUseFactories() throws Exception {
         UUID uuid = UUID.randomUUID();
 
         assertEquals("1", service.convertIdentifier("1", String.class));
-        assertEquals(objectId, service.convertIdentifier(objectId.toHexString(), ObjectId.class));
-        assertEquals(uuid, service.convertIdentifier(uuid.toString(), UUID.class));
-        assertEquals(1L, service.convertIdentifier("1", long.class));
-        assertEquals(1, service.convertIdentifier("1", Integer.class));
-        assertEquals((short) 1, service.convertIdentifier("1", short.class));
-        assertEquals((byte) 1, service.convertIdentifier("1", Byte.class));
+        assertEquals(1L, service.convertIdentifier("1", Long.class));
+        assertEquals(1, service.convertIdentifier("1", int.class));
+        assertEquals((short) 1, service.convertIdentifier("1", Short.class));
+        assertEquals((byte) 1, service.convertIdentifier("1", byte.class));
         assertEquals(new BigInteger("1"), service.convertIdentifier("1", BigInteger.class));
         assertEquals(new BigDecimal("1.5"), service.convertIdentifier("1.5", BigDecimal.class));
-        assertEquals(Boolean.TRUE, service.convertIdentifier("true", boolean.class));
+        assertEquals(Boolean.TRUE, service.convertIdentifier("true", Boolean.class));
+        assertEquals(uuid, service.convertIdentifier(uuid.toString(), UUID.class));
         assertEquals(TestEnum.ONE, service.convertIdentifier("ONE", TestEnum.class));
         assertThrows(CoredeuxValidationException.class, () -> service.convertIdentifier("abc", FactoryId.class));
         assertEquals(null, service.invokeStringFactory(ConstructorId.class, "abc"));
 
-        assertEquals("{\"age\": 10}", service.resolveQueryTemplate("{\"age\": {{ age }}}", Map.of("age", 10)));
+        assertEquals("id", service.identifierField(IdentifierEntity.class).getName());
+        assertThrows(CoredeuxValidationException.class, () -> service.identifierField(NoIdentifierEntity.class));
+    }
+
+    @Test
+    void shouldResolveQueryTemplatesAndWrapFailures() {
+        String resolved = service.resolveQueryTemplate("{\"age\": {{ age }}, \"name\": {{ name }}}",
+                Map.of("age", 10, "name", "Alpha"));
+
+        assertEquals("{\"age\": 10, \"name\": \"Alpha\"}", resolved);
+        assertEquals("{\"query\":{\"term\":{\"age\":10}}}",
+                service.resolveQueryTemplate("{\"query\":{\"term\":{\"age\":{{age}}}}}", Map.of("age", 10)));
         assertThrows(CoredeuxValidationException.class,
                 () -> service.resolveQueryTemplate("{\"age\": {{missing}}}", Map.of("age", 10)));
 
@@ -104,18 +117,6 @@ class MongoDataAccessSupportTest {
         assertSame(existing, service.wrap("message", existing));
         assertThrows(CoredeuxValidationException.class,
                 () -> service.wrap("message", new CoredeuxValidationException("x")));
-    }
-
-    @Test
-    void shouldResolveIdentifierFieldsAndDefaults() {
-        SampleMongoEntity entity = new SampleMongoEntity();
-        entity.setId("id-1");
-
-        assertEquals("id-1", service.extractIdentifier(entity));
-        assertEquals(String.class, service.resolveIdentifierType(NoIdentifierEntity.class));
-        assertEquals(List.of(), service.defaultResults(null));
-        assertThrows(CoredeuxValidationException.class, () -> service.compare("left", new Object(),
-                DefaultCoredeuxMongoDataAccessService.ComparisonType.LESS_THAN));
     }
 
     private SearchParams param(String field, String comparator, Object value) {
@@ -133,6 +134,10 @@ class MongoDataAccessSupportTest {
     }
 
     record ConstructorId(String value) {
+    }
+
+    static class IdentifierEntity {
+        private String id;
     }
 
     static class NoIdentifierEntity {

@@ -25,7 +25,9 @@ import com.coredeux.impex.service.impl.ImportEntityTargetService;
 class CoredeuxImportAutoConfigurationTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withConfiguration(AutoConfigurations.of(CoredeuxImportAutoConfiguration.class))
+            .withConfiguration(AutoConfigurations.of(CoredeuxAutoConfiguration.class,
+                    CoredeuxRequestContextAutoConfiguration.class,
+                    CoredeuxImportAutoConfiguration.class))
             .withBean(CoredeuxService.class, this::sampleCoredeuxService)
             .withBean(EntityDefinitionRegistry.class, this::sampleEntityDefinitionRegistry)
             .withBean(CoredeuxReflectionHelperService.class, DefaultCoredeuxReflectionHelperService::new);
@@ -33,11 +35,18 @@ class CoredeuxImportAutoConfigurationTest {
     @Test
     void registersImportBeans() {
         contextRunner.run(context -> assertThat(context)
+                .hasSingleBean(CoredeuxImportProperties.class)
                 .hasSingleBean(CoredeuxTextImportParser.class)
                 .hasSingleBean(CoredeuxExcelImportParser.class)
                 .hasSingleBean(ImportValueHandlerResolver.class)
                 .hasSingleBean(ImportEntityTargetService.class)
                 .hasSingleBean(CoredeuxImportService.class));
+    }
+
+    @Test
+    void readsDefaultParserFromCoredeuxYaml() {
+        contextRunner.run(context -> assertThat(context.getBean(CoredeuxImportProperties.class).defaultParser())
+                .isEqualTo("excel"));
     }
 
     @SuppressWarnings("unused")

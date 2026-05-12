@@ -1,30 +1,23 @@
 package com.coredeux.core.mongodb.service.impl;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.bson.types.ObjectId;
-import org.springframework.beans.BeanUtils;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.BasicQuery;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ReflectionUtils;
 
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
@@ -32,12 +25,36 @@ import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
+
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.lt;
+import static com.mongodb.client.model.Filters.lte;
+import static com.mongodb.client.model.Filters.ne;
+import static com.mongodb.client.model.Filters.nin;
+import static com.mongodb.client.model.Filters.not;
+import static com.mongodb.client.model.Filters.regex;
 
 /**
  * MongoDB-backed implementation of {@link CoredeuxDataAccessService}.
  */
-@Service("defaultCoredeuxMongoDataAccessService")
 public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccessService {
 
     private static final Set<String> SUPPORTED_COMPARATORS = Set.of(
@@ -58,76 +75,107 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
             "NOTCONTAINS");
 
     private static final Pattern TEMPLATE_PATTERN = Pattern.compile("\\{\\{\\s*([A-Za-z0-9_.-]+)\\s*}}");
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private final MongoTemplate mongoTemplate;
+    private final MongoDatabase database;
+    private final ObjectMapper objectMapper;
+    private final ConcurrentMap<Class<?>, Field> identifierFieldCache = new ConcurrentHashMap<>();
 
-    public DefaultCoredeuxMongoDataAccessService(MongoTemplate mongoTemplate) {
-        this.mongoTemplate = Objects.requireNonNull(mongoTemplate, "mongoTemplate");
+    public DefaultCoredeuxMongoDataAccessService(MongoClient mongoClient, String databaseName) {
+        this(Objects.requireNonNull(mongoClient, "mongoClient").getDatabase(databaseName), new ObjectMapper());
+    }
+
+    public DefaultCoredeuxMongoDataAccessService(MongoDatabase database) {
+        this(database, new ObjectMapper());
+    }
+
+    DefaultCoredeuxMongoDataAccessService(MongoDatabase database, ObjectMapper objectMapper) {
+        this.database = Objects.requireNonNull(database, "database");
+        this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper");
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> T load(String id, Class<T> type) {
         validateLoadInput(id, type);
         try {
             Object convertedId = convertIdentifier(id, resolveIdentifierType(type));
-            T entity = mongoTemplate.findById(convertedId, type);
-            return entity;
+            Document document = collection(type).find(filterById(type, convertedId)).first();
+            return document == null ? null : fromDocument(normalizeDocumentId(document, type), type);
         } catch (RuntimeException exception) {
             throw wrap("Unable to load entity of type " + type.getName() + " for identifier '" + id + "'", exception);
         }
     }
 
     @Override
-    @Transactional
     public <T> String save(T entity) {
         validateEntity(entity, "save");
         try {
-            T saved = mongoTemplate.save(entity);
-            Object identifier = extractIdentifier(saved);
-            return identifier == null ? null : String.valueOf(identifier);
+            Field idField = identifierField(entity.getClass());
+            Object identifier = extractIdentifier(entity);
+            if (identifier == null || (identifier instanceof String stringIdentifier && stringIdentifier.isBlank())) {
+                identifier = generateIdentifier(entity.getClass(), idField);
+                setIdentifier(entity, identifier);
+            }
+            Document document = toDocument(entity);
+            document.put("_id", normalizeMongoId(identifier, idField.getType()));
+            collection(entity.getClass()).replaceOne(filterById(entity.getClass(),
+                    normalizeMongoId(identifier, idField.getType())),
+                    document, new com.mongodb.client.model.ReplaceOptions().upsert(true));
+            return String.valueOf(identifier);
         } catch (RuntimeException exception) {
             throw wrap("Unable to save entity of type " + entity.getClass().getName(), exception);
         }
     }
 
     @Override
-    @Transactional
     public <T> void update(T entity) {
         validateEntity(entity, "update");
-        requireIdentifier(entity, "update");
         try {
-            mongoTemplate.save(entity);
+            Object identifier = requireIdentifier(entity, "update");
+            Document document = toDocument(entity);
+            document.put("_id", normalizeMongoId(identifier, identifierField(entity.getClass()).getType()));
+            UpdateResult result = collection(entity.getClass()).replaceOne(filterById(entity.getClass(),
+                    normalizeMongoId(identifier, identifierField(entity.getClass()).getType())), document,
+                    new com.mongodb.client.model.ReplaceOptions().upsert(false));
+            if (result.getMatchedCount() == 0L) {
+                throw new CoredeuxDataAccessException("No MongoDB document found for identifier " + identifier);
+            }
         } catch (RuntimeException exception) {
             throw wrap("Unable to update entity of type " + entity.getClass().getName(), exception);
         }
     }
 
     @Override
-    @Transactional
     public <T> void remove(T entity) {
         validateEntity(entity, "remove");
-        requireIdentifier(entity, "remove");
         try {
-            mongoTemplate.remove(entity);
+            Object identifier = requireIdentifier(entity, "remove");
+            DeleteResult result = collection(entity.getClass()).deleteOne(filterById(entity.getClass(),
+                    normalizeMongoId(identifier, identifierField(entity.getClass()).getType())));
+            if (result.getDeletedCount() == 0L) {
+                throw new CoredeuxDataAccessException("No MongoDB document found for identifier " + identifier);
+            }
         } catch (RuntimeException exception) {
             throw wrap("Unable to remove entity of type " + entity.getClass().getName(), exception);
         }
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> loadAll(List<SearchParams> params, Class<T> type, int pageSize, int currentPage) {
         validateSearchType(type);
         try {
-            Query countQuery = buildSearchQuery(params);
-            long totalResults = mongoTemplate.count(new Query(), type);
-            long filteredResults = mongoTemplate.count(countQuery, type);
+            Bson filter = buildSearchFilter(params);
+            MongoCollection<Document> collection = collection(type);
+            long totalResults = collection.countDocuments();
+            long filteredResults = collection.countDocuments(filter);
 
-            Query dataQuery = buildSearchQuery(params);
-            applyPaging(dataQuery, pageSize, currentPage);
-            List<T> results = mongoTemplate.find(dataQuery, type);
+            List<T> results = new ArrayList<>();
+            FindIterable<Document> documents = collection.find(filter);
+            if (isPagingEnabled(pageSize, currentPage)) {
+                documents = documents.skip(Math.max(currentPage - 1, 0) * pageSize).limit(pageSize);
+            }
+            for (Document document : documents) {
+                results.add(fromDocument(normalizeDocumentId(document, type), type));
+            }
 
             return SearchResult.<T>builder()
                     .results(defaultResults(results))
@@ -144,18 +192,24 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
             int currentPage) {
         validateQueryInput(query, type);
         try {
             String resolvedQuery = resolveQueryTemplate(query, params);
-            Query countQuery = new BasicQuery(resolvedQuery);
-            long totalResults = mongoTemplate.count(countQuery, type);
+            Document filterDocument = Document.parse(resolvedQuery);
+            MongoCollection<Document> collection = collection(type);
+            long totalResults = collection.countDocuments(filterDocument);
 
-            Query dataQuery = new BasicQuery(resolvedQuery);
-            applyPaging(dataQuery, pageSize, currentPage);
-            List<T> results = mongoTemplate.find(dataQuery, type);
+            FindIterable<Document> documents = collection.find(filterDocument);
+            if (isPagingEnabled(pageSize, currentPage)) {
+                documents = documents.skip(Math.max(currentPage - 1, 0) * pageSize).limit(pageSize);
+            }
+
+            List<T> results = new ArrayList<>();
+            for (Document document : documents) {
+                results.add(fromDocument(normalizeDocumentId(document, type), type));
+            }
 
             return SearchResult.<T>builder()
                     .results(defaultResults(results))
@@ -167,15 +221,14 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> void refresh(T entity) {
         validateEntity(entity, "refresh");
         Object identifier = requireIdentifier(entity, "refresh");
         try {
             @SuppressWarnings("unchecked")
-            T refreshed = (T) mongoTemplate.findById(identifier, entity.getClass());
+            T refreshed = (T) load(String.valueOf(identifier), entity.getClass());
             if (refreshed != null) {
-                BeanUtils.copyProperties(refreshed, entity);
+                copyProperties(refreshed, entity);
             }
         } catch (RuntimeException exception) {
             throw wrap("Unable to refresh entity of type " + entity.getClass().getName(), exception);
@@ -208,35 +261,41 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
         }
     }
 
-    protected Query buildSearchQuery(List<SearchParams> params) {
-        if (CollectionUtils.isEmpty(params)) {
-            return new Query();
+    protected <T> SearchResult<T> defaultSearchResult(List<T> results, long totalResults, long filteredResults,
+            int pageSize, int currentPage) {
+        return SearchResult.<T>builder()
+                .results(defaultResults(results))
+                .pagination(buildPagination(totalResults, filteredResults, pageSize, currentPage))
+                .build();
+    }
+
+    protected <T> List<T> defaultResults(List<T> results) {
+        return results == null || results.isEmpty() ? List.of() : results;
+    }
+
+    protected Bson buildSearchFilter(List<SearchParams> params) {
+        if (params == null || params.isEmpty()) {
+            return new Document();
         }
 
-        List<Criteria> criteria = new ArrayList<>();
+        List<Bson> filters = new ArrayList<>();
         for (SearchParams searchParams : params) {
             if (searchParams == null) {
                 continue;
             }
-            Criteria criterion = buildCriteria(searchParams);
+            Bson criterion = buildCriteria(searchParams);
             if (criterion != null) {
-                criteria.add(criterion);
+                filters.add(criterion);
             }
         }
 
-        if (criteria.isEmpty()) {
-            return new Query();
+        if (filters.isEmpty()) {
+            return new Document();
         }
-        Query query = new Query();
-        if (criteria.size() == 1) {
-            query.addCriteria(criteria.get(0));
-            return query;
-        }
-        query.addCriteria(new Criteria().andOperator(criteria.toArray(Criteria[]::new)));
-        return query;
+        return filters.size() == 1 ? filters.get(0) : and(filters);
     }
 
-    protected Criteria buildCriteria(SearchParams searchParams) {
+    protected Bson buildCriteria(SearchParams searchParams) {
         String field = normalizeRequired(searchParams.getField(), "Search field must not be blank");
         String comparator = normalizeRequired(searchParams.getComparator(), "Search comparator must not be blank")
                 .toUpperCase(Locale.ROOT);
@@ -247,52 +306,48 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
         }
 
         return switch (comparator) {
-            case "EQUALS" -> value != null ? Criteria.where(field).is(value) : null;
-            case "NOTEQUALS" -> value != null ? Criteria.where(field).ne(value) : null;
-            case "STARTSWITH" -> value != null ? Criteria.where(field).regex("^" + Pattern.quote(String.valueOf(value))) : null;
-            case "ANYWHERECS" -> value != null
-                    ? Criteria.where(field).regex(".*" + Pattern.quote(String.valueOf(value)) + ".*")
-                    : null;
+            case "EQUALS" -> value != null ? eq(resolveFieldName(field), value) : null;
+            case "NOTEQUALS" -> value != null ? ne(resolveFieldName(field), value) : null;
+            case "STARTSWITH" -> value != null ? regex(resolveFieldName(field), "^" + Pattern.quote(String.valueOf(value))) : null;
+            case "ANYWHERECS" -> value != null ? regex(resolveFieldName(field), ".*" + Pattern.quote(String.valueOf(value)) + ".*") : null;
             case "ANYWHERE" -> value != null
-                    ? Criteria.where(field).regex(Pattern.compile(".*" + Pattern.quote(String.valueOf(value)) + ".*",
+                    ? regex(resolveFieldName(field), Pattern.compile(".*" + Pattern.quote(String.valueOf(value)) + ".*",
                             Pattern.CASE_INSENSITIVE))
                     : null;
-            case "LESSTHANOREQUAL" -> value != null ? compare(field, value, ComparisonType.LESS_THAN_OR_EQUAL) : null;
-            case "LESSTHAN" -> value != null ? compare(field, value, ComparisonType.LESS_THAN) : null;
-            case "GREATERTHANOREQUAL" -> value != null ? compare(field, value, ComparisonType.GREATER_THAN_OR_EQUAL) : null;
-            case "GREATERTHAN" -> value != null ? compare(field, value, ComparisonType.GREATER_THAN) : null;
-            case "ISNULL" -> Criteria.where(field).is(null);
-            case "ISNOTNULL" -> Criteria.where(field).ne(null).exists(true);
-            case "ISEMPTY" -> Criteria.where(field).size(0);
-            case "ISNOTEMPTY" -> Criteria.where(field).not().size(0);
-            case "CONTAINS" -> value != null ? Criteria.where(field).in(value) : null;
-            case "NOTCONTAINS" -> value != null ? Criteria.where(field).nin(value) : null;
+            case "LESSTHANOREQUAL" -> value != null ? lte(resolveFieldName(field), value) : null;
+            case "LESSTHAN" -> value != null ? lt(resolveFieldName(field), value) : null;
+            case "GREATERTHANOREQUAL" -> value != null ? gte(resolveFieldName(field), value) : null;
+            case "GREATERTHAN" -> value != null ? gt(resolveFieldName(field), value) : null;
+            case "ISNULL" -> eq(resolveFieldName(field), null);
+            case "ISNOTNULL" -> exists(resolveFieldName(field));
+            case "ISEMPTY" -> eq(resolveFieldName(field), "");
+            case "ISNOTEMPTY" -> not(eq(resolveFieldName(field), ""));
+            case "CONTAINS" -> value != null ? contains(resolveFieldName(field), value) : null;
+            case "NOTCONTAINS" -> value != null ? notContains(resolveFieldName(field), value) : null;
             default -> throw new CoredeuxValidationException("Unsupported search comparator: " + comparator);
         };
     }
 
-    protected Criteria compare(String field, Object value, ComparisonType comparisonType) {
-        if (!(value instanceof Comparable<?> comparable)) {
-            throw new CoredeuxValidationException(
-                    "Comparator value must implement Comparable: " + value.getClass().getName());
+    protected Bson contains(String field, Object value) {
+        if (value instanceof Collection<?> collection) {
+            return in(field, collection);
         }
-        return switch (comparisonType) {
-            case LESS_THAN -> Criteria.where(field).lt(comparable);
-            case LESS_THAN_OR_EQUAL -> Criteria.where(field).lte(comparable);
-            case GREATER_THAN -> Criteria.where(field).gt(comparable);
-            case GREATER_THAN_OR_EQUAL -> Criteria.where(field).gte(comparable);
-        };
+        return in(field, value);
     }
 
-    protected String normalizeRequired(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new CoredeuxValidationException(message);
+    protected Bson notContains(String field, Object value) {
+        if (value instanceof Collection<?> collection) {
+            return nin(field, collection);
         }
-        return value.trim();
+        return nin(field, value);
     }
 
-    protected <T> List<T> defaultResults(List<T> results) {
-        return CollectionUtils.isEmpty(results) ? List.of() : results;
+    protected String resolveFieldName(String field) {
+        return "id".equals(field) ? "_id" : field;
+    }
+
+    protected boolean isPagingEnabled(int pageSize, int currentPage) {
+        return pageSize > 0 && currentPage > 0;
     }
 
     protected PaginationData buildPagination(long totalResults, long resultSize, int pageSize, int currentPage) {
@@ -307,15 +362,17 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
         return paginationData;
     }
 
-    protected void applyPaging(Query query, int pageSize, int currentPage) {
-        if (!isPagingEnabled(pageSize, currentPage)) {
-            return;
+    protected String normalizeRequired(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new CoredeuxValidationException(message);
         }
-        query.with(PageRequest.of(Math.max(currentPage - 1, 0), pageSize));
+        return value.trim();
     }
 
-    protected boolean isPagingEnabled(int pageSize, int currentPage) {
-        return pageSize > 0 && currentPage > 0;
+    protected Object extractIdentifier(Object entity) {
+        Field field = identifierField(entity.getClass());
+        ReflectionUtils.makeAccessible(field);
+        return ReflectionUtils.getField(field, entity);
     }
 
     protected Object requireIdentifier(Object entity, String action) {
@@ -326,40 +383,41 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
         return identifier;
     }
 
-    protected Object extractIdentifier(Object entity) {
-        Field field = findIdentifierField(entity.getClass());
-        if (field == null) {
-            return null;
-        }
+    protected void setIdentifier(Object entity, Object identifier) {
+        Field field = identifierField(entity.getClass());
         ReflectionUtils.makeAccessible(field);
-        return ReflectionUtils.getField(field, entity);
+        ReflectionUtils.setField(field, entity, convertIdentifier(String.valueOf(identifier), field.getType()));
     }
 
-    protected Class<?> resolveIdentifierType(Class<?> type) {
-        Field field = findIdentifierField(type);
-        if (field != null) {
-            return field.getType();
-        }
-        return String.class;
+    protected Field identifierField(Class<?> type) {
+        return identifierFieldCache.computeIfAbsent(type, this::findIdentifierField);
     }
 
     protected Field findIdentifierField(Class<?> type) {
-        Field annotatedField = findAnnotatedField(type, Id.class);
-        if (annotatedField != null) {
-            return annotatedField;
+        Field annotated = findAnnotatedField(type, "org.springframework.data.annotation.Id");
+        if (annotated != null) {
+            return annotated;
         }
         Field fallback = ReflectionUtils.findField(type, "id");
+        if (fallback == null) {
+            throw new CoredeuxValidationException("Unable to resolve identifier field for class: " + type.getName());
+        }
         return fallback;
     }
 
-    protected Field findAnnotatedField(Class<?> type, Class<? extends java.lang.annotation.Annotation> annotationType) {
+    protected Field findAnnotatedField(Class<?> type, String annotationClassName) {
         final Field[] found = new Field[1];
         ReflectionUtils.doWithFields(type, field -> {
-            if (field.isAnnotationPresent(annotationType)) {
+            if (fieldHasAnnotation(field, annotationClassName)) {
                 found[0] = field;
             }
         });
         return found[0];
+    }
+
+    protected Class<?> resolveIdentifierType(Class<?> type) {
+        Field field = identifierFieldCache.computeIfAbsent(type, this::findIdentifierField);
+        return field == null ? String.class : field.getType();
     }
 
     protected Object convertIdentifier(String value, Class<?> targetType) {
@@ -405,16 +463,49 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
         throw new CoredeuxValidationException("Unsupported identifier type: " + targetType.getName());
     }
 
+    protected Object generateIdentifier(Class<?> type, Field idField) {
+        Class<?> targetType = idField.getType();
+        if (targetType == String.class) {
+            return new ObjectId().toHexString();
+        }
+        if (targetType == ObjectId.class) {
+            return new ObjectId();
+        }
+        if (targetType == UUID.class) {
+            return UUID.randomUUID();
+        }
+        if (targetType == Long.class || targetType == long.class) {
+            return new ObjectId().getTimestamp() & 0x7fffffffL;
+        }
+        if (targetType == Integer.class || targetType == int.class) {
+            return (int) (new ObjectId().getTimestamp() & 0x7fffffffL);
+        }
+        if (targetType == Short.class || targetType == short.class) {
+            return (short) (new ObjectId().getTimestamp() & 0x7fff);
+        }
+        if (targetType == Byte.class || targetType == byte.class) {
+            return (byte) (new ObjectId().getTimestamp() & 0x7f);
+        }
+        if (targetType == BigInteger.class) {
+            return BigInteger.valueOf(new ObjectId().getTimestamp() & 0x7fffffffL);
+        }
+        if (targetType == BigDecimal.class) {
+            return BigDecimal.valueOf(new ObjectId().getTimestamp() & 0x7fffffffL);
+        }
+        return new ObjectId().toHexString();
+    }
+
     protected Object invokeStringFactory(Class<?> targetType, String value) {
         for (String methodName : List.of("valueOf", "of", "fromString")) {
             try {
                 return targetType.getMethod(methodName, String.class).invoke(null, value);
             } catch (ReflectiveOperationException exception) {
-                // keep searching
+                // continue
             }
         }
         try {
-            return targetType.getConstructor(String.class).newInstance(value);
+            Constructor<?> constructor = targetType.getConstructor(String.class);
+            return constructor.newInstance(value);
         } catch (ReflectiveOperationException exception) {
             return null;
         }
@@ -440,10 +531,119 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
 
     protected String toJsonLiteral(Object value) {
         try {
-            return OBJECT_MAPPER.writeValueAsString(value);
-        } catch (Exception exception) {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException exception) {
             throw new CoredeuxValidationException("Unable to serialize query parameter value", exception);
         }
+    }
+
+    protected Document toDocument(Object entity) {
+        return normalizeDocument(Document.parse(writeJson(entity)));
+    }
+
+    protected <T> T fromDocument(Document document, Class<T> type) {
+        try {
+            return objectMapper.readValue(document.toJson(), type);
+        } catch (Exception exception) {
+            throw new CoredeuxDataAccessException("Unable to deserialize Mongo document for type " + type.getName(),
+                    exception);
+        }
+    }
+
+    protected Document normalizeDocumentId(Document document, Class<?> type) {
+        Document copy = new Document(document);
+        if (copy.containsKey("_id")) {
+            copy.put("id", copy.remove("_id"));
+        }
+        return copy;
+    }
+
+    protected Document normalizeDocument(Document document) {
+        if (document.containsKey("id") && !document.containsKey("_id")) {
+            document.put("_id", document.get("id"));
+        }
+        return document;
+    }
+
+    protected String writeJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception exception) {
+            throw new CoredeuxDataAccessException("Unable to serialize Mongo entity", exception);
+        }
+    }
+
+    protected MongoCollection<Document> collection(Class<?> type) {
+        return database.getCollection(collectionName(type));
+    }
+
+    protected String collectionName(Class<?> type) {
+        String annotationName = mongoDocumentName(type);
+        return annotationName == null || annotationName.isBlank() ? type.getSimpleName() : annotationName;
+    }
+
+    protected String mongoDocumentName(Class<?> type) {
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends java.lang.annotation.Annotation> documentType =
+                    (Class<? extends java.lang.annotation.Annotation>) Class
+                            .forName("org.springframework.data.mongodb.core.mapping.Document");
+            java.lang.annotation.Annotation annotation = type.getAnnotation(documentType);
+            if (annotation == null) {
+                return null;
+            }
+            Object value = annotationTypeValue(annotation);
+            return value == null ? null : String.valueOf(value);
+        } catch (ClassNotFoundException exception) {
+            return null;
+        }
+    }
+
+    protected Object annotationTypeValue(java.lang.annotation.Annotation annotation) {
+        try {
+            return annotation.annotationType().getMethod("value").invoke(annotation);
+        } catch (ReflectiveOperationException exception) {
+            return null;
+        }
+    }
+
+    protected Bson filterById(Class<?> type, Object identifier) {
+        return eq("_id", identifier);
+    }
+
+    protected Object normalizeMongoId(Object identifier, Class<?> targetType) {
+        if (targetType == ObjectId.class && identifier instanceof String stringIdentifier
+                && ObjectId.isValid(stringIdentifier)) {
+            return new ObjectId(stringIdentifier);
+        }
+        return identifier;
+    }
+
+    protected boolean fieldHasAnnotation(Field field, String annotationClassName) {
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends java.lang.annotation.Annotation> annotationType =
+                    (Class<? extends java.lang.annotation.Annotation>) Class.forName(annotationClassName);
+            return field.isAnnotationPresent(annotationType);
+        } catch (ClassNotFoundException exception) {
+            return false;
+        }
+    }
+
+    protected void copyProperties(Object source, Object target) {
+        ReflectionUtils.doWithFields(source.getClass(), field -> {
+            if (java.lang.reflect.Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+                return;
+            }
+            Field targetField = ReflectionUtils.findField(target.getClass(), field.getName());
+            if (targetField == null) {
+                return;
+            }
+            ReflectionUtils.makeAccessible(field);
+            ReflectionUtils.makeAccessible(targetField);
+            Object value = ReflectionUtils.getField(field, source);
+            ReflectionUtils.setField(targetField, target, value);
+        });
     }
 
     protected CoredeuxDataAccessException wrap(String message, RuntimeException exception) {
@@ -456,10 +656,53 @@ public class DefaultCoredeuxMongoDataAccessService implements CoredeuxDataAccess
         return new CoredeuxDataAccessException(message, exception);
     }
 
-    protected enum ComparisonType {
-        LESS_THAN,
-        LESS_THAN_OR_EQUAL,
-        GREATER_THAN,
-        GREATER_THAN_OR_EQUAL
+    protected static final class ReflectionUtils {
+        private ReflectionUtils() {
+        }
+
+        static void makeAccessible(Field field) {
+            if (field != null) {
+                field.setAccessible(true);
+            }
+        }
+
+        static Object getField(Field field, Object target) {
+            try {
+                return field.get(target);
+            } catch (IllegalAccessException exception) {
+                throw new CoredeuxDataAccessException("Unable to read field " + field.getName(), exception);
+            }
+        }
+
+        static void setField(Field field, Object target, Object value) {
+            try {
+                field.set(target, value);
+            } catch (IllegalAccessException exception) {
+                throw new CoredeuxDataAccessException("Unable to write field " + field.getName(), exception);
+            }
+        }
+
+        static Field findField(Class<?> type, String name) {
+            Class<?> current = type;
+            while (current != null && current != Object.class) {
+                for (Field field : current.getDeclaredFields()) {
+                    if (field.getName().equals(name)) {
+                        return field;
+                    }
+                }
+                current = current.getSuperclass();
+            }
+            return null;
+        }
+
+        static void doWithFields(Class<?> type, java.util.function.Consumer<Field> consumer) {
+            Class<?> current = type;
+            while (current != null && current != Object.class) {
+                for (Field field : current.getDeclaredFields()) {
+                    consumer.accept(field);
+                }
+                current = current.getSuperclass();
+            }
+        }
     }
 }

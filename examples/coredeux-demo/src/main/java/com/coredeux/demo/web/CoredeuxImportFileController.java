@@ -20,6 +20,7 @@ import com.coredeux.impex.parser.excel.CoredeuxExcelImportParser;
 import com.coredeux.impex.parser.exception.CoredeuxImportParserException;
 import com.coredeux.impex.parser.text.CoredeuxTextImportParser;
 import com.coredeux.impex.service.CoredeuxImportService;
+import com.coredeux.spring.boot.autoconfigure.CoredeuxImportProperties;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,11 +36,15 @@ public class CoredeuxImportFileController {
     private final CoredeuxImportService coredeuxImportService;
     private final CoredeuxTextImportParser textImportParser;
     private final CoredeuxExcelImportParser excelImportParser;
+    private final CoredeuxImportProperties coredeuxImportProperties;
 
-    public CoredeuxImportFileController(CoredeuxImportService coredeuxImportService) {
+    public CoredeuxImportFileController(CoredeuxImportService coredeuxImportService,
+            CoredeuxTextImportParser textImportParser, CoredeuxExcelImportParser excelImportParser,
+            CoredeuxImportProperties coredeuxImportProperties) {
         this.coredeuxImportService = coredeuxImportService;
-        this.textImportParser = new CoredeuxTextImportParser();
-        this.excelImportParser = new CoredeuxExcelImportParser();
+        this.textImportParser = textImportParser;
+        this.excelImportParser = excelImportParser;
+        this.coredeuxImportProperties = coredeuxImportProperties;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -64,7 +69,7 @@ public class CoredeuxImportFileController {
         if (file == null || file.isEmpty()) {
             throw new CoredeuxImportParserException("Import file must not be empty");
         }
-        if (isExcel(file)) {
+        if (isExcel(file) || "excel".equalsIgnoreCase(defaultParser())) {
             try (InputStream inputStream = file.getInputStream()) {
                 return excelImportParser.parse(inputStream, sheetName);
             }
@@ -89,6 +94,15 @@ public class CoredeuxImportFileController {
      */
     private String normalize(String value) {
         return value == null ? "" : value.toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Reads the configured fallback parser from META-INF/coredeux.yml. Text stays
+     * the safe default when the property is missing or blank.
+     */
+    private String defaultParser() {
+        String parser = coredeuxImportProperties == null ? null : coredeuxImportProperties.defaultParser();
+        return parser == null || parser.isBlank() ? "text" : parser.trim();
     }
 
     /**

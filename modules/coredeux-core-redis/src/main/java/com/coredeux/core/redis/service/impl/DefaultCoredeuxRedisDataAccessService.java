@@ -17,14 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.annotation.Id;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ReflectionUtils;
-
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.search.PaginationData;
@@ -42,7 +34,6 @@ import io.lettuce.core.api.sync.RedisCommands;
 /**
  * Redis-backed implementation of {@link CoredeuxDataAccessService}.
  */
-@Service("defaultCoredeuxRedisDataAccessService")
 public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccessService {
 
     private static final Set<String> SUPPORTED_COMPARATORS = Set.of(
@@ -71,14 +62,13 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     private final String keyPrefix;
 
     public DefaultCoredeuxRedisDataAccessService(StatefulRedisConnection<String, String> connection,
-            @Value("${coredeux.redis.default-key-prefix:}") String keyPrefix) {
+            String keyPrefix) {
         Objects.requireNonNull(connection, "connection");
         this.commands = connection.sync();
         this.keyPrefix = keyPrefix == null ? "" : keyPrefix.trim();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> T load(String id, Class<T> type) {
         validateLoadInput(id, type);
         try {
@@ -90,7 +80,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    @Transactional
     public <T> String save(T entity) {
         validateEntity(entity, "save");
         try {
@@ -109,7 +98,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    @Transactional
     public <T> void update(T entity) {
         validateEntity(entity, "update");
         try {
@@ -121,7 +109,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    @Transactional
     public <T> void remove(T entity) {
         validateEntity(entity, "remove");
         try {
@@ -133,7 +120,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> loadAll(List<SearchParams> params, Class<T> type, int pageSize, int currentPage) {
         validateSearchType(type);
         try {
@@ -158,7 +144,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
             int currentPage) {
         validateQueryInput(query, type);
@@ -181,7 +166,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    @Transactional(readOnly = true)
     public <T> void refresh(T entity) {
         validateEntity(entity, "refresh");
         try {
@@ -579,7 +563,7 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     protected Field findIdentifierField(Class<?> type) {
-        Field annotated = findAnnotatedField(type, Id.class);
+        Field annotated = findAnnotatedField(type, "org.springframework.data.annotation.Id");
         if (annotated != null) {
             return annotated;
         }
@@ -590,10 +574,10 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
         return fallback;
     }
 
-    protected Field findAnnotatedField(Class<?> type, Class<? extends java.lang.annotation.Annotation> annotationType) {
+    protected Field findAnnotatedField(Class<?> type, String annotationClassName) {
         final Field[] found = new Field[1];
         ReflectionUtils.doWithFields(type, field -> {
-            if (field.isAnnotationPresent(annotationType)) {
+            if (fieldHasAnnotation(field, annotationClassName)) {
                 found[0] = field;
             }
         });
@@ -666,5 +650,103 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     protected record RedisQueryRequest(List<SearchParams> filters) {
+    }
+
+    private boolean fieldHasAnnotation(Field field, String annotationClassName) {
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends java.lang.annotation.Annotation> annotationType =
+                    (Class<? extends java.lang.annotation.Annotation>) Class.forName(annotationClassName);
+            return field.isAnnotationPresent(annotationType);
+        } catch (ClassNotFoundException exception) {
+            return false;
+        }
+    }
+
+    protected static final class BeanUtils {
+        private BeanUtils() {
+        }
+
+        static void copyProperties(Object source, Object target) {
+            if (source == null || target == null) {
+                return;
+            }
+            ReflectionUtils.doWithFields(source.getClass(), field -> {
+                if (java.lang.reflect.Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+                    return;
+                }
+                Field targetField = ReflectionUtils.findField(target.getClass(), field.getName());
+                if (targetField == null) {
+                    return;
+                }
+                ReflectionUtils.makeAccessible(field);
+                ReflectionUtils.makeAccessible(targetField);
+                Object value = ReflectionUtils.getField(field, source);
+                ReflectionUtils.setField(targetField, target, value);
+            });
+        }
+    }
+
+    protected static final class CollectionUtils {
+        private CollectionUtils() {
+        }
+
+        static boolean isEmpty(java.util.Collection<?> collection) {
+            return collection == null || collection.isEmpty();
+        }
+
+        static boolean isEmpty(java.util.Map<?, ?> map) {
+            return map == null || map.isEmpty();
+        }
+    }
+
+    protected static final class ReflectionUtils {
+        private ReflectionUtils() {
+        }
+
+        static void makeAccessible(Field field) {
+            if (field != null) {
+                field.setAccessible(true);
+            }
+        }
+
+        static Object getField(Field field, Object target) {
+            try {
+                return field.get(target);
+            } catch (IllegalAccessException exception) {
+                throw new CoredeuxDataAccessException("Unable to read field " + field.getName(), exception);
+            }
+        }
+
+        static void setField(Field field, Object target, Object value) {
+            try {
+                field.set(target, value);
+            } catch (IllegalAccessException exception) {
+                throw new CoredeuxDataAccessException("Unable to write field " + field.getName(), exception);
+            }
+        }
+
+        static Field findField(Class<?> type, String name) {
+            Class<?> current = type;
+            while (current != null && current != Object.class) {
+                for (Field field : current.getDeclaredFields()) {
+                    if (field.getName().equals(name)) {
+                        return field;
+                    }
+                }
+                current = current.getSuperclass();
+            }
+            return null;
+        }
+
+        static void doWithFields(Class<?> type, java.util.function.Consumer<Field> consumer) {
+            Class<?> current = type;
+            while (current != null && current != Object.class) {
+                for (Field field : current.getDeclaredFields()) {
+                    consumer.accept(field);
+                }
+                current = current.getSuperclass();
+            }
+        }
     }
 }

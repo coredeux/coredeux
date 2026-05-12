@@ -1,0 +1,3 @@
+coredeux:
+  import:
+    default-parser: excel

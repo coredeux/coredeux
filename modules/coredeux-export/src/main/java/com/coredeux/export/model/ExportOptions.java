@@ -15,8 +15,7 @@ public class ExportOptions implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Builder.Default
-    private ExportFormat format = ExportFormat.TEXT;
+    private ExportFormat format;
 
     private Integer limit;
 

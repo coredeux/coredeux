@@ -147,10 +147,10 @@ public class CoredeuxExportAutoConfiguration {
             ExportFieldPathParser fieldPathParser, ExportValueResolver valueResolver,
             CoredeuxExportStorageServiceResolver storageServiceResolver,
             CoredeuxExportLogServiceResolver logServiceResolver, CoredeuxExportQueueService queueService,
-            TextExportWriter textWriter, ExcelExportWriter excelWriter) {
+            TextExportWriter textWriter, ExcelExportWriter excelWriter, CoredeuxExportProperties properties) {
         return new DefaultCoredeuxExportService(coredeuxService, reflectionHelperService, entityDefinitionRegistry,
                 fieldPathParser, valueResolver, storageServiceResolver, logServiceResolver, queueService, textWriter,
-                excelWriter);
+                excelWriter, properties.defaultFormat());
     }
 
     @Bean

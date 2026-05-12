@@ -37,14 +37,17 @@ import jakarta.persistence.Persistence;
 public final class CoredeuxNativeRuntime implements AutoCloseable {
 
     private final EntityDefinitionRegistry entityDefinitionRegistry;
+    private final CoredeuxProperties coredeuxProperties;
     private final PostgresCoredeuxJpaDataAccessService customerDataAccessService;
     private final CoredeuxService coredeuxService;
     private final CoredeuxModuleService coredeuxModuleService;
 
-    private CoredeuxNativeRuntime(EntityDefinitionRegistry entityDefinitionRegistry,
+    private CoredeuxNativeRuntime(CoredeuxProperties coredeuxProperties,
+            EntityDefinitionRegistry entityDefinitionRegistry,
             PostgresCoredeuxJpaDataAccessService customerDataAccessService,
             CoredeuxService coredeuxService,
             CoredeuxModuleService coredeuxModuleService) {
+        this.coredeuxProperties = coredeuxProperties;
         this.entityDefinitionRegistry = entityDefinitionRegistry;
         this.customerDataAccessService = customerDataAccessService;
         this.coredeuxService = coredeuxService;
@@ -118,8 +121,15 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
                 () -> null,
                 moduleHandlers);
 
-        return new CoredeuxNativeRuntime(registry, customerDataAccess, new DefaultCoredeuxService(strategy),
+        return new CoredeuxNativeRuntime(coredeuxProperties, registry, customerDataAccess,
+                new DefaultCoredeuxService(strategy),
                 moduleService);
+    }
+
+    public CoredeuxProperties coredeuxProperties() {
+        // Exposes the loaded YAML configuration so examples can consult framework
+        // defaults such as the import parser or export format.
+        return coredeuxProperties;
     }
 
     public EntityDefinitionRegistry entityDefinitionRegistry() {

@@ -24,6 +24,7 @@ import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.log.impl.DefaultCoredeuxExportLogServiceResolver;
 import com.coredeux.export.queue.impl.FileCoredeuxExportQueueService;
+import com.coredeux.export.model.ExportFormat;
 import com.coredeux.export.service.CoredeuxExportService;
 import com.coredeux.export.storage.impl.DefaultCoredeuxExportStorageServiceResolver;
 import com.coredeux.export.storage.impl.DefaultCoredeuxFileSystemExportStorageService;
@@ -61,6 +62,7 @@ class CoredeuxExportAutoConfigurationTest {
             DefaultCoredeuxExportWorker worker = context.getBean(DefaultCoredeuxExportWorker.class);
             assertFalse((Boolean) ReflectionTestUtils.getField(worker, "enabled"));
             assertEquals(3, ReflectionTestUtils.getField(worker, "maxParallel"));
+            assertEquals(ExportFormat.TEXT, context.getBean(CoredeuxExportProperties.class).defaultFormat());
 
             FileCoredeuxExportQueueService queueService = context.getBean(FileCoredeuxExportQueueService.class);
             assertEquals("target/coredeux-export-test/queue/export-queue.json",
