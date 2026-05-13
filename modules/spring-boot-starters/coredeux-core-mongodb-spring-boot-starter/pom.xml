@@ -7,16 +7,16 @@
 
     <parent>
         <groupId>com.coredeux</groupId>
-        <artifactId>coredeux-parent</artifactId>
+        <artifactId>coredeux-spring-boot-starters</artifactId>
         <version>0.1.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>coredeux-import</artifactId>
+    <artifactId>coredeux-core-mongodb-spring-boot-starter</artifactId>
     <packaging>jar</packaging>
 
-    <name>Coredeux Import</name>
-    <description>Import and impex-style capabilities built on top of Coredeux Core</description>
+    <name>Coredeux Core MongoDB Spring Boot Starter</name>
+    <description>Spring Boot starter for the MongoDB-backed CoredeuxDataAccessService implementation</description>
 
     <dependencies>
         <dependency>
@@ -24,41 +24,37 @@
             <artifactId>coredeux-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- JSON parser for map import handler -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <!-- Excel parser support -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.20.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

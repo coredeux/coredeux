@@ -12,11 +12,11 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>coredeux-import</artifactId>
+    <artifactId>coredeux-core-spring-boot-starter</artifactId>
     <packaging>jar</packaging>
 
-    <name>Coredeux Import</name>
-    <description>Import and impex-style capabilities built on top of Coredeux Core</description>
+    <name>Coredeux Core Spring Boot Starter</name>
+    <description>Spring Boot auto-configuration for Coredeux</description>
 
     <dependencies>
         <dependency>
@@ -24,24 +24,37 @@
             <artifactId>coredeux-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- JSON parser for map import handler -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <!-- Excel parser support -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <version>3.2.5</version>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>6.1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>6.1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>6.1.8</version>
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>3.2.5</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
