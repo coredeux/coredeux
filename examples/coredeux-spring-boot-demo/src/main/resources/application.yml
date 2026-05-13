@@ -30,7 +30,10 @@ coredeux:
     redis:
       host: ${COREDEUX_DEMO_REDIS_HOST:localhost}
       port: ${COREDEUX_DEMO_REDIS_PORT:6379}
+  import:
+    default-parser: text
   export:
+    default-format: TEXT
     log:
       default-service: defaultCoredeuxExportLogService
     storage:
