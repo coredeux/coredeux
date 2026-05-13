@@ -1,6 +1,6 @@
 spring:
   application:
-    name: coredeux-demo
+    name: coredeux-spring-boot-demo
   datasource:
     url: jdbc:postgresql://${COREDEUX_DEMO_DB_HOST:localhost}:${COREDEUX_DEMO_DB_PORT:5432}/${COREDEUX_DEMO_DB_NAME:coredeux_oss}
     driver-class-name: org.postgresql.Driver

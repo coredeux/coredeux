@@ -6,18 +6,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
-        <relativePath/>
+        <groupId>com.coredeux</groupId>
+        <artifactId>coredeux-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <groupId>com.coredeux</groupId>
-    <artifactId>coredeux-demo</artifactId>
+    <artifactId>coredeux-spring-boot-demo</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Coredeux Demo</name>
+    <name>Coredeux Spring Boot Demo</name>
     <description>Standalone Spring Boot demo application for Coredeux starters</description>
 
     <properties>
@@ -28,36 +28,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.elasticsearch.client</groupId>
-                <artifactId>elasticsearch-rest-client</artifactId>
-                <version>7.17.4</version>
-            </dependency>
-            <dependency>
-                <groupId>co.elastic.clients</groupId>
-                <artifactId>elasticsearch-java</artifactId>
-                <version>7.17.4</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-smile</artifactId>
-                <version>2.13.3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-cbor</artifactId>
-                <version>2.13.3</version>
-            </dependency>
-            <dependency>
-                <groupId>io.lettuce</groupId>
-                <artifactId>lettuce-core</artifactId>
-                <version>6.1.9.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.mongodb</groupId>
-                <artifactId>mongodb-driver-sync</artifactId>
-                <version>5.0.1</version>
-            </dependency>
             <dependency>
                 <groupId>jakarta.json</groupId>
                 <artifactId>jakarta.json-api</artifactId>
@@ -99,76 +69,47 @@
         </dependency>
         <dependency>
             <groupId>com.coredeux</groupId>
-            <artifactId>coredeux-core-jpa</artifactId>
+            <artifactId>coredeux-core-jpa-spring-boot-starter</artifactId>
             <version>${coredeux.version}</version>
         </dependency>
         <dependency>
             <groupId>com.coredeux</groupId>
-            <artifactId>coredeux-core-jdbc</artifactId>
+            <artifactId>coredeux-core-jdbc-spring-boot-starter</artifactId>
             <version>${coredeux.version}</version>
         </dependency>
         <dependency>
             <groupId>com.coredeux</groupId>
-            <artifactId>coredeux-core-elasticsearch</artifactId>
+            <artifactId>coredeux-core-elasticsearch-spring-boot-starter</artifactId>
             <version>${coredeux.version}</version>
         </dependency>
         <dependency>
             <groupId>com.coredeux</groupId>
-            <artifactId>coredeux-core-mongodb</artifactId>
+            <artifactId>coredeux-core-mongodb-spring-boot-starter</artifactId>
             <version>${coredeux.version}</version>
         </dependency>
         <dependency>
             <groupId>com.coredeux</groupId>
-            <artifactId>coredeux-core-redis</artifactId>
+            <artifactId>coredeux-core-redis-spring-boot-starter</artifactId>
             <version>${coredeux.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <version>3.2.5</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+            <version>3.2.5</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>co.elastic.clients</groupId>
-            <artifactId>elasticsearch-java</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-smile</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-cbor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.lettuce</groupId>
-            <artifactId>lettuce-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver-sync</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>42.7.3</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -193,6 +134,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <version>3.2.5</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -221,6 +163,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.2.5</version>
                 <executions>
                     <execution>
                         <goals>

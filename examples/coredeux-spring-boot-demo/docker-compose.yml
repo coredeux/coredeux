@@ -48,10 +48,10 @@ services:
       timeout: 5s
       retries: 30
 
-  coredeux-demo:
+  coredeux-spring-boot-demo:
     build:
       context: ../..
-      dockerfile: examples/coredeux-demo/Dockerfile
+      dockerfile: examples/coredeux-spring-boot-demo/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy

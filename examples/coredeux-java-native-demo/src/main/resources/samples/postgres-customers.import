@@ -1,4 +1,4 @@
-# Plain Java import sample for examples/coredeux-java-native.
+# Plain Java import sample for examples/coredeux-java-native-demo.
 # Re-running this file is safe because UPSERT resolves customers by the unique id column.
 OPTIONS(passes=1,failFast=false,validateOnly=false)
 

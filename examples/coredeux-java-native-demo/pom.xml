@@ -12,10 +12,10 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>coredeux-java-native</artifactId>
+    <artifactId>coredeux-java-native-demo</artifactId>
     <packaging>jar</packaging>
 
-    <name>Coredeux Java Native Examples</name>
+    <name>Coredeux Java Native Demo</name>
     <description>Standalone Java examples for consuming Coredeux Core without Spring</description>
 
     <dependencies>
