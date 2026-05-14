@@ -24,6 +24,18 @@ That is the shape the framework is trying to keep stable.
 An application says what it wants to do. Coredeux takes care of the repeatable
 parts around that intent.
 
+```mermaid
+flowchart LR
+  A[Application intent] --> B[Coredeux service]
+  B --> C[Lifecycle context]
+  C --> D[Validators]
+  C --> E[Hooks]
+  C --> F[Audit]
+  C --> G[Import / Export]
+  C --> H[Data access adapter]
+  H --> I[(SQL / MongoDB / Elasticsearch / Redis)]
+```
+
 ## Why It Exists
 
 Enterprise systems keep rebuilding the same kinds of behavior:
@@ -57,6 +69,14 @@ Future enterprise apps will not just be built by humans. They will also need to
 work with agents, and those agents will need a framework they can understand
 and use. Coredeux is trying to be that framework.
 
+```mermaid
+flowchart LR
+  Agent[Claude / Codex / AI agent] -->|writes or extends| App[Enterprise app]
+  App -->|uses| Core[Coredeux contracts]
+  Core -->|governs| Ops[CRUD / import / export / workflow]
+  Ops --> Backend[(Database / file / search / queue)]
+```
+
 ## What The Repository Shows Today
 
 This repository contains the current building blocks for that direction:
@@ -73,6 +93,32 @@ This repository contains the current building blocks for that direction:
 These pieces are useful on their own, but they are also part of a larger story:
 Coredeux is shaping the common mechanics so enterprise apps stay predictable as
 they grow.
+
+```mermaid
+flowchart TB
+  subgraph Hosts
+    SB[Spring Boot demo]
+    NV[Native demo]
+    ST[Spring Boot starters]
+  end
+
+  subgraph Framework
+    C[coredeux-core]
+    I[coredeux-import]
+    E[coredeux-export]
+  end
+
+  subgraph Backends
+    JPA[JPA]
+    JDBC[JDBC]
+    MONGO[MongoDB]
+    ES[Elasticsearch]
+    REDIS[Redis]
+  end
+
+  Hosts --> Framework
+  Framework --> Backends
+```
 
 ## What Coredeux Is Not
 
