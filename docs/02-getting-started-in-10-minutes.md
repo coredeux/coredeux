@@ -28,22 +28,6 @@ If you want the plain Java version of the same story, see:
 - [Native Getting Started In 10 Minutes](miscellaneous/01-native-getting-started-in-10-minutes.md)
 - [Native Tour Of The Demo](miscellaneous/02-native-tour-of-the-demo.md)
 
-## The Story
-
-Imagine an enterprise application with a PostgreSQL-backed core, additional
-MongoDB, Redis, and Elasticsearch examples, and a repeatable way to import,
-export, validate, and audit data.
-
-In a normal application, those concerns often drift apart.
-
-Coredeux keeps them on one framework path:
-
-```text
-entity definition -> lifecycle context -> modules -> backend adapter
-```
-
-This guide shows that path in action through the Spring Boot demo.
-
 ## What You Need
 
 For the quick start, you only need Docker.
