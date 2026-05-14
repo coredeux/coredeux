@@ -1,7 +1,7 @@
-# Coredeux Raw JSON Import Tutorial
+# Coredeux Raw JSON Import
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Import](README.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import Technical Details](tech-details.md)
+[Previous: Coredeux Import Overview](01-overview.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Text And Excel File Import](03-text-and-excel-file-import.md)
 <!-- docs-nav-end -->
 
 This guide teaches how to use `coredeux-import` directly with JSON.
@@ -11,7 +11,7 @@ another parser already knows how to produce an `ImportRequest`. You do not need
 the text import parser for this flow.
 
 If you are working from an import file instead of JSON, jump to
-[Coredeux Import File Tutorial](../import-parser/guide.md).
+[Text And Excel File Import](03-text-and-excel-file-import.md).
 
 The raw JSON flow is:
 
@@ -544,7 +544,7 @@ This delegates conversion to `legacyDateImportHandler`, which reads
 `metadata.dateFormat` and parses the string value into `java.util.Date`.
 
 The full reference implementation is documented (with source code) in
-[tech-details.md](tech-details.md) under "legacyDateImportHandler (java.util.Date)".
+[Import Reference](04-reference.md) under "legacyDateImportHandler (java.util.Date)".
 
 ## Complete Example
 
@@ -686,5 +686,5 @@ Those fixtures are deserialized and executed through `CoredeuxImportService`, so
 they verify the JSON contract rather than only testing Java builders.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Import](README.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import Technical Details](tech-details.md)
+[Previous: Coredeux Import Overview](01-overview.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Text And Excel File Import](03-text-and-excel-file-import.md)
 <!-- docs-nav-end -->

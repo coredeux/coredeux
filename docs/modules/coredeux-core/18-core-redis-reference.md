@@ -1,7 +1,7 @@
 # Coredeux Core Redis Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core MongoDB](17-core-mongodb-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import](../import/README.md)
+[Previous: Coredeux Core MongoDB](17-core-mongodb-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import](../coredeux-import/01-overview.md)
 <!-- docs-nav-end -->
 
 `coredeux-core-redis` is the Redis adapter for Coredeux.
@@ -176,5 +176,5 @@ Use `coredeux-core-redis` when you want:
 - module-level wiring that still fits the Coredeux SPI
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core MongoDB](17-core-mongodb-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import](../import/README.md)
+[Previous: Coredeux Core MongoDB](17-core-mongodb-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import](../coredeux-import/01-overview.md)
 <!-- docs-nav-end -->

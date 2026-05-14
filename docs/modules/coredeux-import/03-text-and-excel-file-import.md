@@ -1,13 +1,13 @@
-# Coredeux Import File Tutorial
+# Text And Excel File Import
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Import Parser](README.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Export](../export/README.md)
+[Previous: Coredeux Raw JSON Import](02-raw-json-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Export Overview](../coredeux-export/01-overview.md)
 <!-- docs-nav-end -->
 
 This guide teaches the Coredeux import file format from scratch.
 
 If you want the JSON request form that the file parser ultimately produces,
-see [Coredeux Raw JSON Import Tutorial](../import/guide.md).
+see [Coredeux Raw JSON Import](02-raw-json-import.md).
 
 An import file is a readable table-shaped source that describes:
 
@@ -885,14 +885,14 @@ Implemented now:
 Not implemented yet:
 
 - CSV dialects
-- multipart handling inside the parser module itself; applications can expose
+- multipart handling at the parser layer itself; applications expose
   file-upload endpoints around the parser, as the demo does
 - source-location tracking beyond parser error line numbers
-- automatic execution inside the parser module itself
+- automatic execution without building an `ImportRequest` first
 
 The parser should remain a compiler into `ImportRequest`, not a second import
 engine.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Import Parser](README.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Export](../export/README.md)
+[Previous: Coredeux Raw JSON Import](02-raw-json-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Export Overview](../coredeux-export/01-overview.md)
 <!-- docs-nav-end -->

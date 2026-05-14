@@ -68,9 +68,9 @@ Documentation for optional or standalone Coredeux modules.
 - [Core Elasticsearch Reference](modules/coredeux-core/16-core-elasticsearch-reference.md)
 - [Core MongoDB Reference](modules/coredeux-core/17-core-mongodb-reference.md)
 - [Core Redis Reference](modules/coredeux-core/18-core-redis-reference.md)
-- [Import Module](modules/import/guide.md)
-- [Import Parser Module](modules/import-parser/guide.md)
-- [Export Module](modules/export/guide.md)
+- [Import Overview](modules/coredeux-import/01-overview.md)
+- [Import Reference](modules/coredeux-import/04-reference.md)
+- [Export Overview](modules/coredeux-export/01-overview.md)
 
 ### Guides
 

@@ -1,7 +1,7 @@
 # Platform Documentation
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Export Guide](../modules/export/guide.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Project](../project/README.md)
+[Previous: Coredeux Export Reference](../coredeux-export/04-reference.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Project](../project/README.md)
 <!-- docs-nav-end -->
 
 This section captures framework-level extension guidance for contributors who are changing Coredeux itself.
@@ -16,8 +16,8 @@ Use this platform section when you are adding or changing framework features tha
 
 - [Coredeux Core Reference](../modules/coredeux-core/13-reference.md)
 - [Coredeux Core Module System](../modules/coredeux-core/05-modules.md)
-- [Coredeux Core Module Guide](../modules/core/README.md)
+- [Coredeux Core Module Guide](../modules/coredeux-core/README.md)
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Export Guide](../modules/export/guide.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Project](../project/README.md)
+[Previous: Coredeux Export Reference](../coredeux-export/04-reference.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Project](../project/README.md)
 <!-- docs-nav-end -->

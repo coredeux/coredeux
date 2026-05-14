@@ -1,7 +1,7 @@
-# Coredeux Import Technical Details
+# Coredeux Import Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Raw JSON Import Tutorial](guide.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import Parser](../import-parser/README.md)
+[Previous: Text And Excel File Import](03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Platform Documentation](../../platform/README.md)
 <!-- docs-nav-end -->
 
 This document explains the current `coredeux-import` module in enough detail for
@@ -11,8 +11,9 @@ the original implementation chat.
 ## Purpose
 
 `coredeux-import` executes structured import requests against Coredeux-managed
-entities. The module is intentionally based on a JSON/DTO contract. It does not
-parse files or text formats directly.
+entities. The module is intentionally based on a JSON/DTO contract. It also
+ships the text and Excel parsers that compile import files into that JSON/DTO
+contract.
 
 Supported today:
 
@@ -25,10 +26,12 @@ Supported today:
   entity references.
 - Row-level error collection.
 - Collection write modes: `replace`, `append`, and `clear`.
+- Text file parsing through `CoredeuxTextImportParser`.
+- Workbook parsing through `CoredeuxExcelImportParser`.
 
 Not supported directly by `coredeux-import` today:
 
-- File parsing, CSV, XLSX, multipart uploads, or raw import script parsing.
+- CSV as a standalone format and multipart uploads.
 - Nested object or array conversion by the default handler.
 - Partial collection removal by value.
 
@@ -36,13 +39,13 @@ The intended architecture is:
 
 ```text
 coredeux-import
-  file/text parsing: PSV-style text and XLS/XLSX
+  text and workbook parsing
         -> ImportRequest JSON/DTO contract
         -> validation + execution through Coredeux core services
 ```
 
-See [Import File Tutorial](../import-parser/guide.md) for the text parser that
-converts PSV-style import files into `ImportRequest`.
+See [Text And Excel File Import](03-text-and-excel-file-import.md) for the
+text and workbook parsers that convert import files into `ImportRequest`.
 
 ## Module Location
 
@@ -61,26 +64,35 @@ modules/coredeux-import/src/test/java/com/coredeux/impex
 Demo integration lives in:
 
 ```text
-examples/coredeux-demo
+examples/coredeux-spring-boot-demo
+examples/coredeux-java-native-demo
 ```
 
-The demo exposes:
+The Spring Boot demo exposes:
 
 - `POST /api/import/validate`
 - `POST /api/import`
 
 See:
 
-- `examples/coredeux-demo/src/main/java/com/coredeux/demo/web/CoredeuxImportController.java`
-- `examples/coredeux-demo/postman/coredeux-demo-import.postman_collection.json`
+- `examples/coredeux-spring-boot-demo/src/main/java/com/coredeux/demo/web/CoredeuxImportController.java`
+- `examples/coredeux-spring-boot-demo/postman/coredeux-spring-boot-demo-import.postman_collection.json`
+
+The native demo shows the same import engine without Spring:
+
+- `examples/coredeux-java-native-demo/src/main/java/com/coredeux/examples/nativejava/postgres/PostgresCustomerImportMain.java`
+- `examples/coredeux-java-native-demo/src/main/resources/samples/postgres-customers.import`
 
 ## Dependency Model
 
 `coredeux-import` depends directly on:
 
 - `coredeux-core`
-- Spring context
+- Jackson databind
+- Apache POI
 - Lombok
+
+Spring Boot integration lives in `coredeux-import-spring-boot-starter`.
 
 It does not depend on a persistence implementation directly. Persistence comes
 from the application through `CoredeuxService`, which in turn uses the configured
@@ -93,7 +105,7 @@ Applications using the import module must include:
 - a persistence adapter module such as `coredeux-core-jpa`
 - entity definitions in the normal Coredeux registry
 
-Example demo dependency:
+Example module dependency:
 
 ```xml
 <dependency>
@@ -1200,7 +1212,7 @@ Example column:
 }
 ```
 
-Example implementation (from `examples/coredeux-demo`):
+Example implementation (from `examples/coredeux-spring-boot-demo`):
 
 ```java
 package com.coredeux.demo.imports;
@@ -1672,12 +1684,12 @@ from `ISNULL`.
 
 ## Demo API
 
-The demo module wires `coredeux-import` into the Spring Boot app.
+The Spring Boot demo wires `coredeux-import` into the app.
 
 Controller:
 
 ```text
-modules/coredeux-demo/src/main/java/com/coredeux/demo/web/CoredeuxImportController.java
+modules/coredeux-spring-boot-demo/src/main/java/com/coredeux/demo/web/CoredeuxImportController.java
 ```
 
 Endpoints:
@@ -1697,7 +1709,14 @@ Response status:
 The demo Postman import collection is:
 
 ```text
-modules/coredeux-demo/postman/coredeux-demo-import.postman_collection.json
+modules/coredeux-spring-boot-demo/postman/coredeux-spring-boot-demo-import.postman_collection.json
+```
+
+The native demo exposes the same parser-to-request flow without Spring:
+
+```text
+examples/coredeux-java-native-demo/src/main/java/com/coredeux/examples/nativejava/postgres/PostgresCustomerImportMain.java
+examples/coredeux-java-native-demo/src/main/resources/samples/postgres-customers.import
 ```
 
 It includes:
@@ -1884,8 +1903,8 @@ Important tests:
 
 ```text
 modules/coredeux-import/src/test/java/com/coredeux/impex/service/impl/DefaultCoredeuxImportServiceTest.java
-modules/coredeux-demo/src/test/java/com/coredeux/demo/web/CoredeuxImportControllerTest.java
-modules/coredeux-demo/src/test/java/com/coredeux/demo/CoredeuxDemoApplicationTest.java
+modules/coredeux-spring-boot-demo/src/test/java/com/coredeux/demo/web/CoredeuxImportControllerTest.java
+modules/coredeux-spring-boot-demo/src/test/java/com/coredeux/demo/CoredeuxDemoApplicationTest.java
 ```
 
 The import service tests cover:
@@ -1920,7 +1939,7 @@ The demo tests cover:
 Run the relevant reactor slice:
 
 ```text
-mvn -pl modules/coredeux-import,modules/coredeux-demo -am test
+mvn -pl modules/coredeux-import,modules/coredeux-spring-boot-demo -am test
 ```
 
 ## Common Failure Cases
@@ -1991,17 +2010,24 @@ Steps:
 
 ### Add File Parsing
 
-Do not add file parsing into `coredeux-import`. Add a separate module that
-parses files into `ImportRequest`.
+File parsing already lives inside `coredeux-import` today. Extend the module
+when you need another file format, and let the host application wrap it with
+upload endpoints, command handlers, or other delivery adapters.
 
-The parser module can own concerns such as:
+The parser code inside `coredeux-import` can own concerns such as:
 
 - PSV/CSV/XLSX parsing.
 - escaping.
 - header syntax.
-- multipart upload handling.
 - raw text line parsing.
 - richer collection value representation.
+
+The host application can own concerns such as:
+
+- multipart upload handling.
+- request authentication.
+- route design.
+- progress tracking.
 
 ## Design Notes
 
@@ -2035,5 +2061,5 @@ The parser module can own concerns such as:
 - Public API examples should stay aligned with the Postman collection.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Raw JSON Import Tutorial](guide.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import Parser](../import-parser/README.md)
+[Previous: Text And Excel File Import](03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Platform Documentation](../../platform/README.md)
 <!-- docs-nav-end -->
