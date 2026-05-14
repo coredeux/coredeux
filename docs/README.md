@@ -1,4 +1,4 @@
-# Coredeux Documentation
+# Coredeux
 
 <!-- docs-nav-start -->
 [Documentation Home](README.md) | [Next: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
