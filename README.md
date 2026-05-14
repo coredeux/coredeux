@@ -1,14 +1,27 @@
 # Coredeux
 
-Coredeux is a modular Java framework for building applications that need a
+Coredeux is a modular Java framework for enterprise applications that need a
 shared, governed way to handle common work.
 
-It is not just a CRUD library. It helps you build software where data changes,
-imports, exports, validation, hooks, audit, and automation all follow the same
-style instead of being scattered across every service.
+It is not just a CRUD library. It is meant to sit around the application so
+the recurring parts of enterprise software stay consistent instead of being
+scattered across every service.
 
-The goal is simple: application code should express intent, and Coredeux should
-take care of the repeatable parts around that intent.
+The goal is simple: application code should express intent, and Coredeux
+should take care of the repeatable parts around that intent.
+
+## The Simple Mental Model
+
+Think of Coredeux like this:
+
+```text
+define the capability -> apply framework behavior -> run it through the right backend
+```
+
+That is the shape the framework is trying to keep stable.
+
+An application says what it wants to do. Coredeux takes care of the repeatable
+parts around that intent.
 
 ## What Coredeux Is For
 
@@ -16,46 +29,12 @@ Coredeux is useful when you want to:
 
 - keep business operations consistent across an application
 - reuse the same patterns for create, update, fetch, import, export, and
-  automation flows
+  workflow-style flows
 - avoid rewriting the same validation and hook logic in every service
 - swap backend implementations without changing the way the application talks
   to the framework
 - build toward agent-friendly capabilities that can be discovered and called
   through clear contracts
-
-## What Coredeux Is Not
-
-Coredeux is not a front-end application.
-
-It is not a CMS or portal suite in the old "everything in one box" sense.
-
-It is not trying to replace your domain model. Instead, it provides the
-runtime around your model so the same capability can be executed in a
-consistent way.
-
-## Simple Mental Model
-
-Think of Coredeux as:
-
-`define the capability -> apply framework behavior -> run it through the right backend`
-
-That means the framework can keep the public experience stable while the
-implementation behind it changes by module or storage type.
-
-Entity management is one part of that model, but not the whole story. Import,
-export, and future agent-facing tools sit in the same direction.
-
-Current lifecycle operations used across the framework are:
-
-- `CREATE`
-- `MODIFY`
-- `UPSERT`
-- `DELETE`
-- `FETCH`
-
-These lifecycle events are carried through the framework context so validators,
-hooks, audit handlers, and future module types all see the same operation
-model.
 
 ## Why It Exists
 
@@ -76,20 +55,18 @@ actions should follow the same framework contract as normal application calls.
 
 ## Is Coredeux Relevant In The Age Of Claude And Codex?
 
-Yes, because agents generate and operate workflows, while Coredeux hosts,
-validates, persists, imports, exports, and governs them.
-
-AI coding tools can produce application code quickly, but long-lived systems
-still need consistency beyond a single prompt session. Teams need stable
-conventions, repeatable module patterns, safe data access paths, import and
-export contracts, and examples that can be understood, reused, and extended.
+Yes. AI coding tools can produce application code quickly, but long-lived
+systems still need consistency beyond a single prompt session. Teams need
+stable conventions, repeatable module patterns, safe data access paths,
+import/export contracts, and examples that can be understood, reused, and
+extended.
 
 Coredeux is designed to be that agent-friendly application substrate for
 Java/Spring systems:
 
 - a framework for AI-assisted enterprise applications
-- a reference architecture for CRUD, search, import, export, and workflow-heavy
-  systems
+- a reference architecture for CRUD, search, import, export, and
+  workflow-heavy systems
 - a stable backend foundation that agents such as Codex and Claude can extend
   predictably
 - a demo platform that shows how new modules can be added without inventing the
@@ -98,81 +75,57 @@ Java/Spring systems:
   copy, run, test, and own
 
 The name Coredeux reflects that direction: a foundational core for data,
-services, workflow, and integration. In the agent era, Coredeux aims to be more
-than another Java utility framework. It is infrastructure that makes
+services, workflow, and integration. In the agent era, Coredeux aims to be
+more than another Java utility framework. It is infrastructure that makes
 agent-assisted development easier to trust: clear docs, predictable module
 conventions, working examples, clean tests, and room for AI-ready recipes such
 as "add a new entity module using this pattern."
-
-## Start Here
-
-If you are new to Coredeux, these are the two fastest paths into the project:
-
-- [First 10 Minutes With Coredeux](docs/guides/first-10-minutes.md): the quick,
-  Docker-first path for running `coredeux-demo` and trying CRUD, import, file
-  import, and export.
-- [Docker Demo Setup](docs/guides/docker-demo.md): the stack details for
-  PostgreSQL, MongoDB, Redis, Elasticsearch, and the demo application.
-- [Coredeux Demo Tour](docs/guides/demo-tour.md): a guided walk through the demo
-  app so you can see what was customized and how to extend the framework.
 
 ## What Is Included
 
 This repository includes the building blocks for that model:
 
-- `coredeux-core`
-  framework contracts and common runtime behavior
-- `coredeux-core-jpa`
-  JPA-based backend support, including:
-  - `defaultCoredeuxJpaDataAccessService` for generic JPA/Criteria usage
-  - `postgresCoredeuxJpaDataAccessService` for PostgreSQL JSONB/native-query scenarios
-- `coredeux-core-jdbc`
-  direct SQL / JDBC-backed support with `defaultCoredeuxJdbcDataAccessService`
-- `coredeux-core-elasticsearch`
-  Elasticsearch-backed support with `defaultCoredeuxElasticsearchDataAccessService`
-- `coredeux-core-mongodb`
-  MongoDB-backed backend support:
-  - `defaultCoredeuxMongoDataAccessService` for MongoTemplate-based CRUD, search, and query usage
-- `coredeux-core-redis`
-  Redis-backed backend support:
-  - `defaultCoredeuxRedisDataAccessService` for JSON-backed storage, CRUD, search, and query usage
-  - storage-oriented, not a cache abstraction
-- `coredeux-import`
+- `modules/coredeux-core`
+  core framework contracts and runtime behavior
+- `modules/coredeux-import`
   raw JSON import support plus text and Excel import-file parsing
-- `coredeux-export`
+- `modules/coredeux-export`
   export queueing, file generation, logs, and storage services
-- `examples/coredeux-demo`
+- `modules/coredeux-core-*`
+  native data-access implementations for JPA, JDBC, MongoDB, Elasticsearch,
+  and Redis
+- `modules/spring-boot-starters/*`
+  Spring Boot starter modules for Spring-based hosts
+- `examples/coredeux-spring-boot-demo`
   Spring Boot demo application that shows the framework in action
-  and includes examples for PostgreSQL, JDBC, MongoDB, Elasticsearch, and Redis
-  through the same generic CRUD controller
+- `examples/coredeux-java-native-demo`
+  native Java demo application that shows the same core stories without Spring
+- `docs/`
+  the hosted documentation site, including the numbered docs and demo tours
 
-## Future Direction
+## What Coredeux Is Not
 
-The roadmap includes MCP capabilities so agents can discover and call framework
-operations through governed tool contracts. Coredeux is also moving toward
-agent-aware implementations where agents become first-class framework citizens.
-That means identity, intent, permissions, and traceability should travel with
-the work instead of being bolted on later.
+Coredeux is not:
 
-## Documentation Map
+- a front-end application
+- a database
+- only Spring Boot
+- only plain Java
+- a single storage implementation
+- a finished platform with no more evolution
 
-The main documentation entry point is [docs/README.md](docs/README.md).
-The generated-site reading order is tracked in [docs/SUMMARY.md](docs/SUMMARY.md).
+The demos are examples of how to consume the framework. They are not the
+framework itself.
 
-Useful starting points:
+## Quick Links
 
-- [Architecture Overview](docs/architecture/overview.md)
-- [Entity Definitions](docs/configuration/entity-definitions.md)
-- [Module System](docs/features/modules.md)
-- [Adding A New Entity](docs/guides/add-new-entity.md)
-- [Core Module Reference](docs/modules/core/reference.md)
-- [Core JPA Module Reference](docs/modules/core-jpa/reference.md)
-- [Core Elasticsearch Module Reference](docs/modules/core-elasticsearch/reference.md)
-- [Core MongoDB Module Reference](docs/modules/core-mongodb/reference.md)
-- [Core Redis Module Reference](docs/modules/core-redis/reference.md)
-- [Import Tutorial](docs/modules/import/guide.md)
-- [Import File Tutorial](docs/modules/import-parser/guide.md)
-- [Export Guide](docs/modules/export/guide.md)
+- [Documentation Home](docs/README.md)
+- [What Is Coredeux?](docs/01-what-is-coredeux.md)
+- [Getting Started In 10 Minutes](docs/02-getting-started-in-10-minutes.md)
+- [Tour Of The Demo](docs/03-tour-of-the-demo.md)
+- [Coredeux Core Reference](docs/modules/coredeux-core/13-reference.md)
+- [Coredeux Import Reference](docs/modules/coredeux-import/04-reference.md)
+- [Coredeux Export Reference](docs/modules/coredeux-export/04-reference.md)
 
 ## Build
 
@@ -212,10 +165,16 @@ Run core Elasticsearch tests with dependencies:
 mvn -pl modules/coredeux-core-elasticsearch -am test
 ```
 
-Run the demo in Docker:
+Run the Spring Boot demo in Docker:
 
 ```powershell
-docker compose -f examples/coredeux-demo/docker-compose.yml up --build
+docker compose -f examples/coredeux-spring-boot-demo/docker-compose.yml up --build
+```
+
+Run the native demo:
+
+```powershell
+mvn -pl examples/coredeux-java-native-demo -am test
 ```
 
 ## Status
@@ -228,8 +187,8 @@ The framework is still evolving, but the core shape is already in place:
 - JPA, JDBC, Elasticsearch, MongoDB, Redis, and related backend adapters
 - agent-oriented direction in the roadmap
 
-The tutorials in `docs/guides/` are the best entry point if you want to see
-the framework in action before reading the module references.
+The numbered docs in `docs/` are the best entry point if you want to see the
+framework in action before reading the module references.
 
 ## License
 
