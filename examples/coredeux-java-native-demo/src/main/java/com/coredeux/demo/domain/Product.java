@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -51,6 +52,7 @@ public class Product extends Item {
     private BigDecimal price;
 
     @Column(name = "documentation_url")
+    @Convert(converter = UriAttributeConverter.class)
     private URI documentationUrl;
 
     @Column(nullable = false)

@@ -14,22 +14,18 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  data:
+    mongodb:
+      uri: mongodb://${COREDEUX_DEMO_MONGO_HOST:localhost}:${COREDEUX_DEMO_MONGO_PORT:27017}/${COREDEUX_DEMO_MONGO_DB:coredeux_oss}
+    redis:
+      host: ${COREDEUX_DEMO_REDIS_HOST:localhost}
+      port: ${COREDEUX_DEMO_REDIS_PORT:6379}
+  elasticsearch:
+    uris: http://${COREDEUX_DEMO_ELASTICSEARCH_HOST:localhost}:${COREDEUX_DEMO_ELASTICSEARCH_PORT:9200}
 
 coredeux:
   entities:
     config-location: classpath:coredeux-entities.yml
-  demo:
-    mongodb:
-      host: ${COREDEUX_DEMO_MONGO_HOST:localhost}
-      port: ${COREDEUX_DEMO_MONGO_PORT:27017}
-      database: ${COREDEUX_DEMO_MONGO_DB:coredeux_oss}
-    elasticsearch:
-      host: ${COREDEUX_DEMO_ELASTICSEARCH_HOST:localhost}
-      port: ${COREDEUX_DEMO_ELASTICSEARCH_PORT:9200}
-      scheme: ${COREDEUX_DEMO_ELASTICSEARCH_SCHEME:http}
-    redis:
-      host: ${COREDEUX_DEMO_REDIS_HOST:localhost}
-      port: ${COREDEUX_DEMO_REDIS_PORT:6379}
   import:
     default-parser: text
   export:

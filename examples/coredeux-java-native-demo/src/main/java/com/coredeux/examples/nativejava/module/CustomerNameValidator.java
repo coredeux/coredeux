@@ -6,7 +6,7 @@ import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.validation.CoredeuxEntityValidator;
 import com.coredeux.core.validation.ValidationError;
-import com.coredeux.examples.nativejava.domain.Customer;
+import com.coredeux.demo.domain.Customer;
 
 public class CustomerNameValidator implements CoredeuxEntityValidator<Customer> {
 

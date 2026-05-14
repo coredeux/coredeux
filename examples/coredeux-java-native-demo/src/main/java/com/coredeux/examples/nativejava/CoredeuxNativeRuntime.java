@@ -9,19 +9,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+import org.postgresql.ds.PGSimpleDataSource;
+
 import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.config.CoredeuxPropertiesLoader;
+import com.coredeux.core.elasticsearch.service.impl.DefaultCoredeuxElasticsearchDataAccessService;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
-import com.coredeux.core.elasticsearch.service.impl.DefaultCoredeuxElasticsearchDataAccessService;
 import com.coredeux.core.jdbc.service.impl.DefaultCoredeuxJdbcDataAccessService;
-import com.coredeux.core.mongodb.service.impl.DefaultCoredeuxMongoDataAccessService;
 import com.coredeux.core.jpa.service.impl.PostgresCoredeuxJpaDataAccessService;
-import com.coredeux.core.redis.service.impl.DefaultCoredeuxRedisDataAccessService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.module.impl.AuditModuleHandler;
 import com.coredeux.core.module.impl.HooksModuleHandler;
 import com.coredeux.core.module.impl.ValidatorsModuleHandler;
+import com.coredeux.core.mongodb.service.impl.DefaultCoredeuxMongoDataAccessService;
+import com.coredeux.core.redis.service.impl.DefaultCoredeuxRedisDataAccessService;
 import com.coredeux.core.registry.EntityDefinitionRegistries;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
@@ -45,13 +49,12 @@ import com.coredeux.export.log.impl.FileCoredeuxExportLogService;
 import com.coredeux.export.model.ExportFormat;
 import com.coredeux.export.queue.CoredeuxExportQueueService;
 import com.coredeux.export.queue.impl.FileCoredeuxExportQueueService;
-import com.coredeux.export.service.CoredeuxExportService;
 import com.coredeux.export.service.CoredeuxExportExecutionService;
+import com.coredeux.export.service.CoredeuxExportService;
 import com.coredeux.export.service.impl.DefaultCoredeuxExportService;
 import com.coredeux.export.service.impl.ExportFieldPathParser;
 import com.coredeux.export.service.impl.ExportValueFormatter;
 import com.coredeux.export.service.impl.ExportValueResolver;
-import com.coredeux.export.storage.CoredeuxExportStorageService;
 import com.coredeux.export.storage.CoredeuxExportStorageServiceResolver;
 import com.coredeux.export.storage.impl.DefaultCoredeuxExportStorageServiceResolver;
 import com.coredeux.export.storage.impl.DefaultCoredeuxFileSystemExportStorageService;
@@ -61,24 +64,19 @@ import com.coredeux.export.writer.TextExportWriter;
 import com.coredeux.impex.handler.ImportValueHandlerResolver;
 import com.coredeux.impex.handler.impl.DefaultCoredeuxImportValueHandler;
 import com.coredeux.impex.handler.impl.JsonMapImportHandler;
-import com.coredeux.impex.parser.excel.CoredeuxExcelImportParser;
-import com.coredeux.impex.parser.text.CoredeuxTextImportParser;
 import com.coredeux.impex.service.CoredeuxImportService;
 import com.coredeux.impex.service.impl.DefaultCoredeuxImportService;
 import com.coredeux.impex.service.impl.ImportEntityTargetService;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
-import org.apache.http.HttpHost;
-import org.elasticsearch.client.RestClient;
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import org.postgresql.ds.PGSimpleDataSource;
-
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
@@ -369,8 +367,10 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
     }
 
     private static MongoClient mongoClient(CoredeuxProperties coredeuxProperties) {
-        String host = stringValue(coredeuxProperties.string("demo.mongodb.host"), "localhost");
-        int port = intValue(coredeuxProperties.string("demo.mongodb.port"), 27017);
+        String host = value("COREDEUX_DEMO_MONGO_HOST", coredeuxProperties.string("demo.mongodb.host"),
+                "localhost");
+        int port = intValue(value("COREDEUX_DEMO_MONGO_PORT", coredeuxProperties.string("demo.mongodb.port"),
+                "27017"), 27017);
         return MongoClients.create("mongodb://" + host + ":" + port);
     }
 
@@ -379,15 +379,19 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
     }
 
     private static RestClient elasticsearchRestClient(CoredeuxProperties coredeuxProperties) {
-        String host = stringValue(coredeuxProperties.string("demo.elasticsearch.host"), "localhost");
-        int port = intValue(coredeuxProperties.string("demo.elasticsearch.port"), 9200);
-        String scheme = stringValue(coredeuxProperties.string("demo.elasticsearch.scheme"), "http");
+        String host = value("COREDEUX_DEMO_ELASTICSEARCH_HOST", coredeuxProperties.string("demo.elasticsearch.host"),
+                "localhost");
+        int port = intValue(value("COREDEUX_DEMO_ELASTICSEARCH_PORT",
+                coredeuxProperties.string("demo.elasticsearch.port"), "9200"), 9200);
+        String scheme = value("COREDEUX_DEMO_ELASTICSEARCH_SCHEME",
+                coredeuxProperties.string("demo.elasticsearch.scheme"), "http");
         return RestClient.builder(new HttpHost(host, port, scheme)).build();
     }
 
     private static RedisClient redisClient(CoredeuxProperties coredeuxProperties) {
-        String host = stringValue(coredeuxProperties.string("demo.redis.host"), "localhost");
-        int port = intValue(coredeuxProperties.string("demo.redis.port"), 6379);
+        String host = value("COREDEUX_DEMO_REDIS_HOST", coredeuxProperties.string("demo.redis.host"), "localhost");
+        int port = intValue(value("COREDEUX_DEMO_REDIS_PORT", coredeuxProperties.string("demo.redis.port"), "6379"),
+                6379);
         return RedisClient.create(RedisURI.Builder.redis(host, port).build());
     }
 

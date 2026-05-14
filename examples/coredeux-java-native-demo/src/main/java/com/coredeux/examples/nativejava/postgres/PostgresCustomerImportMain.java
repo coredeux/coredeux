@@ -11,7 +11,7 @@ import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.examples.nativejava.CoredeuxNativeRuntime;
-import com.coredeux.examples.nativejava.domain.Customer;
+import com.coredeux.demo.domain.Customer;
 import com.coredeux.impex.handler.CoredeuxImportValueHandler;
 import com.coredeux.impex.handler.ImportValueHandlerResolver;
 import com.coredeux.impex.handler.impl.DefaultCoredeuxImportValueHandler;

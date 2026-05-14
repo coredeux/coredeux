@@ -5,7 +5,15 @@
              version="3.1">
     <persistence-unit name="coredeux-postgres-native" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <class>com.coredeux.examples.nativejava.domain.Customer</class>
+        <class>com.coredeux.demo.domain.Customer</class>
+        <class>com.coredeux.demo.domain.Product</class>
+        <class>com.coredeux.demo.domain.Role</class>
+        <class>com.coredeux.demo.domain.Address</class>
+        <class>com.coredeux.demo.domain.CustomerProfile</class>
+        <class>com.coredeux.demo.domain.CustomerOrder</class>
+        <class>com.coredeux.demo.domain.OrderItem</class>
+        <class>com.coredeux.demo.export.ExportStorageRecord</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
             <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/coredeux"/>

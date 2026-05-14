@@ -3,7 +3,7 @@ package com.coredeux.examples.nativejava.module;
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.hooks.CoredeuxEntityHook;
-import com.coredeux.examples.nativejava.domain.Customer;
+import com.coredeux.demo.domain.Customer;
 
 public class CustomerLifecycleHook implements CoredeuxEntityHook<Customer> {
 
