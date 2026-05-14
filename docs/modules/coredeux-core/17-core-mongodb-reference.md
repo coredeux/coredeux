@@ -1,7 +1,7 @@
 # Coredeux Core MongoDB Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core Elasticsearch](../core-elasticsearch/reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Redis](../core-redis/reference.md)
+[Previous: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Redis](18-core-redis-reference.md)
 <!-- docs-nav-end -->
 
 This document is the detailed reference for `coredeux-core-mongodb`.
@@ -14,7 +14,7 @@ comparators, and the boundaries between the adapter and the rest of Coredeux.
 `coredeux-core-mongodb` is a persistence adapter module for Coredeux.
 
 It depends on `coredeux-core` and supplies a `CoredeuxDataAccessService`
-implementation backed by `MongoTemplate`.
+implementation backed by the native MongoDB Java driver.
 
 Current implementation:
 
@@ -25,8 +25,9 @@ Current implementation:
 MongoDB is a good fit when the entity model is document-oriented and you want a
 non-relational persistence option that still plugs into the Coredeux SPI.
 
-The adapter uses `MongoTemplate` directly rather than Spring Data repositories
-so it can stay aligned with Coredeux's dynamic, entity-definition-driven model.
+The adapter uses the native MongoDB Java driver directly rather than Spring
+Data repositories so it can stay aligned with Coredeux's dynamic,
+entity-definition-driven model.
 
 ## Package Structure
 
@@ -38,9 +39,9 @@ Main class:
 
 - [DefaultCoredeuxMongoDataAccessService.java](../../../modules/coredeux-core-mongodb/src/main/java/com/coredeux/core/mongodb/service/impl/DefaultCoredeuxMongoDataAccessService.java)
 
-## Spring Bean
+## Bean Name
 
-This module exposes one `CoredeuxDataAccessService` bean:
+The concrete adapter bean name used by the demo and Spring starter is:
 
 - `defaultCoredeuxMongoDataAccessService`
 
@@ -60,7 +61,7 @@ This adapter provides:
 - `update`
 - `remove`
 - `refresh`
-- `loadAll` using Mongo `Criteria`
+- `loadAll` using native MongoDB filters
 - `query` using a JSON template with `{{param}}` placeholders
 - identifier conversion from String into the entity identifier type
 - pagination and result counting
@@ -68,10 +69,9 @@ This adapter provides:
 
 ## Transaction Model
 
-The implementation uses Spring transactions:
-
-- `@Transactional(readOnly = true)` for `load`, `loadAll`, `query`, and `refresh`
-- `@Transactional` for `save`, `update`, and `remove`
+The implementation is native-driver based. In Spring Boot apps, the starter
+wires the bean into the application context, but the data-access code itself is
+not based on Spring Data MongoDB.
 
 ## Method Behavior
 
@@ -80,16 +80,17 @@ The implementation uses Spring transactions:
 Behavior:
 
 - validate id and type
-- resolve the entity identifier type from the `@Id` field or `id` field
+- resolve the entity identifier type from the identifier field or `id` field
 - convert the incoming String id into that type
-- call `mongoTemplate.findById(...)`
+- query the collection by identifier through the native driver
 
 ### `save(T entity)`
 
 Behavior:
 
 - validate non-null entity
-- call `mongoTemplate.save(entity)`
+- convert the entity to a BSON document and insert or replace it through the
+  native driver
 - read the identifier back from the saved entity
 - return the identifier as a string when available
 
@@ -99,7 +100,7 @@ Behavior:
 
 - validate non-null entity
 - require an identifier before updating
-- call `mongoTemplate.save(entity)`
+- replace the document through the native driver
 
 ### `remove(T entity)`
 
@@ -107,7 +108,7 @@ Behavior:
 
 - validate non-null entity
 - require an identifier before removal
-- call `mongoTemplate.remove(entity)`
+- delete the document through the native driver
 
 ### `refresh(T entity)`
 
@@ -123,7 +124,7 @@ Behavior:
 Behavior:
 
 - validate type
-- build a Mongo `Query` from `SearchParams`
+- build a Mongo filter from `SearchParams`
 - count total documents in the collection
 - count filtered matches
 - apply paging
@@ -135,7 +136,7 @@ Behavior:
 
 - validate query and type
 - replace `{{param}}` placeholders with JSON literals
-- execute the query with MongoDB JSON syntax
+- execute the query with MongoDB JSON syntax through `Document.parse(...)`
 - count matching documents
 - apply paging
 - return `SearchResult<T>`
@@ -192,8 +193,8 @@ Rules:
 
 Identifier resolution is reflection-based:
 
-- the adapter looks for a field annotated with Spring Data Mongo `@Id`
-- if no annotated field exists, it falls back to a field named `id`
+- the adapter looks for an identifier field
+- if no dedicated field exists, it falls back to a field named `id`
 - incoming String ids are converted to common identifier types such as
   `String`, `ObjectId`, `UUID`, numeric wrappers, `BigInteger`, and
   `BigDecimal`
@@ -238,5 +239,5 @@ Depend on `coredeux-core-mongodb` if your application or module:
   `supportedComparators(Class<?> type)`
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core Elasticsearch](../core-elasticsearch/reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Redis](../core-redis/reference.md)
+[Previous: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Redis](18-core-redis-reference.md)
 <!-- docs-nav-end -->

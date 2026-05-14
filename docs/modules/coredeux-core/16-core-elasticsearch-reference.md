@@ -1,7 +1,7 @@
 # Coredeux Core Elasticsearch Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core JDBC](../core-jdbc/reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core MongoDB](../core-mongodb/reference.md)
+[Previous: Coredeux Core JDBC](15-core-jdbc-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core MongoDB](17-core-mongodb-reference.md)
 <!-- docs-nav-end -->
 
 This document is the detailed reference for `coredeux-core-elasticsearch`.
@@ -9,12 +9,16 @@ This document is the detailed reference for `coredeux-core-elasticsearch`.
 It explains the Elasticsearch adapter design, supported operations, search
 comparators, and the boundaries between the adapter and the rest of Coredeux.
 
+This page also carries the quick module-level overview that used to live in the
+older README, so the search-first positioning and the adapter details stay
+together.
+
 ## Purpose
 
 `coredeux-core-elasticsearch` is a persistence adapter module for Coredeux.
 
 It depends on `coredeux-core` and supplies a `CoredeuxDataAccessService`
-implementation backed by `ElasticsearchOperations`.
+implementation backed by the native Elasticsearch Java API client.
 
 Current implementation:
 
@@ -25,8 +29,9 @@ Current implementation:
 Elasticsearch is a good fit when the entity model needs search-oriented
 storage and text-friendly querying while still plugging into the Coredeux SPI.
 
-The adapter uses `ElasticsearchOperations` directly so it can stay aligned with
-Coredeux's dynamic, entity-definition-driven model.
+The adapter uses the native Elasticsearch Java API client directly so it can
+stay aligned with Coredeux's dynamic, entity-definition-driven model without
+depending on Spring Data Elasticsearch.
 
 ## Package Structure
 
@@ -38,9 +43,9 @@ Main class:
 
 - [DefaultCoredeuxElasticsearchDataAccessService.java](../../../modules/coredeux-core-elasticsearch/src/main/java/com/coredeux/core/elasticsearch/service/impl/DefaultCoredeuxElasticsearchDataAccessService.java)
 
-## Spring Bean
+## Bean Name
 
-This module exposes one `CoredeuxDataAccessService` bean:
+The concrete adapter bean name used by the demo and Spring starter is:
 
 - `defaultCoredeuxElasticsearchDataAccessService`
 
@@ -68,10 +73,9 @@ This adapter provides:
 
 ## Transaction Model
 
-The implementation uses Spring transactions:
-
-- `@Transactional(readOnly = true)` for `load`, `loadAll`, `query`, and `refresh`
-- `@Transactional` for `save`, `update`, and `remove`
+The implementation is the native client-backed adapter. In the Spring Boot
+starter it is wrapped in the normal Spring bean lifecycle, but the adapter
+itself does not depend on Spring Data Elasticsearch.
 
 ## Method Behavior
 
@@ -80,16 +84,16 @@ The implementation uses Spring transactions:
 Behavior:
 
 - validate id and type
-- resolve the entity identifier type from the `@Id` field or `id` field
+- resolve the entity identifier type from the identifier field or `id` field
 - convert the incoming String id into that type
-- call `elasticsearchOperations.get(...)`
+- call the native gateway to load the document
 
 ### `save(T entity)`
 
 Behavior:
 
 - validate non-null entity
-- call `elasticsearchOperations.save(...)`
+- index the entity through the native gateway
 - read the identifier back from the saved entity
 - return the identifier as a string when available
 
@@ -98,14 +102,14 @@ Behavior:
 Behavior:
 
 - validate non-null entity
-- call `elasticsearchOperations.save(...)`
+- re-index the entity through the native gateway
 
 ### `remove(T entity)`
 
 Behavior:
 
 - validate non-null entity
-- call `elasticsearchOperations.delete(...)`
+- delete the document through the native gateway
 
 ### `refresh(T entity)`
 
@@ -189,15 +193,15 @@ Rules:
 
 Identifier resolution is reflection-based:
 
-- the adapter looks for a field annotated with Spring Data Elasticsearch `@Id`
-- if no annotated field exists, it falls back to a field named `id`
+- the adapter looks for an identifier field
+- if no dedicated field is found, it falls back to a field named `id`
 - incoming String ids are converted to common identifier types such as
   `String`, `UUID`, numeric wrappers, `BigInteger`, and `BigDecimal`
 
 ## Index Handling
 
-The adapter resolves index coordinates from Spring Data Elasticsearch when
-available and otherwise falls back to the entity simple name.
+The adapter resolves index names from the entity type and optional
+`default-index-prefix`.
 
 You can also set a prefix with:
 
@@ -209,6 +213,10 @@ coredeux:
 
 That lets the module target a consistent index naming scheme without changing
 the entity type.
+
+The native gateway uses the Elasticsearch client directly, so the application
+only needs to provide the client and the bean name. Spring Boot starters wire
+that automatically when you use the starter modules.
 
 ## Choosing The Right Adapter
 
@@ -250,5 +258,5 @@ Depend on `coredeux-core-elasticsearch` if your application or module:
   `supportedComparators(Class<?> type)`
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core JDBC](../core-jdbc/reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core MongoDB](../core-mongodb/reference.md)
+[Previous: Coredeux Core JDBC](15-core-jdbc-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core MongoDB](17-core-mongodb-reference.md)
 <!-- docs-nav-end -->

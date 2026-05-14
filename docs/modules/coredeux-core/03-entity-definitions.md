@@ -1,12 +1,13 @@
 # Entity Definitions
 
 <!-- docs-nav-start -->
-[Previous: Configuration](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: External Entity Definition Sources](external-entity-definition-source.md)
+[Previous: Lifecycle Model](02-lifecycle.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: External Entity Definition Sources](04-external-entity-definition-source.md)
 <!-- docs-nav-end -->
 
 Coredeux entities are configured through YAML.
 
-The YAML tells the framework how to identify the entity, which persistence implementation to use, and which optional modules are enabled.
+The YAML tells the framework how to identify the entity, which persistence
+implementation to use, and which optional modules are enabled.
 
 ## Root Structure
 
@@ -61,7 +62,8 @@ If omitted, the loader defaults it to the full class name.
 
 ### identifier
 
-Field name used by the framework to resolve the entity identifier through reflection.
+Field name used by the framework to resolve the entity identifier through
+reflection.
 
 This field is mandatory.
 
@@ -113,6 +115,16 @@ Module-specific configuration object.
 
 The structure depends on the module type.
 
+## Special Module Configs
+
+Most module configuration is stored as immutable maps and lists.
+
+One current special case is the `attributes` module, which is converted into a
+typed attribute model when it appears in the YAML.
+
+That keeps the general loader simple while still allowing typed structures
+where the framework needs them.
+
 ## Audit Module Example
 
 ```yaml
@@ -129,15 +141,20 @@ The structure depends on the module type.
 
 ## Data Access Routing
 
-The `storage.data-access-service` field tells the framework which `CoredeuxDataAccessService` bean should handle persistence for the entity.
+The `storage.data-access-service` field tells the framework which
+`CoredeuxDataAccessService` bean should handle persistence for the entity.
 
-That allows different entities to use different adapters inside the same application.
+That allows different entities to use different adapters inside the same
+application.
 
 Examples:
 
 - generic JPA entity
 - PostgreSQL JSONB-aware JPA entity
-- future MongoDB entity
+- JDBC-backed entity
+- MongoDB-backed entity
+- Elasticsearch-backed entity
+- Redis-backed entity
 
 ## Validation Rules
 
@@ -153,8 +170,9 @@ Current loader rules:
 
 Only stable cross-framework entity information should remain top-level.
 
-Feature-specific behavior should be modeled through the `modules` list so future modules can be added without repeatedly changing the core entity definition contract.
+Feature-specific behavior should stay under `modules` so future modules can be
+added without repeatedly changing the core entity contract.
 
 <!-- docs-nav-start -->
-[Previous: Configuration](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: External Entity Definition Sources](external-entity-definition-source.md)
+[Previous: Lifecycle Model](02-lifecycle.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: External Entity Definition Sources](04-external-entity-definition-source.md)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # External Entity Definition Sources
 
 <!-- docs-nav-start -->
-[Previous: Entity Definitions](entity-definitions.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Features](../features/README.md)
+[Previous: Entity Definitions](03-entity-definitions.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Module System](05-modules.md)
 <!-- docs-nav-end -->
 
 This guide explains how to replace the default `classpath:coredeux-entities.yml`
@@ -22,13 +22,7 @@ the data. The only assumption is:
 The default `coredeux-core` setup loads entity definitions from a classpath
 resource:
 
-- [CoredeuxEntityDefinitionConfiguration.java](../../modules/coredeux-core/src/main/java/com/coredeux/core/config/CoredeuxEntityDefinitionConfiguration.java)
-
-Default property:
-
-```text
-coredeux.entities.config-location=classpath:coredeux-entities.yml
-```
+- `coredeux.entities.config-location=classpath:coredeux-entities.yml`
 
 That is the right default for:
 
@@ -55,9 +49,9 @@ The current loading pipeline in `coredeux-core` is:
 
 Relevant classes:
 
-- [CoredeuxEntityDefinitionConfiguration.java](../../modules/coredeux-core/src/main/java/com/coredeux/core/config/CoredeuxEntityDefinitionConfiguration.java)
-- [YamlEntityDefinitionLoader.java](../../modules/coredeux-core/src/main/java/com/coredeux/core/loader/YamlEntityDefinitionLoader.java)
-- [InMemoryEntityDefinitionRegistry.java](../../modules/coredeux-core/src/main/java/com/coredeux/core/registry/InMemoryEntityDefinitionRegistry.java)
+- `CoredeuxEntityDefinitionConfiguration`
+- `YamlEntityDefinitionLoader`
+- `InMemoryEntityDefinitionRegistry`
 
 Important design point:
 
@@ -100,8 +94,6 @@ In practical terms:
 First define a small abstraction in your application module.
 
 ```java
-package com.example.coredeux.config;
-
 public interface ExternalCoredeuxYamlProvider {
 
     String loadYamlText();
@@ -121,20 +113,6 @@ Coredeux does not need to know the source.
 ## Example: Custom Registry Configuration
 
 ```java
-package com.example.coredeux.config;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-
-import com.coredeux.core.loader.EntityDefinitionLoader;
-import com.coredeux.core.registry.EntityDefinitionRegistry;
-import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
-
 @Configuration
 public class ExternalCoredeuxEntityDefinitionConfiguration {
 
@@ -163,11 +141,6 @@ The following example keeps the guide source-agnostic while showing the general
 pattern for database access.
 
 ```java
-package com.example.coredeux.config;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-
 @Component
 public class DatabaseCoredeuxYamlProvider implements ExternalCoredeuxYamlProvider {
 
@@ -195,16 +168,12 @@ public class DatabaseCoredeuxYamlProvider implements ExternalCoredeuxYamlProvide
 
 The exact query and schema are application concerns, not Coredeux concerns.
 
-## Example: Secrets Manager or Vault Provider
+## Example: Secrets Manager Or Vault Provider
 
 The same pattern works if your application already has a client that can read a
 secret value.
 
 ```java
-package com.example.coredeux.config;
-
-import org.springframework.stereotype.Component;
-
 @Component
 public class SecretStoreCoredeuxYamlProvider implements ExternalCoredeuxYamlProvider {
 
@@ -256,7 +225,7 @@ public class ExternalCoredeuxConfig {
 
 That example proves the only thing Coredeux really requires is valid YAML text.
 
-## Bean Precedence and Spring Wiring
+## Bean Precedence And Spring Wiring
 
 The default `coredeux-core` config also declares an `EntityDefinitionRegistry`
 bean.
@@ -273,7 +242,7 @@ Recommended approach:
 
 That is usually the least invasive option in Spring Boot applications.
 
-## Validation and Error Behavior
+## Validation And Error Behavior
 
 Your custom external-source setup still uses the standard
 `YamlEntityDefinitionLoader`, so you keep current validation rules.
@@ -335,7 +304,7 @@ Because entity definitions influence:
 
 - which persistence bean is used
 - which modules run
-- which audit/validator/hook handlers are invoked
+- which audit, validator, and hook handlers are invoked
 
 they should be treated as privileged framework configuration.
 
@@ -368,5 +337,5 @@ This is the preferred current approach because it:
 - keeps the external-source concern in the application layer
 
 <!-- docs-nav-start -->
-[Previous: Entity Definitions](entity-definitions.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Features](../features/README.md)
+[Previous: Entity Definitions](03-entity-definitions.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Module System](05-modules.md)
 <!-- docs-nav-end -->

@@ -1,13 +1,19 @@
 # Coredeux Core JDBC Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core JPA](../core-jpa/reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Elasticsearch](../core-elasticsearch/reference.md)
+[Previous: Coredeux Core JPA](14-core-jpa-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md)
 <!-- docs-nav-end -->
 
 `coredeux-core-jdbc` is the direct SQL adapter for Coredeux.
 
 It maps entity fields to table columns using standard Java bean conventions and
 optional JPA annotations such as `@Table`, `@Column`, and `@Id`.
+
+This page also carries the quick module-level summary that used to live in the
+older README, so the overview and the detailed adapter reference stay together.
+
+Use it when you want relational storage without JPA. The adapter works with
+plain SQL, JDBC template-style inputs, and data sources.
 
 ## What It Supports
 
@@ -65,5 +71,5 @@ Use this adapter when you want plain SQL with the Coredeux lifecycle and module
 model around it.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core JPA](../core-jpa/reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Elasticsearch](../core-elasticsearch/reference.md)
+[Previous: Coredeux Core JPA](14-core-jpa-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md)
 <!-- docs-nav-end -->

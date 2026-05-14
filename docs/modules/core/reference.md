@@ -11,10 +11,10 @@ or extending the module without reverse-engineering the source tree.
 
 Use this document together with:
 
-- [Architecture Overview](../../architecture/overview.md)
-- [Lifecycle Model](../../architecture/lifecycle.md)
-- [Entity Definitions](../../configuration/entity-definitions.md)
-- [Module System](../../features/modules.md)
+- [Coredeux Core Overview](../coredeux-core/01-overview.md)
+- [Lifecycle Model](../coredeux-core/02-lifecycle.md)
+- [Entity Definitions](../coredeux-core/03-entity-definitions.md)
+- [Module System](../coredeux-core/05-modules.md)
 
 ## Purpose
 
@@ -799,8 +799,8 @@ Those concerns belong in adapter modules or transport modules, not the core.
 If you are new to Coredeux and want to work quickly:
 
 1. read this file
-2. read [Entity Definitions](../../configuration/entity-definitions.md)
-3. read [Module System](../../features/modules.md)
+2. read [Entity Definitions](../coredeux-core/03-entity-definitions.md)
+3. read [Module System](../coredeux-core/05-modules.md)
 4. read the JPA reference if your project uses JPA
 
 <!-- docs-nav-start -->

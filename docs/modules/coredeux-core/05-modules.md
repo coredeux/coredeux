@@ -1,12 +1,14 @@
 # Module System
 
 <!-- docs-nav-start -->
-[Previous: Features](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Guides](../guides/README.md)
+[Previous: External Entity Definition Sources](04-external-entity-definition-source.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Adding A New Entity](06-add-new-entity.md)
 <!-- docs-nav-end -->
 
-Coredeux modules are optional entity-level capabilities configured through YAML and executed by the framework strategy layer.
+Coredeux modules are optional entity-level capabilities configured through YAML
+and executed by the framework strategy layer.
 
-Modules allow the framework to add behavior without hardcoding that behavior into the service API or the data-access SPI.
+Modules allow the framework to add behavior without hardcoding that behavior
+into the service API or the data-access SPI.
 
 ## Why Modules Exist
 
@@ -20,7 +22,8 @@ Examples:
 - future agent-aware modules may expose selected entity operations as MCP
   capabilities while preserving validation, lifecycle hooks, and audit behavior
 
-This makes the framework extensible without forcing every entity to use every capability.
+This makes the framework extensible without forcing every entity to use every
+capability.
 
 ## Current Built-In Module Types
 
@@ -37,7 +40,8 @@ Contract:
 Expected behavior:
 
 - return a list of `ValidationError`
-- the framework aggregates validation errors and raises a validation exception when needed
+- the framework aggregates validation errors and raises a validation exception
+  when needed
 
 ### hooks
 
@@ -49,7 +53,8 @@ Contract:
 
 - `CoredeuxEntityHook`
 
-Hooks are lifecycle-oriented and are useful for enrichment, side effects, and entity-specific framework behavior.
+Hooks are lifecycle-oriented and are useful for enrichment, side effects, and
+entity-specific framework behavior.
 
 ### audit
 
@@ -139,7 +144,8 @@ Example:
 
 ## External Module Execution
 
-Coredeux also exposes `CoredeuxModuleService` so modules can be invoked outside the normal CRUD path.
+Coredeux also exposes `CoredeuxModuleService` so modules can be invoked outside
+the normal CRUD path.
 
 Typical use cases:
 
@@ -148,7 +154,8 @@ Typical use cases:
 - admin operations
 - replaying framework behavior explicitly
 
-The framework still derives request and lifecycle context internally when external module execution is used.
+The framework still derives request and lifecycle context internally when
+external module execution is used.
 
 ## Guidance For New Module Types
 
@@ -163,5 +170,5 @@ When adding a new module type:
 This keeps `coredeux-core` stable while still allowing the framework to grow.
 
 <!-- docs-nav-start -->
-[Previous: Features](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Guides](../guides/README.md)
+[Previous: External Entity Definition Sources](04-external-entity-definition-source.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Adding A New Entity](06-add-new-entity.md)
 <!-- docs-nav-end -->

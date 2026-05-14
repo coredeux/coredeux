@@ -4,41 +4,60 @@
 [Previous: Overview](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Roadmap](roadmap.md)
 <!-- docs-nav-end -->
 
-Coredeux aims to become a foundational enterprise Java framework for
-building SaaS platforms and AI‑native enterprise applications.
+Coredeux is a framework for enterprise Java applications that need a stable
+way to handle the common work around business intent.
 
-The framework direction is agent-aware by design. Coredeux will soon expose MCP capabilities so agents can safely discover and call framework operations, and future agent-aware implementations will treat agents as first-class citizens of the framework rather than external automation bolted on at the edge.
+Today that means helping teams build applications with:
 
-## Problem
+- CRUD and search
+- validation and hooks
+- audit and workflow-style extensions
+- import and export
+- consistent storage routing across SQL and NoSQL systems
+- clean integration into both Spring Boot apps and plain Java hosts
 
-Enterprises repeatedly build foundational capabilities like:
+The longer-term direction is to make those same enterprise building blocks
+natural for AI agents to discover and use through governed contracts such as
+MCP.
 
--   Multi‑tenancy
--   Workflow orchestration
--   Event infrastructure
--   Import/export engines
--   Agent-facing tool contracts for safe automation
+That is the dual role of Coredeux:
 
-Coredeux standardizes these capabilities.
+1. provide reusable building blocks for enterprise applications
+2. embed cleanly into existing Java and Spring systems without forcing a rewrite
 
-## Goal
+The reason this matters in the age of Codex and Claude is simple: agents can
+write code, but enterprise systems still need stable framework behavior after
+the code is shipped. Coredeux is meant to keep that behavior consistent.
 
-Enable faster platform development with reusable architectural building
-blocks.
+## Why It Exists
 
-## Target Platforms
+Most applications end up rebuilding the same framework-layer patterns:
 
--   Commerce
--   Marketplace
--   Booking
--   Workflow systems
--   AI‑assisted enterprise platforms
--   Agent-aware back-office and operations platforms
+- create, update, fetch, and remove flows
+- validation
+- lifecycle hooks
+- audit
+- import and export
+- backend-specific storage routing
 
-## Long Term
+Coredeux standardizes those pieces so the application can focus on business
+intent instead of wiring repeatable infrastructure in every service.
 
-To become a trusted framework similar to how Spring simplified Java
-backend development, while also giving enterprise agents a clear, governed way to participate in platform workflows.
+## Who It Serves
+
+Coredeux is relevant for:
+
+- teams building new enterprise Java applications
+- teams extending existing Spring Boot systems
+- teams that want a clear path toward agent-facing runtime integration
+- teams that want the same model to work across SQL and NoSQL storage
+
+## Long-Term Direction
+
+The framework is designed so future agent-aware features can live inside the
+same operational model as the rest of the app. That means Coredeux is not just
+about code generation. It is about the runtime shape that keeps enterprise
+behavior predictable when agents are involved.
 
 <!-- docs-nav-start -->
 [Previous: Overview](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Roadmap](roadmap.md)

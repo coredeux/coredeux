@@ -1,7 +1,7 @@
 # Coredeux Core Redis Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core MongoDB](../core-mongodb/reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import](../import/README.md)
+[Previous: Coredeux Core MongoDB](17-core-mongodb-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import](../import/README.md)
 <!-- docs-nav-end -->
 
 `coredeux-core-redis` is the Redis adapter for Coredeux.
@@ -12,6 +12,10 @@ stores entity payloads as JSON strings under predictable Redis keys.
 This module currently behaves as Redis-backed storage, not as a cache layer.
 It persists JSON payloads, reads them back by key, and performs scan-based
 search over the stored namespace.
+
+This page also carries the module-level Redis summary that used to live in the
+older README, so the storage-first positioning and the detailed adapter notes
+now live together.
 
 ## Purpose
 
@@ -172,5 +176,5 @@ Use `coredeux-core-redis` when you want:
 - module-level wiring that still fits the Coredeux SPI
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core MongoDB](../core-mongodb/reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import](../import/README.md)
+[Previous: Coredeux Core MongoDB](17-core-mongodb-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Import](../import/README.md)
 <!-- docs-nav-end -->

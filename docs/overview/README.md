@@ -4,10 +4,17 @@
 [Previous: Tutorial Order](../SUMMARY.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Vision](vision.md)
 <!-- docs-nav-end -->
 
-This section describes the product direction and long-term intent of Coredeux.
+This section explains where Coredeux is going and why it exists.
+
+Use it when you want the project story before the implementation details.
 
 - [Vision](vision.md)
 - [Roadmap](roadmap.md)
+- [Coredeux Core Reference](../modules/coredeux-core/13-reference.md)
+
+The detailed framework mechanics now live in the core module documentation,
+especially [coredeux-core Reference](../modules/coredeux-core/13-reference.md).
+That keeps this section focused on direction rather than internals.
 
 <!-- docs-nav-start -->
 [Previous: Tutorial Order](../SUMMARY.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Vision](vision.md)

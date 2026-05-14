@@ -12,16 +12,18 @@ application, use a module, extend the platform, or maintain the project.
 
 - [Tutorial Order](SUMMARY.md): the canonical previous/next sequence for
   generated HTML documentation.
-- [First 10 Minutes With Coredeux](guides/first-10-minutes.md): the shortest
-  Docker-first path from a running demo stack to CRUD, modules, import, and
+- [What Is Coredeux?](01-what-is-coredeux.md): the framework thesis and the
+  AI-agent-native direction behind it.
+- [Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md): the
+  Docker-first path into the Spring Boot demo, CRUD, import, file import, and
   export.
-- [Docker Demo Setup](guides/docker-demo.md): the containerized stack details
-  for the demo application and its backing services.
+- [Tour Of The Demo](03-tour-of-the-demo.md): a guided map of the Spring Boot
+  demo and the patterns it is teaching.
 - [Vision](overview/vision.md): why Coredeux exists and what it is trying to
   become.
-- [Architecture Overview](architecture/overview.md): framework model, core
-  flow, lifecycle vocabulary, and extension direction.
-- [Adding A New Entity](guides/add-new-entity.md): practical application
+- [Core Reference](modules/coredeux-core/13-reference.md): framework model,
+  core flow, lifecycle vocabulary, module system, and extension direction.
+- [Adding A New Entity](modules/coredeux-core/11-add-new-entity.md): practical
   workflow for adding an entity to Coredeux.
 
 ## Documentation Map
@@ -36,36 +38,36 @@ Product and project direction.
 - [Vision](overview/vision.md)
 - [Roadmap](overview/roadmap.md)
 
-### Architecture
+### Core Model
 
 Framework internals and conceptual model.
 
-- [Architecture Overview](architecture/overview.md)
-- [Lifecycle Model](architecture/lifecycle.md)
-
-### Configuration
-
-Application-facing configuration contracts.
-
-- [Entity Definitions](configuration/entity-definitions.md)
-- [External Entity Definition Sources](configuration/external-entity-definition-source.md)
-
-### Features
-
-Cross-cutting framework feature documentation.
-
-- [Module System](features/modules.md)
+- [What Is Coredeux?](01-what-is-coredeux.md)
+- [Coredeux Core Reference](modules/coredeux-core/13-reference.md)
 
 ### Modules
 
 Documentation for optional or standalone Coredeux modules.
 
-- [Core Module](modules/core/README.md)
-- [Core JPA Module](modules/core-jpa/reference.md)
-- [Core JDBC Module](modules/core-jdbc/reference.md)
-- [Core Elasticsearch Module](modules/core-elasticsearch/README.md)
-- [Core MongoDB Module](modules/core-mongodb/reference.md)
-- [Core Redis Module](modules/core-redis/reference.md)
+- [Coredeux Core](modules/coredeux-core/README.md)
+- [Coredeux Core Overview](modules/coredeux-core/01-overview.md)
+- [Coredeux Core Lifecycle](modules/coredeux-core/02-lifecycle.md)
+- [Coredeux Entity Definitions](modules/coredeux-core/03-entity-definitions.md)
+- [Coredeux External Entity Definition Source](modules/coredeux-core/04-external-entity-definition-source.md)
+- [Coredeux Module System](modules/coredeux-core/05-modules.md)
+- [Add Or Choose A Data Access Service](modules/coredeux-core/06-add-data-access-service.md)
+- [Available Data Access Implementations](modules/coredeux-core/07-available-data-access-implementations.md)
+- [Add A Hook](modules/coredeux-core/08-add-hook.md)
+- [Add A Validator](modules/coredeux-core/09-add-validator.md)
+- [Add Audit](modules/coredeux-core/10-add-audit.md)
+- [Adding A New Entity](modules/coredeux-core/11-add-new-entity.md)
+- [Adding A Core Module](modules/coredeux-core/12-add-core-module.md)
+- [Coredeux Core Reference](modules/coredeux-core/13-reference.md)
+- [Core JPA Reference](modules/coredeux-core/14-core-jpa-reference.md)
+- [Core JDBC Reference](modules/coredeux-core/15-core-jdbc-reference.md)
+- [Core Elasticsearch Reference](modules/coredeux-core/16-core-elasticsearch-reference.md)
+- [Core MongoDB Reference](modules/coredeux-core/17-core-mongodb-reference.md)
+- [Core Redis Reference](modules/coredeux-core/18-core-redis-reference.md)
 - [Import Module](modules/import/guide.md)
 - [Import Parser Module](modules/import-parser/guide.md)
 - [Export Module](modules/export/guide.md)
@@ -74,10 +76,15 @@ Documentation for optional or standalone Coredeux modules.
 
 Task-oriented developer guides.
 
-- [First 10 Minutes With Coredeux](guides/first-10-minutes.md)
-- [Docker Demo Setup](guides/docker-demo.md)
-- [Coredeux Demo Tour](guides/demo-tour.md)
-- [Adding A New Entity](guides/add-new-entity.md)
+- [Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
+- [Tour Of The Demo](03-tour-of-the-demo.md)
+
+### Miscellaneous
+
+Companion docs for the plain Java native demo.
+
+- [Getting Started With The Native Demo In 10 Minutes](miscellaneous/01-native-getting-started-in-10-minutes.md)
+- [Tour Of The Native Demo](miscellaneous/02-native-tour-of-the-demo.md)
 
 ### Platform
 
@@ -104,11 +111,8 @@ context, but they are not canonical user documentation.
 
 Use canonical docs for implementation and usage decisions:
 
-- `architecture/`
-- `configuration/`
-- `features/`
+- `modules/coredeux-core/`
 - `modules/`
-- `guides/`
 - `platform/`
 
 Use `development/session-history/` only when you need historical context about

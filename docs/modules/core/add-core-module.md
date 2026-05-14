@@ -1,7 +1,7 @@
 # Adding A Core Module
 
 <!-- docs-nav-start -->
-[Previous: coredeux-core Reference](reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: coredeux-core-jpa Reference](../core-jpa/reference.md)
+[Previous: coredeux-core Reference](reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: coredeux-core-jpa Reference](../coredeux-core/14-core-jpa-reference.md)
 <!-- docs-nav-end -->
 
 This guide describes how to add a new entity-level module to `coredeux-core`.
@@ -300,7 +300,7 @@ For externally invoked behavior, add coverage through `DefaultCoredeuxModuleServ
 
 ## 9. Document The User-Facing Configuration
 
-Update `docs/features/modules.md` with:
+Update `docs/modules/coredeux-core/05-modules.md` with:
 
 - purpose of the new module
 - public contract applications must implement
@@ -336,8 +336,8 @@ mvn -pl modules/coredeux-core clean test
 - Handler resolves configured beans by name from `handlers`.
 - Handler validates generic entity support when using typed user contracts.
 - Tests cover happy path, skipped path, invalid config, and bean resolution failure.
-- `docs/features/modules.md` documents user-facing configuration.
+- `docs/modules/coredeux-core/05-modules.md` documents user-facing configuration.
 
 <!-- docs-nav-start -->
-[Previous: coredeux-core Reference](reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: coredeux-core-jpa Reference](../core-jpa/reference.md)
+[Previous: coredeux-core Reference](reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: coredeux-core-jpa Reference](../coredeux-core/14-core-jpa-reference.md)
 <!-- docs-nav-end -->

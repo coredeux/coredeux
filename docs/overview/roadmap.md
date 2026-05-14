@@ -1,42 +1,45 @@
 # Coredeux Roadmap
 
 <!-- docs-nav-start -->
-[Previous: Vision](vision.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Architecture](../architecture/README.md)
+[Previous: Vision](vision.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Core Model](../modules/coredeux-core/README.md)
 <!-- docs-nav-end -->
 
-Coredeux is an enterprise-grade Java framework focused on building scalable multi-tenant SaaS platforms, microservices ecosystems, and cloud-native solutions.
+Coredeux is being built in stages so the framework stays usable while the
+surface area grows.
 
-This roadmap represents the planned evolution of the framework.
+## Phase 1 - Foundation
 
----
+- core lifecycle and strategy model
+- entity-definition loading from YAML
+- module dispatch for validators, hooks, audit, and custom modules
+- SQL and NoSQL data-access adapters
+- Spring Boot starters for the Spring-based host path
+- a plain Java native host path for the non-Spring route
 
-## Phase 1 — Foundation (In Progress)
+## Phase 2 - Framework Completeness
 
+- richer module coverage for enterprise app behavior
+- stronger import/export and workflow-style patterns
+- clearer support for custom data access and backend-specific behavior
+- tighter demo parity between Spring Boot and native hosts
 
----
+## Phase 3 - Agent-Aware Runtime
 
-## Phase 2 — Enterprise Capabilities
+- MCP-facing contracts for discoverable framework operations
+- agent-readable tool surfaces for common enterprise actions
+- clearer governance, traceability, and operational boundaries for agent use
+- future modules where agents participate from inside the application runtime
 
-- MCP capability layer so agents can discover and call Coredeux framework operations through explicit, governed tool contracts.
-- Agent-aware service/module integrations where agent identity, intent, permissions, and traceability are part of framework context.
-- First-class agent participation in operational flows such as import/export, workflow actions, audit review, entity maintenance, and platform administration.
+## Long-Term Goal
 
+Coredeux aims to be the framework layer that keeps enterprise applications
+predictable even as implementation shifts between humans, agents, Spring Boot,
+and native Java.
 
----
-
-## Long Term Vision
-
-Coredeux aims to become a foundational framework for building:
-
-- SaaS Platforms
-- Commerce Systems
-- Booking Systems
-- Workflow Platforms
-- AI-native Enterprise Applications
-- Agent-aware Enterprise Platforms where agents are first-class framework participants
-
-Community contributions are welcome to shape this journey.
+The target is not to replace application code. The target is to give that code
+a stable structure that survives long-lived systems and repeated agent-assisted
+changes.
 
 <!-- docs-nav-start -->
-[Previous: Vision](vision.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Architecture](../architecture/README.md)
+[Previous: Vision](vision.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Core Model](../modules/coredeux-core/README.md)
 <!-- docs-nav-end -->
