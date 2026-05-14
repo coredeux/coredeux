@@ -1,7 +1,7 @@
 # Getting Started In 10 Minutes
 
 <!-- docs-nav-start -->
-[Previous: What Is Coredeux?](01-what-is-coredeux.md) | [Documentation Home](README.md) | [Tutorial Order](SUMMARY.md) | [Next: Overview](overview/README.md)
+[Previous: What Is Coredeux?](01-what-is-coredeux.md) | [Documentation Home](README.md) | [Next: Tour Of The Demo](03-tour-of-the-demo.md)
 <!-- docs-nav-end -->
 
 This is the fastest way to meet Coredeux in a running application.
@@ -264,5 +264,5 @@ If you want the architecture story behind what you just ran, continue with:
 - [Lifecycle Model](modules/coredeux-core/02-lifecycle.md)
 
 <!-- docs-nav-start -->
-[Previous: What Is Coredeux?](01-what-is-coredeux.md) | [Documentation Home](README.md) | [Tutorial Order](SUMMARY.md) | [Next: Overview](overview/README.md)
+[Previous: What Is Coredeux?](01-what-is-coredeux.md) | [Documentation Home](README.md) | [Next: Tour Of The Demo](03-tour-of-the-demo.md)
 <!-- docs-nav-end -->

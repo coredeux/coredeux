@@ -1,7 +1,7 @@
 # Getting Started With The Native Demo In 10 Minutes
 
 <!-- docs-nav-start -->
-[Previous: Documentation Home](../README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Native Tour Of The Demo](02-native-tour-of-the-demo.md)
+[Previous: Coredeux Export Reference](../modules/coredeux-export/04-reference.md) | [Documentation Home](../README.md) | [Next: Native Tour Of The Demo](02-native-tour-of-the-demo.md)
 <!-- docs-nav-end -->
 
 This is the fastest way to meet the Coredeux native demo in a running
@@ -211,5 +211,5 @@ If you want to understand how the native demo is built, continue with:
 - [Native Tour Of The Demo](02-native-tour-of-the-demo.md)
 
 <!-- docs-nav-start -->
-[Previous: Documentation Home](../README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Native Tour Of The Demo](02-native-tour-of-the-demo.md)
+[Previous: Coredeux Export Reference](../modules/coredeux-export/04-reference.md) | [Documentation Home](../README.md) | [Next: Native Tour Of The Demo](02-native-tour-of-the-demo.md)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Text And Excel File Import
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Raw JSON Import](02-raw-json-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Export Overview](../coredeux-export/01-overview.md)
+[Previous: Coredeux Raw JSON Import](02-raw-json-import.md) | [Documentation Home](../../README.md) | [Next: Coredeux Export Overview](../coredeux-export/01-overview.md)
 <!-- docs-nav-end -->
 
 This guide teaches the Coredeux import file format from scratch.
@@ -894,5 +894,5 @@ The parser should remain a compiler into `ImportRequest`, not a second import
 engine.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Raw JSON Import](02-raw-json-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Export Overview](../coredeux-export/01-overview.md)
+[Previous: Coredeux Raw JSON Import](02-raw-json-import.md) | [Documentation Home](../../README.md) | [Next: Coredeux Export Overview](../coredeux-export/01-overview.md)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Coredeux Raw JSON Import
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Import Overview](01-overview.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Text And Excel File Import](03-text-and-excel-file-import.md)
+[Previous: Coredeux Import Overview](01-overview.md) | [Documentation Home](../../README.md) | [Next: Text And Excel File Import](03-text-and-excel-file-import.md)
 <!-- docs-nav-end -->
 
 This guide teaches how to use `coredeux-import` directly with JSON.
@@ -686,5 +686,5 @@ Those fixtures are deserialized and executed through `CoredeuxImportService`, so
 they verify the JSON contract rather than only testing Java builders.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Import Overview](01-overview.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Text And Excel File Import](03-text-and-excel-file-import.md)
+[Previous: Coredeux Import Overview](01-overview.md) | [Documentation Home](../../README.md) | [Next: Text And Excel File Import](03-text-and-excel-file-import.md)
 <!-- docs-nav-end -->

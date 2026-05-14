@@ -1,7 +1,7 @@
 # Coredeux Core MongoDB Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Redis](18-core-redis-reference.md)
+[Previous: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md) | [Documentation Home](../../README.md) | [Next: Coredeux Core Redis](18-core-redis-reference.md)
 <!-- docs-nav-end -->
 
 This document is the detailed reference for `coredeux-core-mongodb`.
@@ -239,5 +239,5 @@ Depend on `coredeux-core-mongodb` if your application or module:
   `supportedComparators(Class<?> type)`
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Redis](18-core-redis-reference.md)
+[Previous: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md) | [Documentation Home](../../README.md) | [Next: Coredeux Core Redis](18-core-redis-reference.md)
 <!-- docs-nav-end -->

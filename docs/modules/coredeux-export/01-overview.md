@@ -1,7 +1,7 @@
 # Coredeux Export Overview
 
 <!-- docs-nav-start -->
-[Previous: Text And Excel File Import](../coredeux-import/03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Export Request And Output](02-request-and-output.md)
+[Previous: Text And Excel File Import](../coredeux-import/03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Next: Export Request And Output](02-request-and-output.md)
 <!-- docs-nav-end -->
 
 `coredeux-export` turns a Coredeux entity into a background export job.
@@ -98,5 +98,5 @@ value is supplied in the request or configuration.
 - [Export Reference](04-reference.md)
 
 <!-- docs-nav-start -->
-[Previous: Text And Excel File Import](../coredeux-import/03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Export Request And Output](02-request-and-output.md)
+[Previous: Text And Excel File Import](../coredeux-import/03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Next: Export Request And Output](02-request-and-output.md)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Coredeux Import Reference
 
 <!-- docs-nav-start -->
-[Previous: Text And Excel File Import](03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Platform Documentation](../../platform/README.md)
+[Previous: Text And Excel File Import](03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Next: Coredeux Export](../coredeux-export/01-overview.md)
 <!-- docs-nav-end -->
 
 This document explains the current `coredeux-import` module in enough detail for
@@ -2061,5 +2061,5 @@ The host application can own concerns such as:
 - Public API examples should stay aligned with the Postman collection.
 
 <!-- docs-nav-start -->
-[Previous: Text And Excel File Import](03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Platform Documentation](../../platform/README.md)
+[Previous: Text And Excel File Import](03-text-and-excel-file-import.md) | [Documentation Home](../../README.md) | [Next: Coredeux Export](../coredeux-export/01-overview.md)
 <!-- docs-nav-end -->

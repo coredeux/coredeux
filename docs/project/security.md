@@ -1,7 +1,7 @@
 # Security Policy
 
 <!-- docs-nav-start -->
-[Previous: Release Process](release-process.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md)
+[Previous: Release Process](release-process.md) | [Documentation Home](../README.md) | [Next: Third-Party Notices](third-party-notices.md)
 <!-- docs-nav-end -->
 
 ## Reporting Vulnerabilities
@@ -30,5 +30,5 @@ Please allow maintainers time to fix before public disclosure.
 -   Avoid insecure defaults
 
 <!-- docs-nav-start -->
-[Previous: Release Process](release-process.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md)
+[Previous: Release Process](release-process.md) | [Documentation Home](../README.md)
 <!-- docs-nav-end -->

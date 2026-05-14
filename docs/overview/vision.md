@@ -1,7 +1,7 @@
 # Coredeux Vision
 
 <!-- docs-nav-start -->
-[Previous: Overview](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Roadmap](roadmap.md)
+[Previous: Overview](README.md) | [Documentation Home](../README.md) | [Next: Roadmap](roadmap.md)
 <!-- docs-nav-end -->
 
 Coredeux is a framework for enterprise Java applications that need a stable
@@ -60,5 +60,5 @@ about code generation. It is about the runtime shape that keeps enterprise
 behavior predictable when agents are involved.
 
 <!-- docs-nav-start -->
-[Previous: Overview](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Roadmap](roadmap.md)
+[Previous: Overview](README.md) | [Documentation Home](../README.md) | [Next: Roadmap](roadmap.md)
 <!-- docs-nav-end -->

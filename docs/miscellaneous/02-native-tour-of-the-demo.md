@@ -1,7 +1,7 @@
 # Tour Of The Native Demo
 
 <!-- docs-nav-start -->
-[Previous: Native Getting Started In 10 Minutes](01-native-getting-started-in-10-minutes.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Overview](../overview/README.md)
+[Previous: Native Getting Started In 10 Minutes](01-native-getting-started-in-10-minutes.md) | [Documentation Home](../README.md) | [Next: Platform Documentation](../platform/README.md)
 <!-- docs-nav-end -->
 
 The native demo is the plain Java version of the Coredeux story.
@@ -204,5 +204,5 @@ If you want the broader product story, continue with:
 - [Overview](../overview/README.md)
 
 <!-- docs-nav-start -->
-[Previous: Native Getting Started In 10 Minutes](01-native-getting-started-in-10-minutes.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Overview](../overview/README.md)
+[Previous: Native Getting Started In 10 Minutes](01-native-getting-started-in-10-minutes.md) | [Documentation Home](../README.md) | [Next: Platform Documentation](../platform/README.md)
 <!-- docs-nav-end -->

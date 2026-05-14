@@ -1,7 +1,7 @@
 # coredeux-core Reference
 
 <!-- docs-nav-start -->
-[Previous: Adding A Core Module](12-add-core-module.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Core JPA Reference](14-core-jpa-reference.md)
+[Previous: Adding a Core Module](12-add-core-module.md) | [Documentation Home](../../README.md) | [Next: Core JPA Reference](14-core-jpa-reference.md)
 <!-- docs-nav-end -->
 
 This is the technical reference for the Coredeux core layer and its storage
@@ -20,11 +20,11 @@ Use this document together with:
 - [Module System](05-modules.md)
 - [Add Or Choose A Data Access Service](06-add-data-access-service.md)
 - [Available Data Access Implementations](07-available-data-access-implementations.md)
-- [Add A Hook](08-add-hook.md)
-- [Add A Validator](09-add-validator.md)
+- [Add a Hook](08-add-hook.md)
+- [Add a Validator](09-add-validator.md)
 - [Add Audit](10-add-audit.md)
-- [Adding A New Entity](11-add-new-entity.md)
-- [Adding A Core Module](12-add-core-module.md)
+- [Adding a New Entity](11-add-new-entity.md)
+- [Adding a Core Module](12-add-core-module.md)
 
 ## What This Layer Is
 
@@ -842,5 +842,5 @@ The framework is intentionally explicit. That makes it predictable for humans
 and legible for agents.
 
 <!-- docs-nav-start -->
-[Previous: Adding A Core Module](12-add-core-module.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Core JPA Reference](14-core-jpa-reference.md)
+[Previous: Adding a Core Module](12-add-core-module.md) | [Documentation Home](../../README.md) | [Next: Core JPA Reference](14-core-jpa-reference.md)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Governance Model
 
 <!-- docs-nav-start -->
-[Previous: Project](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Release Process](release-process.md)
+[Previous: Project](README.md) | [Documentation Home](../README.md) | [Next: Release Process](release-process.md)
 <!-- docs-nav-end -->
 
 Coredeux follows a merit‑based governance model.
@@ -29,5 +29,5 @@ Coredeux follows a merit‑based governance model.
 -   Maintainer has final say
 
 <!-- docs-nav-start -->
-[Previous: Project](README.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Release Process](release-process.md)
+[Previous: Project](README.md) | [Documentation Home](../README.md) | [Next: Release Process](release-process.md)
 <!-- docs-nav-end -->

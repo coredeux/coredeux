@@ -1,7 +1,7 @@
 # Module System
 
 <!-- docs-nav-start -->
-[Previous: External Entity Definition Sources](04-external-entity-definition-source.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Adding A New Entity](06-add-new-entity.md)
+[Previous: External Entity Definition Sources](04-external-entity-definition-source.md) | [Documentation Home](../../README.md) | [Next: Add Or Choose A Data Access Service](06-add-data-access-service.md)
 <!-- docs-nav-end -->
 
 Coredeux modules are optional entity-level capabilities configured through YAML
@@ -170,5 +170,5 @@ When adding a new module type:
 This keeps `coredeux-core` stable while still allowing the framework to grow.
 
 <!-- docs-nav-start -->
-[Previous: External Entity Definition Sources](04-external-entity-definition-source.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Adding A New Entity](06-add-new-entity.md)
+[Previous: External Entity Definition Sources](04-external-entity-definition-source.md) | [Documentation Home](../../README.md) | [Next: Add Or Choose A Data Access Service](06-add-data-access-service.md)
 <!-- docs-nav-end -->

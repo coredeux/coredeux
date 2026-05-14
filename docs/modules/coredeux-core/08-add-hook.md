@@ -1,7 +1,7 @@
-# Add A Hook
+# Add a Hook
 
 <!-- docs-nav-start -->
-[Previous: Available Data Access Implementations](07-available-data-access-implementations.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Add A Validator](09-add-validator.md)
+[Previous: Available Data Access Implementations](07-available-data-access-implementations.md) | [Documentation Home](../../README.md) | [Next: Add a Validator](09-add-validator.md)
 <!-- docs-nav-end -->
 
 Hooks let Coredeux react to lifecycle phases around an entity operation.
@@ -188,9 +188,9 @@ The only difference is how the bean is registered:
 
 ## What To Read Next
 
-- [Add A Validator](09-add-validator.md)
+- [Add a Validator](09-add-validator.md)
 - [Add Audit](10-add-audit.md)
 
 <!-- docs-nav-start -->
-[Previous: Available Data Access Implementations](07-available-data-access-implementations.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Add A Validator](09-add-validator.md)
+[Previous: Available Data Access Implementations](07-available-data-access-implementations.md) | [Documentation Home](../../README.md) | [Next: Add a Validator](09-add-validator.md)
 <!-- docs-nav-end -->

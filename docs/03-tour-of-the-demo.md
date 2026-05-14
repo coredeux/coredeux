@@ -1,7 +1,7 @@
 # Tour Of The Demo
 
 <!-- docs-nav-start -->
-[Previous: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md) | [Documentation Home](README.md) | [Tutorial Order](SUMMARY.md) | [Next: Overview](overview/README.md)
+[Previous: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md) | [Documentation Home](README.md) | [Next: Overview](overview/README.md)
 <!-- docs-nav-end -->
 
 The Spring Boot demo is not just a smoke test. It is a small application that
@@ -196,5 +196,5 @@ If you want the deeper architecture view, continue with:
 - [Lifecycle Model](modules/coredeux-core/02-lifecycle.md)
 
 <!-- docs-nav-start -->
-[Previous: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md) | [Documentation Home](README.md) | [Tutorial Order](SUMMARY.md) | [Next: Overview](overview/README.md)
+[Previous: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md) | [Documentation Home](README.md) | [Next: Overview](overview/README.md)
 <!-- docs-nav-end -->

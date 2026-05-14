@@ -1,7 +1,7 @@
 # Modules
 
 <!-- docs-nav-start -->
-[Previous: Adding A New Entity](coredeux-core/11-add-new-entity.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Coredeux Core](coredeux-core/README.md)
+[Previous: Roadmap](../overview/roadmap.md) | [Documentation Home](../README.md) | [Next: Coredeux Core](coredeux-core/README.md)
 <!-- docs-nav-end -->
 
 This section documents Coredeux modules, including built-in core capabilities
@@ -30,5 +30,5 @@ Use the module guides after the core concepts are familiar:
 - [Export Overview](coredeux-export/01-overview.md)
 
 <!-- docs-nav-start -->
-[Previous: Adding A New Entity](coredeux-core/11-add-new-entity.md) | [Documentation Home](../README.md) | [Tutorial Order](../SUMMARY.md) | [Next: Coredeux Core](coredeux-core/README.md)
+[Previous: Roadmap](../overview/roadmap.md) | [Documentation Home](../README.md) | [Next: Coredeux Core](coredeux-core/README.md)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Overview
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core](README.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Lifecycle Model](02-lifecycle.md)
+[Previous: Coredeux Core](README.md) | [Documentation Home](../../README.md) | [Next: Lifecycle Model](02-lifecycle.md)
 <!-- docs-nav-end -->
 
 Coredeux Core is the framework layer between application intent and backend execution.
@@ -96,5 +96,5 @@ If you are new to the core framework, read the pages in this order:
 5. the reference page when you need deeper detail
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core](README.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Lifecycle Model](02-lifecycle.md)
+[Previous: Coredeux Core](README.md) | [Documentation Home](../../README.md) | [Next: Lifecycle Model](02-lifecycle.md)
 <!-- docs-nav-end -->

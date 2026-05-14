@@ -1,7 +1,7 @@
 # Coredeux Core JDBC Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core JPA](14-core-jpa-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md)
+[Previous: Coredeux Core JPA](14-core-jpa-reference.md) | [Documentation Home](../../README.md) | [Next: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md)
 <!-- docs-nav-end -->
 
 `coredeux-core-jdbc` is the direct SQL adapter for Coredeux.
@@ -71,5 +71,5 @@ Use this adapter when you want plain SQL with the Coredeux lifecycle and module
 model around it.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core JPA](14-core-jpa-reference.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md)
+[Previous: Coredeux Core JPA](14-core-jpa-reference.md) | [Documentation Home](../../README.md) | [Next: Coredeux Core Elasticsearch](16-core-elasticsearch-reference.md)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Available Data Access Implementations
 
 <!-- docs-nav-start -->
-[Previous: Add Or Choose A Data Access Service](06-add-data-access-service.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Add A Hook](08-add-hook.md)
+[Previous: Add Or Choose A Data Access Service](06-add-data-access-service.md) | [Documentation Home](../../README.md) | [Next: Add a Hook](08-add-hook.md)
 <!-- docs-nav-end -->
 
 This page lists the built-in `CoredeuxDataAccessService` implementations
@@ -152,7 +152,7 @@ as long as the YAML points at the right bean name.
 ## What To Read Next
 
 - [Add Or Choose A Data Access Service](06-add-data-access-service.md)
-- [Add A Hook](08-add-hook.md)
+- [Add a Hook](08-add-hook.md)
 - [Core JPA Reference](14-core-jpa-reference.md)
 - [Core JDBC Reference](15-core-jdbc-reference.md)
 - [Core Elasticsearch Reference](16-core-elasticsearch-reference.md)
@@ -160,5 +160,5 @@ as long as the YAML points at the right bean name.
 - [Core Redis Reference](18-core-redis-reference.md)
 
 <!-- docs-nav-start -->
-[Previous: Add Or Choose A Data Access Service](06-add-data-access-service.md) | [Documentation Home](../../README.md) | [Tutorial Order](../../SUMMARY.md) | [Next: Add A Hook](08-add-hook.md)
+[Previous: Add Or Choose A Data Access Service](06-add-data-access-service.md) | [Documentation Home](../../README.md) | [Next: Add a Hook](08-add-hook.md)
 <!-- docs-nav-end -->

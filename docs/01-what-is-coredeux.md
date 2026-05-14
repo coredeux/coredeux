@@ -1,7 +1,7 @@
 # What Is Coredeux?
 
 <!-- docs-nav-start -->
-[Previous: Documentation Home](README.md) | [Documentation Home](README.md) | [Tutorial Order](SUMMARY.md) | [Next: Overview](overview/README.md)
+[Previous: Documentation Home](README.md) | [Documentation Home](README.md) | [Next: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
 <!-- docs-nav-end -->
 
 Coredeux is a framework for enterprise Java applications that need a shared,
@@ -107,5 +107,5 @@ then the architecture docs:
 - [Lifecycle Model](modules/coredeux-core/02-lifecycle.md)
 
 <!-- docs-nav-start -->
-[Previous: Documentation Home](README.md) | [Documentation Home](README.md) | [Tutorial Order](SUMMARY.md) | [Next: Overview](overview/README.md)
+[Previous: Documentation Home](README.md) | [Documentation Home](README.md) | [Next: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
 <!-- docs-nav-end -->
