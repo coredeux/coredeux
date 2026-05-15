@@ -192,4 +192,14 @@ framework in action before reading the module references.
 
 ## License
 
-Licensed under the Apache License, Version 2.0.
+The current Coredeux repository release is licensed under Apache License 2.0.
+
+License terms may change for future major versions. Each released version is
+governed by the license included with that version at the time of release.
+Earlier released versions remain subject to the license under which they were
+published.
+
+See also:
+
+- [NOTICE](NOTICE)
+- [TRADEMARKS.md](TRADEMARKS.md)
