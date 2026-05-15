@@ -1,0 +1,6 @@
+OPTIONS(passes=1,failFast=false)
+
+UPSERT com.coredeux.demo.domain.mongodb.MongoAuditTrail | id(unique=true)    | source       | category | occurredAt               | details(handler=jsonMapImportHandler)
+                                                        | mongo-demo-audit-1 | demo-import  | SECURITY | 2026-05-08T08:45:00Z     | "{\"actor\":\"agent-demo\",\"action\":\"login\",\"success\":true}"
+                                                        | mongo-demo-audit-2 | demo-import  | DATA     | 2026-05-08T09:10:00Z     | "{\"actor\":\"ops-user\",\"action\":\"export\",\"rows\":24}"
+                                                        | mongo-demo-audit-3 | demo-worker  | SYSTEM   | 2026-05-08T09:30:00Z     | "{\"component\":\"scheduler\",\"status\":\"completed\",\"durationMs\":835}"

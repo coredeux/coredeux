@@ -73,7 +73,7 @@ docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --bui
 Wait for the services to become healthy. When the app is ready, open:
 
 ```text
-http://localhost:8080/health
+http://localhost:8080/swagger-ui.html
 ```
 
 ### Normal Run

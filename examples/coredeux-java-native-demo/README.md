@@ -14,6 +14,24 @@ real Coredeux app:
 - Swagger UI and an OpenAPI document for the native HTTP surface
 - a small HTTP server that exposes the demo over HTTP
 
+## Bundled API assets
+
+The native module ships with the same Postman-style collections and sample
+files used by the Spring demo, adjusted for the native runtime:
+
+- `postman/coredeux-java-native-demo.postman_collection.json`
+- `postman/coredeux-java-native-demo-import.postman_collection.json`
+- `src/main/resources/samples/import-products.import`
+- `src/main/resources/samples/import-products.xlsx`
+- `src/main/resources/samples/import-jdbc-inventory.import`
+- `src/main/resources/samples/import-mongodb-audit-trails.import`
+- `src/main/resources/samples/import-elasticsearch-catalog.import`
+- `src/main/resources/samples/import-redis-sessions.import`
+
+The older `src/main/resources/samples/postgres-customers.import` sample stays in
+place for the lower-level Postgres walkthrough and the `/api/import/sample`
+endpoint.
+
 ## Main entry point
 
 The application starts here:
