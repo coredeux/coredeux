@@ -4,8 +4,8 @@
 [Previous: Overview](README.md) | [Documentation Home](../README.md) | [Next: Roadmap](roadmap.md)
 <!-- docs-nav-end -->
 
-Coredeux is a framework for enterprise Java applications that need a stable
-way to handle the common work around business intent.
+Coredeux is an enterprise application runtime that keeps the repetitive
+framework work around business intent stable.
 
 Today that means helping teams build applications with:
 

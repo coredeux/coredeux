@@ -28,7 +28,8 @@ Use this document together with:
 
 ## What This Layer Is
 
-`coredeux-core` is the framework kernel.
+`coredeux-core` is the framework kernel and the contract boundary for the
+rest of the platform.
 
 It owns:
 
@@ -51,6 +52,19 @@ It does not own:
 - Spring Boot web concerns
 
 Those live in adapter modules, Spring starters, or host applications.
+
+If you remember one thing, remember this:
+
+```mermaid
+flowchart LR
+    App["Application intent"] --> Svc["CoredeuxService"]
+    Svc --> Str["CoredeuxStrategy"]
+    Str --> Mod["Modules / lifecycle / context"]
+    Str --> Daa["CoredeuxDataAccessService"]
+    Daa --> Back["Backend adapter"]
+```
+
+The framework stays legible because the contracts stay stable.
 
 ## Architectural Shape
 

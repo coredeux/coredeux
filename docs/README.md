@@ -4,12 +4,21 @@
 [Documentation Home](README.md) | [Next: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
 <!-- docs-nav-end -->
 
-Coredeux is a framework for enterprise Java applications that need strong,
-repeatable building blocks today and a clean path into the agent era tomorrow.
+Coredeux standardizes the repetitive infrastructure of enterprise Java
+applications and keeps it usable across both Spring Boot and native hosts.
 
-It is not just a CRUD library. It is meant to sit around the application so
-the recurring parts of enterprise software stay consistent instead of being
-scattered across every service.
+It is a framework for the parts of an application that keep getting rebuilt:
+validation, hooks, audit, import, export, workflow-style extensions, and
+storage routing.
+
+It is not just a CRUD library. It is meant to sit around the application so the
+common framework behavior stays consistent instead of being scattered across
+every service.
+
+## The One-Line Identity
+
+Coredeux is an enterprise application runtime for governed, contract-driven
+behavior.
 
 ## The Simple Mental Model
 

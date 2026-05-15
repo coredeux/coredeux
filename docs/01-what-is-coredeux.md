@@ -7,25 +7,25 @@
 Coredeux is a framework for enterprise Java applications that need a shared,
 governed way to handle common work.
 
-It is meant to sit around the application so the recurring parts of enterprise
-software stay consistent instead of being scattered across every service.
+The homepage now carries the fuller story. This page is just the short bridge
+into the hands-on material.
 
-If you want the fuller framework story, the homepage now carries it. This page
-is the lighter bridge into the hands-on material.
+If you want the fast version, think of Coredeux as the runtime layer that keeps
+the repeated enterprise pieces consistent:
 
-## What To Keep In Mind
+- validation
+- hooks
+- audit
+- import and export
+- backend routing
+- extension points
 
-Coredeux is trying to standardize the everyday pieces that enterprise apps keep
-rebuilding:
+Use the next pages for the hands-on walkthrough and the deeper framework map:
 
-- load and update records
-- validate input
-- apply hooks and side effects
-- import and export data
-- keep behavior consistent across different storage choices
-- make the application easier to extend without rewriting the same patterns
-
-The next step is to see that idea in a running app.
+- [Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
+- [Tour Of The Demo](03-tour-of-the-demo.md)
+- [Overview](overview/README.md)
+- [Coredeux Core Reference](modules/coredeux-core/13-reference.md)
 
 ## Where To Go Next
 

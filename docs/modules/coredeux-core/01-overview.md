@@ -4,7 +4,8 @@
 [Previous: Coredeux Core](README.md) | [Documentation Home](../../README.md) | [Next: Lifecycle Model](02-lifecycle.md)
 <!-- docs-nav-end -->
 
-Coredeux Core is the framework layer between application intent and backend execution.
+Coredeux Core is the contract layer between application intent and backend
+execution.
 
 That is the simplest way to think about it.
 
