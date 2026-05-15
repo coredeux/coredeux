@@ -195,7 +195,11 @@ enough that both humans and agents can work with them safely.
 - [Native Getting Started In 10 Minutes](miscellaneous/01-native-getting-started-in-10-minutes.md)
 - [Native Tour Of The Demo](miscellaneous/02-native-tour-of-the-demo.md)
 
-## 06. Platform And Project
+## 06. Spring Boot Import Integration
+
+- [Import Into An Existing Spring Boot App](miscellaneous/03-import-into-an-existing-spring-boot-app.md)
+
+## 07. Platform And Project
 
 - [Platform Documentation](platform/README.md)
 - [Project](project/README.md)

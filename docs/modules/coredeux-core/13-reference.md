@@ -17,6 +17,7 @@ Use this document together with:
 - [Overview](01-overview.md)
 - [Lifecycle Model](02-lifecycle.md)
 - [Entity Definitions](03-entity-definitions.md)
+- [Property Resolution Order](19-property-resolution-order.md)
 - [Module System](05-modules.md)
 - [Add Or Choose A Data Access Service](06-add-data-access-service.md)
 - [Available Data Access Implementations](07-available-data-access-implementations.md)
@@ -52,6 +53,11 @@ It does not own:
 - Spring Boot web concerns
 
 Those live in adapter modules, Spring starters, or host applications.
+
+If you are trying to understand where a property value comes from in a Spring
+Boot host, read [Property Resolution Order](19-property-resolution-order.md).
+That page explains the override order without mixing it into the rest of the
+core runtime reference.
 
 If you remember one thing, remember this:
 

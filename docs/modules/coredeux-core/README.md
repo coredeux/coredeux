@@ -26,6 +26,7 @@ Read it in order if you want the full picture:
 16. [Core Elasticsearch Reference](16-core-elasticsearch-reference.md)
 17. [Core MongoDB Reference](17-core-mongodb-reference.md)
 18. [Core Redis Reference](18-core-redis-reference.md)
+19. [Property Resolution Order](19-property-resolution-order.md)
 
 The numbered pages are the canonical version of this section.
 

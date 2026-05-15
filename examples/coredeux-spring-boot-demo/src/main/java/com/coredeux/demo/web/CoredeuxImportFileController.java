@@ -97,8 +97,9 @@ public class CoredeuxImportFileController {
     }
 
     /**
-     * Reads the configured fallback parser from META-INF/coredeux.yml. Text stays
-     * the safe default when the property is missing or blank.
+     * Reads the configured fallback parser from Spring Boot properties first, then
+     * falls back to the Coredeux native defaults. Text stays the safe default when
+     * the property is missing or blank.
      */
     private String defaultParser() {
         String parser = coredeuxImportProperties == null ? null : coredeuxImportProperties.defaultParser();
