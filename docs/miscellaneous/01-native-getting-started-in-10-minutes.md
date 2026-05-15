@@ -76,6 +76,36 @@ Wait for the services to become healthy. When the app is ready, open:
 http://localhost:8080/health
 ```
 
+### Normal Run
+
+This is the default path. No debug flags are needed.
+
+```bash
+docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
+```
+
+### Debug Run
+
+Use the same compose command, but add a JDWP agent on port `5005`. Keep that
+terminal running and attach your debugger to `localhost:5005` from your IDE.
+
+PowerShell:
+
+```powershell
+$env:JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
+docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
+Remove-Item Env:JAVA_TOOL_OPTIONS
+```
+
+bash or zsh:
+
+```bash
+JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005' docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
+```
+
+If you prefer local debugging instead of Docker debugging, run the jar from
+your IDE or with `java -agentlib:jdwp=...` and attach to `localhost:5005`.
+
 That health endpoint is the first sign that the native runtime, the Coredeux
 configuration, and the embedded HTTP server are all alive together.
 

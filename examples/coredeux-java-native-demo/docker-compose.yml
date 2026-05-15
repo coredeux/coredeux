@@ -62,6 +62,7 @@ services:
       elasticsearch:
         condition: service_healthy
     environment:
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:-}
       COREDEUX_NATIVE_PORT: 8080
       COREDEUX_POSTGRES_URL: jdbc:postgresql://postgres:5432/coredeux_oss
       COREDEUX_POSTGRES_USER: postgres
@@ -76,3 +77,4 @@ services:
       COREDEUX_DEMO_REDIS_PORT: 6379
     ports:
       - "8080:8080"
+      - "5005:5005"

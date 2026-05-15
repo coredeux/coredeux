@@ -72,6 +72,36 @@ Wait for the services to become healthy. When the app is ready, open:
 http://localhost:8080/swagger-ui.html
 ```
 
+### Normal Run
+
+This is the default path. No debug flags are needed.
+
+```powershell
+docker compose -f examples/coredeux-spring-boot-demo/docker-compose.yml up --build
+```
+
+### Debug Run
+
+Use the same compose command, but add a JDWP agent on port `5005`. Keep that
+terminal running and attach your debugger to `localhost:5005` from your IDE.
+
+PowerShell:
+
+```powershell
+$env:JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
+docker compose -f examples/coredeux-spring-boot-demo/docker-compose.yml up --build
+Remove-Item Env:JAVA_TOOL_OPTIONS
+```
+
+bash or zsh:
+
+```bash
+JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005' docker compose -f examples/coredeux-spring-boot-demo/docker-compose.yml up --build
+```
+
+If you prefer local debugging instead of Docker debugging, run the app from
+your IDE or Maven with the same JDWP settings and attach to `localhost:5005`.
+
 That is the moment the framework becomes tangible.
 
 You are not looking at a toy endpoint set. You are looking at a Spring Boot host
