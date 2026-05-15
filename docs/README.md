@@ -184,6 +184,7 @@ enough that both humans and agents can work with them safely.
 - [Core Elasticsearch Reference](modules/coredeux-core/16-core-elasticsearch-reference.md)
 - [Core MongoDB Reference](modules/coredeux-core/17-core-mongodb-reference.md)
 - [Core Redis Reference](modules/coredeux-core/18-core-redis-reference.md)
+- [Property Resolution Order](modules/coredeux-core/19-property-resolution-order.md)
 
 ## 04. Import And Export
 
