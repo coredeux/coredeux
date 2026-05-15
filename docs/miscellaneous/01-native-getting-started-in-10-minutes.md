@@ -110,32 +110,39 @@ your IDE or with `java -agentlib:jdwp=...`, then attach to `localhost:5005`.
 That health endpoint is the first sign that the native runtime, the Coredeux
 configuration, and the embedded HTTP server are all alive together.
 
-## 2. Try The Customer API
+## 2. Open Swagger And Try The Generic Entity Route
 
-The native server exposes a direct customer path:
+The native server now exposes Swagger UI for quick exploration:
 
 ```text
-/api/customers
+http://localhost:8080/swagger-ui.html
 ```
 
-It also exposes the generic Coredeux entity route:
+The OpenAPI document lives at:
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+The native server also exposes the generic Coredeux entity route:
 
 ```text
 /api/entities/{entityName}
 ```
 
-Start with the customer path because it is the simplest way to see the flow.
+Start with the generic entity route because it shows the framework shape most
+clearly.
 
-List customers:
+List customers through the generic route:
 
 ```text
-GET /api/customers
+GET /api/entities/com.coredeux.demo.domain.Customer
 ```
 
-Create a customer:
+Create a customer through the generic route:
 
 ```text
-POST /api/customers
+POST /api/entities/com.coredeux.demo.domain.Customer
 ```
 
 Use a small body like:

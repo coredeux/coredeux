@@ -11,6 +11,7 @@ real Coredeux app:
 - JPA, JDBC, MongoDB, Elasticsearch, and Redis data access services
 - validators, hooks, audit handlers, and workflows
 - import and export support
+- Swagger UI and an OpenAPI document for the native HTTP surface
 - a small HTTP server that exposes the demo over HTTP
 
 ## Main entry point
@@ -70,8 +71,9 @@ and exposes the native demo over HTTP.
 The server registers these routes:
 
 - `/health`
+- `/swagger-ui.html`
+- `/v3/api-docs`
 - `/api/entities/{entityName}`
-- `/api/customers`
 - `/api/import`
 - `/api/export`
 
@@ -81,7 +83,7 @@ The server is responsible for:
 - reading and writing JSON
 - resolving entity types from the Coredeux registry
 - translating path parameters into entity identifiers
-- exposing a friendly `customers` route on top of the generic entity route
+- exposing Swagger UI and the generated OpenAPI document for the HTTP surface
 
 The server is started by `CoredeuxNativeDemoServer.start(runtime, port)`.
 It also owns the HTTP executor and shuts it down in `close()`.
@@ -254,6 +256,7 @@ The HTTP server then uses the runtime to:
 - validate and parse imports
 - queue and process export jobs
 - serve download artifacts from export storage
+- expose Swagger UI and `/v3/api-docs`
 
 ## Running the demo
 

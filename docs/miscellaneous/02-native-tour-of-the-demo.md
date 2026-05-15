@@ -123,8 +123,9 @@ embedded `HttpServer`.
 The main routes are:
 
 - `/health`
+- `/swagger-ui.html`
+- `/v3/api-docs`
 - `/api/entities/{entityName}`
-- `/api/customers`
 - `/api/import`
 - `/api/export`
 

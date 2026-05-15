@@ -27,7 +27,6 @@ import com.coredeux.export.model.ExportResponse;
 import com.coredeux.export.model.ExportStatus;
 import com.coredeux.export.service.CoredeuxExportService;
 import com.coredeux.export.support.ExportJsonSupport;
-import com.coredeux.demo.domain.Customer;
 import com.coredeux.impex.model.ImportRequest;
 import com.coredeux.impex.model.ImportResponse;
 import com.coredeux.impex.parser.excel.CoredeuxExcelImportParser;
@@ -48,11 +47,11 @@ import com.sun.net.httpserver.HttpServer;
 public final class CoredeuxNativeDemoServer implements AutoCloseable {
 
     private static final String ENTITY_PATH = "/api/entities";
-    private static final String CUSTOMER_PATH = "/api/customers";
     private static final String IMPORT_PATH = "/api/import";
     private static final String EXPORT_PATH = "/api/export";
+    private static final String OPENAPI_PATH = "/v3/api-docs";
+    private static final String SWAGGER_UI_PATH = "/swagger-ui.html";
     private static final String SAMPLE_IMPORT_PATH = "samples/postgres-customers.import";
-    private static final String CUSTOMER_ENTITY_NAME = Customer.class.getName();
 
     private final CoredeuxNativeRuntime runtime;
     private final HttpServer server;
@@ -94,8 +93,9 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
 
     private void registerRoutes() {
         server.createContext("/health", this::handleHealth);
+        server.createContext(OPENAPI_PATH, this::handleOpenApiDocs);
+        server.createContext(SWAGGER_UI_PATH, this::handleSwaggerUi);
         server.createContext(ENTITY_PATH, this::handleEntities);
-        server.createContext(CUSTOMER_PATH, this::handleCustomers);
         server.createContext(IMPORT_PATH, this::handleImport);
         server.createContext(EXPORT_PATH, this::handleExport);
     }
@@ -111,8 +111,20 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
                 "port", port()));
     }
 
-    private void handleCustomers(HttpExchange exchange) throws IOException {
-        handleEntity(exchange, CUSTOMER_ENTITY_NAME, tail(exchange, CUSTOMER_PATH));
+    private void handleOpenApiDocs(HttpExchange exchange) throws IOException {
+        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "GET");
+            return;
+        }
+        writeJson(exchange, 200, openApiDocument());
+    }
+
+    private void handleSwaggerUi(HttpExchange exchange) throws IOException {
+        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "GET");
+            return;
+        }
+        writeHtml(exchange, 200, swaggerUiHtml());
     }
 
     private void handleEntities(HttpExchange exchange) throws IOException {
@@ -154,6 +166,296 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
             case "DELETE" -> deleteEntity(exchange, entityName, id);
             default -> methodNotAllowed(exchange, "GET", "PUT", "DELETE");
         }
+    }
+
+    private Map<String, Object> openApiDocument() {
+        Map<String, Object> document = new LinkedHashMap<>();
+        document.put("openapi", "3.0.3");
+        document.put("info", Map.of(
+                "title", "Coredeux Java Native Demo API",
+                "description", "Plain Java demo endpoints for Coredeux Core, import, export, and the embedded HTTP runtime.",
+                "version", "0.1.0-SNAPSHOT"));
+        document.put("servers", List.of(Map.of(
+                "url", "http://localhost:" + port(),
+                "description", "Native demo server")));
+        document.put("paths", openApiPaths());
+        document.put("components", Map.of("schemas", openApiSchemas()));
+        return document;
+    }
+
+    private Map<String, Object> openApiPaths() {
+        Map<String, Object> paths = new LinkedHashMap<>();
+        paths.put("/health", Map.of(
+                "get", operation(
+                        "Check health",
+                        "Returns the current native demo status.",
+                        null,
+                        Map.of("200", jsonResponse("HealthResponse")))));
+
+        paths.put("/api/entities/{entityName}", Map.of(
+                "get", operation(
+                        "List entities",
+                        "Lists managed entities by full class name.",
+                        List.of(parameter("entityName", "path", "Full entity class name", true, refSchema("string"))),
+                        Map.of(
+                                "200", jsonResponse("EntityDocumentArray"),
+                                "400", errorResponse(),
+                                "404", errorResponse())),
+                "post", operation(
+                        "Create entity",
+                        "Creates a new entity instance for the requested entity type.",
+                        List.of(parameter("entityName", "path", "Full entity class name", true, refSchema("string"))),
+                        Map.of(
+                                "201", jsonResponse("EntityDocument"),
+                                "400", errorResponse(),
+                                "404", errorResponse()),
+                        refSchema("EntityDocument"))));
+
+        paths.put("/api/entities/{entityName}/{id}", Map.of(
+                "get", operation(
+                        "Read entity",
+                        "Reads a single entity by identifier.",
+                        List.of(
+                                parameter("entityName", "path", "Full entity class name", true, refSchema("string")),
+                                parameter("id", "path", "Entity identifier", true, refSchema("string"))),
+                        Map.of("200", jsonResponse("EntityDocument"), "404", errorResponse())),
+                "put", operation(
+                        "Update entity",
+                        "Updates an existing entity by identifier.",
+                        List.of(
+                                parameter("entityName", "path", "Full entity class name", true, refSchema("string")),
+                                parameter("id", "path", "Entity identifier", true, refSchema("string"))),
+                        Map.of(
+                                "200", jsonResponse("EntityDocument"),
+                                "400", errorResponse(),
+                                "404", errorResponse()),
+                        refSchema("EntityDocument")),
+                "delete", operation(
+                        "Delete entity",
+                        "Deletes an entity by identifier.",
+                        List.of(
+                                parameter("entityName", "path", "Full entity class name", true, refSchema("string")),
+                                parameter("id", "path", "Entity identifier", true, refSchema("string"))),
+                        Map.of(
+                                "204", Map.of("description", "Entity deleted"),
+                                "404", errorResponse()))));
+
+        paths.put("/api/import", Map.of(
+                "post", operation(
+                        "Import data",
+                        "Validates and imports a JSON import request.",
+                        null,
+                        Map.of(
+                                "200", jsonResponse("ImportResponse"),
+                                "400", errorResponse()),
+                        refSchema("ImportRequest"))));
+
+        paths.put("/api/import/validate", Map.of(
+                "post", operation(
+                        "Validate import",
+                        "Validates an import request without executing it.",
+                        null,
+                        Map.of(
+                                "200", jsonResponse("ImportResponse"),
+                                "400", errorResponse()),
+                        refSchema("ImportRequest"))));
+
+        paths.put("/api/import/sample", Map.of(
+                "post", operation(
+                        "Import sample file",
+                        "Loads the bundled Postgres sample import file and executes it.",
+                        null,
+                        Map.of(
+                                "200", jsonResponse("ImportResponse"),
+                                "400", errorResponse()))));
+
+        paths.put("/api/import/file", Map.of(
+                "post", operation(
+                        "Import file",
+                        "Uploads a text or Excel import file and executes it.",
+                        List.of(parameter("parser", "query", "Optional parser override", false, refSchema("string"))),
+                        Map.of(
+                                "200", jsonResponse("ImportResponse"),
+                                "400", errorResponse()),
+                        refSchema("binary"),
+                        "application/octet-stream")));
+
+        paths.put("/api/import/file/validate", Map.of(
+                "post", operation(
+                        "Validate file import",
+                        "Uploads an import file and validates it without executing the import.",
+                        List.of(parameter("parser", "query", "Optional parser override", false, refSchema("string"))),
+                        Map.of(
+                                "200", jsonResponse("ImportResponse"),
+                                "400", errorResponse()),
+                        refSchema("binary"),
+                        "application/octet-stream")));
+
+        paths.put("/api/export", Map.of(
+                "post", operation(
+                        "Queue export",
+                        "Queues an export job and processes it in the demo runtime.",
+                        null,
+                        Map.of(
+                                "200", jsonResponse("ExportResponse"),
+                                "202", jsonResponse("ExportResponse"),
+                                "400", errorResponse()),
+                        refSchema("ExportRequest"))));
+
+        paths.put("/api/export/{uid}", Map.of(
+                "get", operation(
+                        "Read export",
+                        "Fetches the current export job state by uid.",
+                        List.of(parameter("uid", "path", "Export uid", true, refSchema("string"))),
+                        Map.of(
+                                "200", jsonResponse("ExportResponse"),
+                                "202", jsonResponse("ExportResponse"),
+                                "404", errorResponse()))));
+
+        paths.put("/api/export/{uid}/download", Map.of(
+                "get", operation(
+                        "Download export",
+                        "Downloads the exported artifact once the job is complete.",
+                        List.of(parameter("uid", "path", "Export uid", true, refSchema("string"))),
+                        Map.of(
+                                "200", Map.of("description", "Binary export artifact"),
+                                "404", errorResponse(),
+                                "409", errorResponse()))));
+
+        return paths;
+    }
+
+    private Map<String, Object> openApiSchemas() {
+        Map<String, Object> schemas = new LinkedHashMap<>();
+        schemas.put("string", Map.of("type", "string"));
+        schemas.put("binary", Map.of("type", "string", "format", "binary"));
+        schemas.put("HealthResponse", objectSchema(Map.of(
+                "status", Map.of("type", "string"),
+                "service", Map.of("type", "string"),
+                "port", Map.of("type", "integer", "format", "int32")),
+                List.of("status", "service", "port")));
+        schemas.put("EntityDocument", objectSchema(Map.of(), List.of()));
+        schemas.put("EntityDocumentArray", Map.of(
+                "type", "array",
+                "items", Map.of("$ref", "#/components/schemas/EntityDocument")));
+        schemas.put("ImportRequest", objectSchema(Map.of(), List.of()));
+        schemas.put("ImportResponse", objectSchema(Map.of(), List.of()));
+        schemas.put("ExportRequest", objectSchema(Map.of(), List.of()));
+        schemas.put("ExportResponse", objectSchema(Map.of(), List.of()));
+        return schemas;
+    }
+
+    private Map<String, Object> operation(String summary, String description, List<Map<String, Object>> parameters,
+            Map<String, Object> responses) {
+        return operation(summary, description, parameters, responses, null);
+    }
+
+    private Map<String, Object> operation(String summary, String description, List<Map<String, Object>> parameters,
+            Map<String, Object> responses, Map<String, Object> requestBodySchema, String requestBodyContentType) {
+        Map<String, Object> operation = operation(summary, description, parameters, responses, requestBodySchema);
+        if (requestBodySchema != null && requestBodyContentType != null && !requestBodyContentType.isBlank()) {
+            operation.put("requestBody", Map.of(
+                    "required", true,
+                    "content", Map.of(requestBodyContentType, Map.of("schema", requestBodySchema))));
+        }
+        return operation;
+    }
+
+    private Map<String, Object> operation(String summary, String description, List<Map<String, Object>> parameters,
+            Map<String, Object> responses, Map<String, Object> requestBodySchema) {
+        Map<String, Object> operation = new LinkedHashMap<>();
+        operation.put("summary", summary);
+        operation.put("description", description);
+        operation.put("responses", responses);
+        if (parameters != null && !parameters.isEmpty()) {
+            operation.put("parameters", parameters);
+        }
+        if (requestBodySchema != null) {
+            operation.put("requestBody", Map.of(
+                    "required", true,
+                    "content", Map.of("application/json", Map.of("schema", requestBodySchema))));
+        }
+        return operation;
+    }
+
+    private Map<String, Object> parameter(String name, String in, String description, boolean required,
+            Map<String, Object> schema) {
+        Map<String, Object> parameter = new LinkedHashMap<>();
+        parameter.put("name", name);
+        parameter.put("in", in);
+        parameter.put("description", description);
+        parameter.put("required", required);
+        parameter.put("schema", schema);
+        return parameter;
+    }
+
+    private Map<String, Object> jsonResponse(String schemaName) {
+        return Map.of(
+                "description", "OK",
+                "content", Map.of(
+                        "application/json", Map.of(
+                                "schema", Map.of("$ref", "#/components/schemas/" + schemaName))));
+    }
+
+    private Map<String, Object> errorResponse() {
+        return Map.of(
+                "description", "Error",
+                "content", Map.of(
+                        "application/json", Map.of(
+                                "schema", Map.of("$ref", "#/components/schemas/ErrorResponse"))));
+    }
+
+    private Map<String, Object> objectSchema(Map<String, Object> properties, List<String> required) {
+        Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("additionalProperties", true);
+        if (properties != null && !properties.isEmpty()) {
+            schema.put("properties", properties);
+        }
+        if (required != null && !required.isEmpty()) {
+            schema.put("required", required);
+        }
+        return schema;
+    }
+
+    private Map<String, Object> refSchema(String name) {
+        return Map.of("$ref", "#/components/schemas/" + name);
+    }
+
+    private String swaggerUiHtml() {
+        return """
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="UTF-8">
+                  <title>Coredeux Java Native Demo API</title>
+                  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+                  <style>
+                    body { margin: 0; background: #fafafa; }
+                    #swagger-ui { max-width: 100%; }
+                  </style>
+                </head>
+                <body>
+                  <div id="swagger-ui"></div>
+                  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+                  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+                  <script>
+                    window.onload = function() {
+                      window.ui = SwaggerUIBundle({
+                        url: '/v3/api-docs',
+                        dom_id: '#swagger-ui',
+                        deepLinking: true,
+                        presets: [
+                          SwaggerUIBundle.presets.apis,
+                          SwaggerUIStandalonePreset
+                        ],
+                        layout: 'BaseLayout'
+                      });
+                    };
+                  </script>
+                </body>
+                </html>
+                """;
     }
 
     private void listEntities(HttpExchange exchange, String entityName) throws IOException {
@@ -248,6 +550,14 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
         if (path.equals(IMPORT_PATH + "/sample")) {
             ImportRequest request = parseSampleImportRequest();
             ImportResponse response = runtime.coredeuxImportService().importData(request);
+            writeJson(exchange, response.hasErrors() ? 400 : 200, response);
+            return;
+        }
+
+        if (path.equals(IMPORT_PATH + "/file/validate")) {
+            byte[] body = exchange.getRequestBody().readAllBytes();
+            ImportRequest request = parseImportFile(exchange, body);
+            ImportResponse response = runtime.coredeuxImportService().validateData(request);
             writeJson(exchange, response.hasErrors() ? 400 : 200, response);
             return;
         }
@@ -401,6 +711,15 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
 
     private void sendError(HttpExchange exchange, int status, String message) throws IOException {
         writeJson(exchange, status, Map.of("message", message));
+    }
+
+    private void writeHtml(HttpExchange exchange, int status, String body) throws IOException {
+        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
+        exchange.sendResponseHeaders(status, bytes.length);
+        try (OutputStream output = exchange.getResponseBody()) {
+            output.write(bytes);
+        }
     }
 
     private void writeJson(HttpExchange exchange, int status, Object body) throws IOException {
