@@ -86,13 +86,14 @@ docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --bui
 
 ### Debug Run
 
-Use the same compose command, but add a JDWP agent on port `5005`. Keep that
-terminal running and attach your debugger to `localhost:5005` from your IDE.
+Use the same compose command, but add a JDWP agent on port `5005`. Start the
+demo in this mode, keep that terminal running, and then attach your debugger to
+`localhost:5005` from your IDE.
 
 PowerShell:
 
 ```powershell
-$env:JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
+$env:JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005'
 docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
 Remove-Item Env:JAVA_TOOL_OPTIONS
 ```
@@ -100,11 +101,11 @@ Remove-Item Env:JAVA_TOOL_OPTIONS
 bash or zsh:
 
 ```bash
-JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005' docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
+JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005' docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
 ```
 
 If you prefer local debugging instead of Docker debugging, run the jar from
-your IDE or with `java -agentlib:jdwp=...` and attach to `localhost:5005`.
+your IDE or with `java -agentlib:jdwp=...`, then attach to `localhost:5005`.
 
 That health endpoint is the first sign that the native runtime, the Coredeux
 configuration, and the embedded HTTP server are all alive together.

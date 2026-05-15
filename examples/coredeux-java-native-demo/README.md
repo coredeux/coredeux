@@ -271,13 +271,13 @@ docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --bui
 ```
 
 To debug the native demo in Docker, run the same compose command with a JDWP
-agent on port `5005`. Keep that terminal open, and attach your debugger to
-`localhost:5005` from your IDE.
+agent on port `5005`. Start the stack in this mode, keep that terminal open,
+and attach your debugger to `localhost:5005` from your IDE.
 
 PowerShell:
 
 ```powershell
-$env:JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
+$env:JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005'
 docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
 Remove-Item Env:JAVA_TOOL_OPTIONS
 ```
@@ -285,7 +285,7 @@ Remove-Item Env:JAVA_TOOL_OPTIONS
 bash or zsh:
 
 ```bash
-JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005' docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
+JAVA_TOOL_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005' docker compose -f examples/coredeux-java-native-demo/docker-compose.yml up --build
 ```
 
 If you want to debug the app locally instead of inside Docker, build the jar
@@ -293,7 +293,7 @@ and run it with the same JDWP agent:
 
 ```powershell
 mvn -pl examples/coredeux-java-native-demo -am -DskipTests package
-java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -jar examples/coredeux-java-native-demo/target/coredeux-java-native-demo-0.1.0-SNAPSHOT.jar
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005 -jar examples/coredeux-java-native-demo/target/coredeux-java-native-demo-0.1.0-SNAPSHOT.jar
 ```
 
 In that local-debug case, you still attach to `localhost:5005`, but the app is
