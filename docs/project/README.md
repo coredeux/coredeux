@@ -8,6 +8,7 @@ This section contains project-level process and governance documents.
 
 - [Governance](governance.md)
 - [Release Process](release-process.md)
+- [Versioning And Branching](versioning.md)
 - [Security Policy](security.md)
 - [Third-Party Notices](third-party-notices.md)
 

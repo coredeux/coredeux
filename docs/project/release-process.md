@@ -1,7 +1,7 @@
 # Release Process
 
 <!-- docs-nav-start -->
-[Previous: Governance Model](governance.md) | [Documentation Home](../README.md) | [Next: Security Policy](security.md)
+[Previous: Governance Model](governance.md) | [Documentation Home](../README.md) | [Next: Versioning And Branching](versioning.md)
 <!-- docs-nav-end -->
 
 Coredeux follows semantic versioning.
@@ -29,5 +29,5 @@ MAJOR.MINOR.PATCH
 -   release/\* → stabilization
 
 <!-- docs-nav-start -->
-[Previous: Governance Model](governance.md) | [Documentation Home](../README.md) | [Next: Security Policy](security.md)
+[Previous: Governance Model](governance.md) | [Documentation Home](../README.md) | [Next: Versioning And Branching](versioning.md)
 <!-- docs-nav-end -->

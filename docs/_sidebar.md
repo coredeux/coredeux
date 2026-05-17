@@ -47,5 +47,6 @@
   * [Project](project/README.md)
   * [Governance Model](project/governance.md)
   * [Release Process](project/release-process.md)
+  * [Versioning And Branching](project/versioning.md)
   * [Security Policy](project/security.md)
   * [Third-Party Notices](project/third-party-notices.md)
