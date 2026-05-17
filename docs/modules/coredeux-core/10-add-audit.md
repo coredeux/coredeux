@@ -132,7 +132,54 @@ The audit module understands these configured operations:
 - `DELETE`
 - `ALL`
 
-The module maps those operations to the right framework phases.
+The module maps those operations to specific framework phases:
+
+| Audit operation | Framework phase | When the handler runs |
+| --- | --- | --- |
+| `SAVE` | `AFTER_SAVE` | After `CoredeuxDataAccessService.save(...)` has completed |
+| `UPDATE` | `AFTER_UPDATE` | After `CoredeuxDataAccessService.update(...)` has completed |
+| `DELETE` | `BEFORE_DELETE` | Before `CoredeuxDataAccessService.remove(...)` is called |
+| `ALL` | `AFTER_SAVE`, `AFTER_UPDATE`, `BEFORE_DELETE` | For every audit-supported write operation |
+
+The important detail is that audit is not called for every lifecycle phase.
+It is only called when the phase maps to one of the configured audit
+operations.
+
+For example, if an entity has this configuration:
+
+```yaml
+modules:
+  - name: audit
+    enabled: true
+    handlers:
+      - demoAuditHandler
+    config:
+      operations:
+        - SAVE
+        - UPDATE
+```
+
+then `demoAuditHandler` runs after saves and updates, but not before deletes.
+If the same entity configures `DELETE`, the handler runs before the delete is
+sent to the data access service.
+
+This is the mapping used internally by the audit module:
+
+```java
+private String mapPhaseToAuditOperation(String phase) {
+    return switch (phase) {
+        case CoredeuxHookPhases.AFTER_SAVE -> SAVE;
+        case CoredeuxHookPhases.AFTER_UPDATE -> UPDATE;
+        case CoredeuxHookPhases.BEFORE_DELETE -> DELETE;
+        default -> null;
+    };
+}
+```
+
+The delete audit runs before removal because the existing entity is still
+available at that point. The handler can inspect the object that is about to be
+deleted and write a meaningful audit record before the storage adapter removes
+it.
 
 That makes it possible to express business-level audit policy in YAML without
 hardcoding lifecycle branches in the application.
