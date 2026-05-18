@@ -29,6 +29,7 @@
         <poi.version>5.2.5</poi.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
+        <sonar.organization>coredeux</sonar.organization>
     </properties>
 
     <dependencyManagement>
