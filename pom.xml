@@ -19,6 +19,8 @@
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
         <lombok.version>1.18.46</lombok.version>
+        <byte-buddy.version>1.17.8</byte-buddy.version>
+        <jacoco.version>0.8.14</jacoco.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <jakarta.persistence.version>3.1.0</jakarta.persistence.version>
         <hibernate.version>6.4.4.Final</hibernate.version>
@@ -45,6 +47,16 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${byte-buddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${byte-buddy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>
