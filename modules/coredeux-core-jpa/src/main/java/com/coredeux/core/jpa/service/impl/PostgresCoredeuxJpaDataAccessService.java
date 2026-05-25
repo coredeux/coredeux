@@ -228,7 +228,7 @@ public class PostgresCoredeuxJpaDataAccessService extends DefaultCoredeuxJpaData
         return field.getName();
     }
 
-    private Field findField(Class<?> type, String fieldName) {
+    public Field findField(Class<?> type, String fieldName) {
         Class<?> current = type;
         while (current != null && current != Object.class) {
             try {

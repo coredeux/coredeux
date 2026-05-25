@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -22,7 +21,7 @@ import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
-import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.coredeux.core.service.impl.AbstractCoredeuxDataAccessService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,31 +33,13 @@ import io.lettuce.core.api.sync.RedisCommands;
 /**
  * Redis-backed implementation of {@link CoredeuxDataAccessService}.
  */
-public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccessService {
-
-    private static final Set<String> SUPPORTED_COMPARATORS = Set.of(
-            "EQUALS",
-            "NOTEQUALS",
-            "STARTSWITH",
-            "ANYWHERECS",
-            "ANYWHERE",
-            "LESSTHANOREQUAL",
-            "LESSTHAN",
-            "GREATERTHANOREQUAL",
-            "GREATERTHAN",
-            "ISNULL",
-            "ISNOTNULL",
-            "ISEMPTY",
-            "ISNOTEMPTY",
-            "CONTAINS",
-            "NOTCONTAINS");
+public class DefaultCoredeuxRedisDataAccessService extends AbstractCoredeuxDataAccessService {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final TypeReference<List<SearchParams>> SEARCH_PARAMS_LIST = new TypeReference<>() {
     };
 
     private final RedisCommands<String, String> commands;
-    private final ConcurrentMap<Class<?>, Field> identifierFieldCache = new ConcurrentHashMap<>();
     private final String keyPrefix;
 
     public DefaultCoredeuxRedisDataAccessService(StatefulRedisConnection<String, String> connection,
@@ -139,11 +120,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     @Override
-    public Set<String> supportedComparators(Class<?> type) {
-        return SUPPORTED_COMPARATORS;
-    }
-
-    @Override
     public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
             int currentPage) {
         validateQueryInput(query, type);
@@ -178,36 +154,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
         } catch (RuntimeException exception) {
             throw wrap("Unable to refresh entity of type " + entity.getClass().getName(), exception);
         }
-    }
-
-    protected void validateLoadInput(String id, Class<?> type) {
-        if (id == null || id.isBlank()) {
-            throw new CoredeuxValidationException("Load identifier must not be blank");
-        }
-        validateSearchType(type);
-    }
-
-    protected void validateQueryInput(String query, Class<?> type) {
-        if (query == null || query.isBlank()) {
-            throw new CoredeuxValidationException("Query string must not be blank");
-        }
-        validateSearchType(type);
-    }
-
-    protected void validateSearchType(Class<?> type) {
-        if (type == null) {
-            throw new CoredeuxValidationException("Entity type must not be null");
-        }
-    }
-
-    protected <T> void validateEntity(T entity, String action) {
-        if (entity == null) {
-            throw new CoredeuxValidationException("Entity must not be null for " + action);
-        }
-    }
-
-    protected String typeName(Class<?> type) {
-        return type == null ? "null" : type.getName();
     }
 
     protected String redisNamespace(Class<?> type) {
@@ -282,7 +228,7 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
             normalizeRequired(searchParams.getField(), "Search field must not be blank");
             String comparator = normalizeRequired(searchParams.getComparator(), "Search comparator must not be blank")
                     .toUpperCase(Locale.ROOT);
-            if (!SUPPORTED_COMPARATORS.contains(comparator)) {
+            if (!supportedComparators(Object.class).contains(comparator)) {
                 throw new CoredeuxValidationException("Unsupported search comparator: " + comparator);
             }
         }
@@ -294,7 +240,7 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
                 .toUpperCase(Locale.ROOT);
         Object value = searchParams.getValue();
 
-        if (!SUPPORTED_COMPARATORS.contains(comparator)) {
+        if (!supportedComparators(entity.getClass()).contains(comparator)) {
             throw new CoredeuxValidationException("Unsupported search comparator: " + comparator);
         }
 
@@ -421,13 +367,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
         return false;
     }
 
-    protected String normalizeRequired(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new CoredeuxValidationException(message);
-        }
-        return value.trim();
-    }
-
     protected <T> List<T> page(List<T> results, int pageSize, int currentPage) {
         if (!isPagingEnabled(pageSize, currentPage) || CollectionUtils.isEmpty(results)) {
             return results;
@@ -435,26 +374,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
         int fromIndex = Math.min(Math.max(currentPage - 1, 0) * pageSize, results.size());
         int toIndex = Math.min(fromIndex + pageSize, results.size());
         return results.subList(fromIndex, toIndex);
-    }
-
-    protected boolean isPagingEnabled(int pageSize, int currentPage) {
-        return pageSize > 0 && currentPage > 0;
-    }
-
-    protected PaginationData buildPagination(long totalResults, long resultSize, int pageSize, int currentPage) {
-        PaginationData paginationData = new PaginationData();
-        paginationData.setCurrentPage((long) currentPage);
-        paginationData.setPageSize((long) pageSize);
-        if (isPagingEnabled(pageSize, currentPage)) {
-            paginationData.setTotalResults(totalResults);
-            paginationData.setResultSize(resultSize);
-            paginationData.setTotalPages(resultSize == 0 ? 0L : (long) Math.ceil(resultSize / (double) pageSize));
-        }
-        return paginationData;
-    }
-
-    protected <T> List<T> defaultResults(List<T> results) {
-        return CollectionUtils.isEmpty(results) ? List.of() : results;
     }
 
     protected String resolveQueryTemplate(String query, Map<String, Object> params) {
@@ -538,53 +457,8 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
         return UUID.randomUUID().toString();
     }
 
-    protected Object extractIdentifier(Object entity) {
-        Field field = identifierField(entity.getClass());
-        ReflectionUtils.makeAccessible(field);
-        return ReflectionUtils.getField(field, entity);
-    }
-
-    protected Object requireIdentifier(Object entity, String action) {
-        Object identifier = extractIdentifier(entity);
-        if (identifier == null || (identifier instanceof String stringIdentifier && stringIdentifier.isBlank())) {
-            throw new CoredeuxValidationException("Entity identifier must not be blank for " + action);
-        }
-        return identifier;
-    }
-
-    protected void setIdentifier(Object entity, Object identifier) {
-        Field field = identifierField(entity.getClass());
-        ReflectionUtils.makeAccessible(field);
-        ReflectionUtils.setField(field, entity, convertIdentifier(String.valueOf(identifier), field.getType()));
-    }
-
-    protected Field identifierField(Class<?> type) {
-        return identifierFieldCache.computeIfAbsent(type, this::findIdentifierField);
-    }
-
-    protected Field findIdentifierField(Class<?> type) {
-        Field annotated = findAnnotatedField(type, "org.springframework.data.annotation.Id");
-        if (annotated != null) {
-            return annotated;
-        }
-        Field fallback = ReflectionUtils.findField(type, "id");
-        if (fallback == null) {
-            throw new CoredeuxValidationException("Unable to resolve identifier field for class: " + type.getName());
-        }
-        return fallback;
-    }
-
-    protected Field findAnnotatedField(Class<?> type, String annotationClassName) {
-        final Field[] found = new Field[1];
-        ReflectionUtils.doWithFields(type, field -> {
-            if (fieldHasAnnotation(field, annotationClassName)) {
-                found[0] = field;
-            }
-        });
-        return found[0];
-    }
-
-    protected Object convertIdentifier(String value, Class<?> targetType) {
+    @Override
+    public Object convertIdentifier(String value, Class<?> targetType) {
         if (targetType == null || targetType == String.class || targetType.isAssignableFrom(String.class)) {
             return value;
         }
@@ -617,26 +491,7 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
             Enum<?> enumValue = Enum.valueOf((Class<? extends Enum>) targetType, value);
             return enumValue;
         }
-        Object factoryValue = invokeStringFactory(targetType, value);
-        if (factoryValue != null) {
-            return factoryValue;
-        }
         return value;
-    }
-
-    protected Object invokeStringFactory(Class<?> targetType, String value) {
-        for (String methodName : List.of("valueOf", "of", "fromString")) {
-            try {
-                return targetType.getMethod(methodName, String.class).invoke(null, value);
-            } catch (ReflectiveOperationException exception) {
-                // continue
-            }
-        }
-        try {
-            return targetType.getConstructor(String.class).newInstance(value);
-        } catch (ReflectiveOperationException exception) {
-            return null;
-        }
     }
 
     protected CoredeuxDataAccessException wrap(String message, Exception exception) {
@@ -650,17 +505,6 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
     }
 
     protected record RedisQueryRequest(List<SearchParams> filters) {
-    }
-
-    private boolean fieldHasAnnotation(Field field, String annotationClassName) {
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends java.lang.annotation.Annotation> annotationType =
-                    (Class<? extends java.lang.annotation.Annotation>) Class.forName(annotationClassName);
-            return field.isAnnotationPresent(annotationType);
-        } catch (ClassNotFoundException exception) {
-            return false;
-        }
     }
 
     protected static final class BeanUtils {

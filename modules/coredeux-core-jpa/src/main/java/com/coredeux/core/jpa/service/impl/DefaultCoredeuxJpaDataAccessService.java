@@ -6,16 +6,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.jpa.support.JpaIdentifierConverter;
-import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
-import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.coredeux.core.service.impl.AbstractCoredeuxDataAccessService;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -33,27 +31,7 @@ import jakarta.persistence.metamodel.PluralAttribute;
 /**
  * Default JPA-backed implementation of {@link CoredeuxDataAccessService}.
  */
-public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessService, AutoCloseable {
-
-    protected static final String EQUALS = "EQUALS";
-    protected static final String NOTEQUALS = "NOTEQUALS";
-    protected static final String STARTSWITH = "STARTSWITH";
-    protected static final String ANYWHERECS = "ANYWHERECS";
-    protected static final String ANYWHERE = "ANYWHERE";
-    protected static final String LESSTHANOREQUAL = "LESSTHANOREQUAL";
-    protected static final String LESSTHAN = "LESSTHAN";
-    protected static final String GREATERTHANOREQUAL = "GREATERTHANOREQUAL";
-    protected static final String GREATERTHAN = "GREATERTHAN";
-    protected static final String ISNULL = "ISNULL";
-    protected static final String ISNOTNULL = "ISNOTNULL";
-    protected static final String ISEMPTY = "ISEMPTY";
-    protected static final String ISNOTEMPTY = "ISNOTEMPTY";
-    protected static final String CONTAINS = "CONTAINS";
-    protected static final String NOTCONTAINS = "NOTCONTAINS";
-
-    private static final Set<String> SUPPORTED_COMPARATORS = Set.of(EQUALS, NOTEQUALS, STARTSWITH, ANYWHERECS,
-            ANYWHERE, LESSTHANOREQUAL, LESSTHAN, GREATERTHANOREQUAL, GREATERTHAN, ISNULL, ISNOTNULL, ISEMPTY,
-            ISNOTEMPTY, CONTAINS, NOTCONTAINS);
+public class DefaultCoredeuxJpaDataAccessService extends AbstractCoredeuxDataAccessService implements AutoCloseable {
 
     private EntityManager entityManager;
     private EntityManagerFactory entityManagerFactory;
@@ -142,11 +120,6 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
     }
 
     @Override
-    public Set<String> supportedComparators(Class<?> type) {
-        return SUPPORTED_COMPARATORS;
-    }
-
-    @Override
     public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
             int currentPage) {
         validateQueryInput(query, type);
@@ -172,8 +145,18 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
     public <T> void refresh(T entity) {
         validateEntity(entity, "refresh");
         write(entityManager -> {
-            T managedEntity = entityManager.contains(entity) ? entity : entityManager.merge(entity);
-            entityManager.refresh(managedEntity);
+            if (entityManager.contains(entity)) {
+                entityManager.refresh(entity);
+                return null;
+            }
+            Object identifier = requireIdentifier(entity, "refresh");
+            Object convertedIdentifier = JpaIdentifierConverter.convert(String.valueOf(identifier),
+                    resolveIdentifierType(entity.getClass()));
+            @SuppressWarnings("unchecked")
+            T refreshed = (T) entityManager.find(entity.getClass(), convertedIdentifier);
+            if (refreshed != null && refreshed != entity) {
+                copyFields(refreshed, entity);
+            }
             return null;
         }, "Unable to refresh entity of type " + entity.getClass().getName());
     }
@@ -200,32 +183,6 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
         return currentEntityManager;
     }
 
-    protected void validateLoadInput(String id, Class<?> type) {
-        if (id == null || id.isBlank()) {
-            throw new CoredeuxValidationException("Load identifier must not be blank");
-        }
-        validateSearchType(type);
-    }
-
-    protected void validateQueryInput(String query, Class<?> type) {
-        if (query == null || query.isBlank()) {
-            throw new CoredeuxValidationException("Query string must not be blank");
-        }
-        validateSearchType(type);
-    }
-
-    protected void validateSearchType(Class<?> type) {
-        if (type == null) {
-            throw new CoredeuxValidationException("Entity type must not be null");
-        }
-    }
-
-    protected <T> void validateEntity(T entity, String action) {
-        if (entity == null) {
-            throw new CoredeuxValidationException("Entity must not be null for " + action);
-        }
-    }
-
     protected <T> Class<?> resolveIdentifierType(Class<T> type) {
         EntityType<T> entityType = getEntityManager().getMetamodel().entity(type);
         if (!entityType.hasSingleIdAttribute()) {
@@ -249,26 +206,6 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
         }
         query.setFirstResult(Math.max(currentPage - 1, 0) * pageSize);
         query.setMaxResults(pageSize);
-    }
-
-    protected boolean isPagingEnabled(int pageSize, int currentPage) {
-        return pageSize > 0 && currentPage > 0;
-    }
-
-    protected PaginationData buildPagination(long totalResults, long resultSize, int pageSize, int currentPage) {
-        PaginationData paginationData = new PaginationData();
-        paginationData.setCurrentPage((long) currentPage);
-        paginationData.setPageSize((long) pageSize);
-        if (isPagingEnabled(pageSize, currentPage)) {
-            paginationData.setTotalResults(totalResults);
-            paginationData.setResultSize(resultSize);
-            paginationData.setTotalPages(resultSize == 0 ? 0L : (long) Math.ceil(resultSize / (double) pageSize));
-        }
-        return paginationData;
-    }
-
-    protected <T> List<T> defaultResults(List<T> results) {
-        return results == null || results.isEmpty() ? List.of() : results;
     }
 
     protected <T> void detachResults(List<T> results) {
@@ -350,13 +287,6 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
         };
     }
 
-    protected String normalizeRequired(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new CoredeuxValidationException(message);
-        }
-        return value.trim();
-    }
-
     @SuppressWarnings("unchecked")
     protected Expression<Collection<Object>> asCollectionExpression(Path<?> path, String comparator) {
         if (!(path.getModel() instanceof PluralAttribute<?, ?, ?>) && !Collection.class.isAssignableFrom(path.getJavaType())) {
@@ -403,16 +333,6 @@ public class DefaultCoredeuxJpaDataAccessService implements CoredeuxDataAccessSe
             current = current.get(part.trim());
         }
         return current;
-    }
-
-    protected CoredeuxDataAccessException wrap(String message, RuntimeException exception) {
-        if (exception instanceof CoredeuxDataAccessException dataAccessException) {
-            return dataAccessException;
-        }
-        if (exception instanceof CoredeuxValidationException validationException) {
-            throw validationException;
-        }
-        return new CoredeuxDataAccessException(message, exception);
     }
 
     protected <T> T read(Function<EntityManager, T> callback, String errorMessage) {

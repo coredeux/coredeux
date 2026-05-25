@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,10 +31,9 @@ import javax.sql.DataSource;
 
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
-import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
-import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.coredeux.core.service.impl.AbstractCoredeuxDataAccessService;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
@@ -44,24 +42,7 @@ import jakarta.persistence.Table;
 /**
  * JDBC-based implementation of {@link CoredeuxDataAccessService}.
  */
-public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessService {
-
-    private static final Set<String> SUPPORTED_COMPARATORS = Set.of(
-            "EQUALS",
-            "NOTEQUALS",
-            "STARTSWITH",
-            "ANYWHERECS",
-            "ANYWHERE",
-            "LESSTHANOREQUAL",
-            "LESSTHAN",
-            "GREATERTHANOREQUAL",
-            "GREATERTHAN",
-            "ISNULL",
-            "ISNOTNULL",
-            "ISEMPTY",
-            "ISNOTEMPTY",
-            "CONTAINS",
-            "NOTCONTAINS");
+public class DefaultCoredeuxJdbcDataAccessService extends AbstractCoredeuxDataAccessService {
 
     private static final Pattern NAMED_PARAMETER_PATTERN = Pattern.compile(":([A-Za-z_][A-Za-z0-9_]*)");
 
@@ -87,8 +68,8 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         validateLoadInput(id, type);
         try {
             JdbcEntityMetadata metadata = metadata(type);
-            String sql = "select " + selectList(metadata) + " from " + metadata.qualifiedTableName()
-                    + " where " + metadata.idColumn() + " = ?";
+        String sql = "select " + selectList(metadata) + " from " + metadata.qualifiedTableName()
+                + " where " + metadata.idColumn() + " = ?";
             List<T> results = query(sql, List.of(convertIdentifier(id, metadata.idField().getType())), type);
             return results.isEmpty() ? null : results.get(0);
         } catch (RuntimeException exception) {
@@ -109,7 +90,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
                         + ") values (" + insertPlaceholdersSql(metadata, false) + ")";
                 Object generated = insertAndReturnKey(sql, values, metadata, false);
                 if (generated != null) {
-                    setFieldValue(entity, metadata.idField(), convertValue(generated, metadata.idField().getType()));
+                    writeField(metadata.idField(), entity, convertValue(generated, metadata.idField().getType()));
                     return String.valueOf(generated);
                 }
                 return null;
@@ -129,7 +110,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         validateEntity(entity, "update");
         try {
             JdbcEntityMetadata metadata = metadata(entity.getClass());
-            Object identifier = requireIdentifier(entity, metadata, "update");
+            Object identifier = requireIdentifier(entity, "update");
             Map<String, Object> values = extractColumnValues(entity, metadata, true);
             List<Object> parameters = orderedParameters(values, metadata, false);
             parameters.add(identifier);
@@ -147,7 +128,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         validateEntity(entity, "remove");
         try {
             JdbcEntityMetadata metadata = metadata(entity.getClass());
-            Object identifier = requireIdentifier(entity, metadata, "remove");
+            Object identifier = requireIdentifier(entity, "remove");
             String sql = "delete from " + metadata.qualifiedTableName() + " where " + metadata.idColumn() + " = ?";
             update(sql, List.of(identifier));
         } catch (RuntimeException exception) {
@@ -182,11 +163,6 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
     }
 
     @Override
-    public Set<String> supportedComparators(Class<?> type) {
-        return SUPPORTED_COMPARATORS;
-    }
-
-    @Override
     public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
             int currentPage) {
         validateQueryInput(query, type);
@@ -215,7 +191,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         validateEntity(entity, "refresh");
         try {
             JdbcEntityMetadata metadata = metadata(entity.getClass());
-            Object identifier = requireIdentifier(entity, metadata, "refresh");
+            Object identifier = requireIdentifier(entity, "refresh");
             Object refreshed = load(String.valueOf(identifier), entity.getClass());
             if (refreshed != null) {
                 copyFields(refreshed, entity);
@@ -225,53 +201,12 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         }
     }
 
-    protected void validateLoadInput(String id, Class<?> type) {
-        if (id == null || id.isBlank()) {
-            throw new CoredeuxValidationException("Load identifier must not be blank");
-        }
-        validateSearchType(type);
-    }
-
-    protected void validateQueryInput(String query, Class<?> type) {
-        if (query == null || query.isBlank()) {
-            throw new CoredeuxValidationException("Query string must not be blank");
-        }
-        validateSearchType(type);
-    }
-
-    protected void validateSearchType(Class<?> type) {
-        if (type == null) {
-            throw new CoredeuxValidationException("Entity type must not be null");
-        }
-    }
-
-    protected <T> void validateEntity(T entity, String action) {
-        if (entity == null) {
-            throw new CoredeuxValidationException("Entity must not be null for " + action);
-        }
-    }
-
-    protected String typeName(Class<?> type) {
-        return type == null ? "null" : type.getName();
-    }
-
-    protected String normalizeRequired(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new CoredeuxValidationException(message);
-        }
-        return value.trim();
-    }
-
-    protected <T> List<T> defaultResults(List<T> results) {
-        return results == null || results.isEmpty() ? List.of() : results;
-    }
-
     protected JdbcEntityMetadata metadata(Class<?> type) {
         return metadataCache.computeIfAbsent(type, this::buildMetadata);
     }
 
     protected JdbcEntityMetadata buildMetadata(Class<?> type) {
-        Field idField = findIdentifierField(type);
+        Field idField = identifierField(type);
         String tableName = resolveTableName(type);
         List<JdbcFieldMapping> mappings = new ArrayList<>();
         doWithFields(type, field -> {
@@ -408,27 +343,9 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             if (!includeIdentifier && mapping.isIdentifier(metadata)) {
                 continue;
             }
-            values.put(mapping.columnName(), extractFieldValue(entity, mapping.field()));
+            values.put(mapping.columnName(), readField(mapping.field(), entity));
         }
         return values;
-    }
-
-    protected Object extractFieldValue(Object entity, Field field) {
-        try {
-            field.setAccessible(true);
-            return field.get(entity);
-        } catch (IllegalAccessException exception) {
-            throw new CoredeuxDataAccessException("Unable to read field " + field.getName(), exception);
-        }
-    }
-
-    protected void setFieldValue(Object entity, Field field, Object value) {
-        try {
-            field.setAccessible(true);
-            field.set(entity, convertValue(value, field.getType()));
-        } catch (IllegalAccessException exception) {
-            throw new CoredeuxDataAccessException("Unable to write field " + field.getName(), exception);
-        }
     }
 
     protected BoundParameters mapParameters(Map<String, Object> values, JdbcEntityMetadata metadata,
@@ -488,7 +405,7 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
             String comparator = normalizeRequired(searchParams.getComparator(), "Search comparator must not be blank")
                     .toUpperCase(Locale.ROOT);
             String column = metadata.columnNameForField(field);
-            if (!SUPPORTED_COMPARATORS.contains(comparator)) {
+            if (!supportedComparators(metadata.type()).contains(comparator)) {
                 throw new CoredeuxValidationException("Unsupported search comparator: " + comparator);
             }
 
@@ -595,172 +512,12 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
         params.add(Math.max(currentPage - 1, 0) * pageSize);
     }
 
-    protected boolean isPagingEnabled(int pageSize, int currentPage) {
-        return pageSize > 0 && currentPage > 0;
-    }
-
     protected String normalizeQuery(String query) {
         String normalized = query.trim();
         if (normalized.endsWith(";")) {
             return normalized.substring(0, normalized.length() - 1);
         }
         return normalized;
-    }
-
-    protected PaginationData buildPagination(long totalResults, long resultSize, int pageSize, int currentPage) {
-        PaginationData paginationData = new PaginationData();
-        paginationData.setCurrentPage((long) currentPage);
-        paginationData.setPageSize((long) pageSize);
-        if (isPagingEnabled(pageSize, currentPage)) {
-            paginationData.setTotalResults(totalResults);
-            paginationData.setResultSize(resultSize);
-            paginationData.setTotalPages(resultSize == 0 ? 0L : (long) Math.ceil(resultSize / (double) pageSize));
-        }
-        return paginationData;
-    }
-
-    protected Object requireIdentifier(Object entity, JdbcEntityMetadata metadata, String action) {
-        Object identifier = extractFieldValue(entity, metadata.idField());
-        if (identifier == null || (identifier instanceof String stringIdentifier && stringIdentifier.isBlank())) {
-            throw new CoredeuxValidationException("Entity identifier must not be blank for " + action);
-        }
-        return identifier;
-    }
-
-    protected Field findIdentifierField(Class<?> type) {
-        Field annotatedField = findAnnotatedField(type, Id.class);
-        if (annotatedField != null) {
-            return annotatedField;
-        }
-        return findField(type, "id");
-    }
-
-    protected Field findAnnotatedField(Class<?> type, Class<? extends java.lang.annotation.Annotation> annotationType) {
-        final Field[] found = new Field[1];
-        doWithFields(type, field -> {
-            if (field.isAnnotationPresent(annotationType)) {
-                found[0] = field;
-            }
-        });
-        return found[0];
-    }
-
-    protected Object convertIdentifier(String value, Class<?> targetType) {
-        if (targetType == null || targetType == String.class || targetType.isAssignableFrom(String.class)) {
-            return value;
-        }
-        if (targetType == Long.class || targetType == long.class) {
-            return Long.valueOf(value);
-        }
-        if (targetType == Integer.class || targetType == int.class) {
-            return Integer.valueOf(value);
-        }
-        if (targetType == Short.class || targetType == short.class) {
-            return Short.valueOf(value);
-        }
-        if (targetType == Byte.class || targetType == byte.class) {
-            return Byte.valueOf(value);
-        }
-        if (targetType == BigInteger.class) {
-            return new BigInteger(value);
-        }
-        if (targetType == BigDecimal.class) {
-            return new BigDecimal(value);
-        }
-        if (targetType == Boolean.class || targetType == boolean.class) {
-            return Boolean.valueOf(value);
-        }
-        if (targetType == UUID.class) {
-            return UUID.fromString(value);
-        }
-        if (targetType.isEnum()) {
-            @SuppressWarnings({ "rawtypes", "unchecked" })
-            Enum<?> enumValue = Enum.valueOf((Class<? extends Enum>) targetType, value);
-            return enumValue;
-        }
-        Object factoryValue = invokeStringFactory(targetType, value);
-        if (factoryValue != null) {
-            return factoryValue;
-        }
-        throw new CoredeuxValidationException("Unsupported identifier type: " + targetType.getName());
-    }
-
-    protected Object convertValue(Object value, Class<?> targetType) {
-        if (value == null || targetType == null) {
-            return value;
-        }
-        if (targetType.isInstance(value)) {
-            return value;
-        }
-        if (targetType == String.class) {
-            return String.valueOf(value);
-        }
-        if (Number.class.isAssignableFrom(targetType) || targetType.isPrimitive()) {
-            String text = String.valueOf(value);
-            if (targetType == Long.class || targetType == long.class) {
-                return Long.valueOf(text);
-            }
-            if (targetType == Integer.class || targetType == int.class) {
-                return Integer.valueOf(text);
-            }
-            if (targetType == Short.class || targetType == short.class) {
-                return Short.valueOf(text);
-            }
-            if (targetType == Byte.class || targetType == byte.class) {
-                return Byte.valueOf(text);
-            }
-            if (targetType == BigInteger.class) {
-                return new BigInteger(text);
-            }
-            if (targetType == BigDecimal.class) {
-                return new BigDecimal(text);
-            }
-            if (targetType == Double.class || targetType == double.class) {
-                return Double.valueOf(text);
-            }
-            if (targetType == Float.class || targetType == float.class) {
-                return Float.valueOf(text);
-            }
-        }
-        if (targetType == Boolean.class || targetType == boolean.class) {
-            return Boolean.valueOf(String.valueOf(value));
-        }
-        if (targetType == UUID.class) {
-            return UUID.fromString(String.valueOf(value));
-        }
-        if (targetType.isEnum()) {
-            @SuppressWarnings({ "rawtypes", "unchecked" })
-            Enum<?> enumValue = Enum.valueOf((Class<? extends Enum>) targetType, String.valueOf(value));
-            return enumValue;
-        }
-        Object factoryValue = invokeStringFactory(targetType, String.valueOf(value));
-        return factoryValue != null ? factoryValue : value;
-    }
-
-    protected Object invokeStringFactory(Class<?> targetType, String value) {
-        for (String methodName : List.of("valueOf", "of", "fromString")) {
-            try {
-                return targetType.getMethod(methodName, String.class).invoke(null, value);
-            } catch (ReflectiveOperationException exception) {
-                // continue
-            }
-        }
-        try {
-            Constructor<?> constructor = targetType.getConstructor(String.class);
-            return constructor.newInstance(value);
-        } catch (ReflectiveOperationException exception) {
-            return null;
-        }
-    }
-
-    protected CoredeuxDataAccessException wrap(String message, RuntimeException exception) {
-        if (exception instanceof CoredeuxDataAccessException dataAccessException) {
-            return dataAccessException;
-        }
-        if (exception instanceof CoredeuxValidationException validationException) {
-            throw validationException;
-        }
-        return new CoredeuxDataAccessException(message, exception);
     }
 
     protected long queryForLong(String sql, Map<String, Object> params) {
@@ -882,56 +639,6 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
                 | NoSuchMethodException | SQLException exception) {
             throw new CoredeuxDataAccessException("Unable to materialize entity of type " + type.getName(), exception);
         }
-    }
-
-    protected void copyFields(Object source, Object target) {
-        Class<?> current = source.getClass();
-        while (current != null && current != Object.class) {
-            for (Field field : current.getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
-                    continue;
-                }
-                try {
-                    field.setAccessible(true);
-                    Object value = field.get(source);
-                    Field targetField = findField(target.getClass(), field.getName());
-                    if (targetField != null) {
-                        targetField.setAccessible(true);
-                        targetField.set(target, convertValue(value, targetField.getType()));
-                    }
-                } catch (IllegalAccessException exception) {
-                    throw new CoredeuxDataAccessException("Unable to copy field " + field.getName(), exception);
-                }
-            }
-            current = current.getSuperclass();
-        }
-    }
-
-    protected Field findField(Class<?> type, String name) {
-        Class<?> current = type;
-        while (current != null && current != Object.class) {
-            for (Field field : current.getDeclaredFields()) {
-                if (field.getName().equals(name)) {
-                    return field;
-                }
-            }
-            current = current.getSuperclass();
-        }
-        return null;
-    }
-
-    protected void doWithFields(Class<?> type, FieldConsumer consumer) {
-        Class<?> current = type;
-        while (current != null && current != Object.class) {
-            for (Field field : current.getDeclaredFields()) {
-                consumer.accept(field);
-            }
-            current = current.getSuperclass();
-        }
-    }
-
-    protected interface FieldConsumer {
-        void accept(Field field);
     }
 
     protected record BoundSql(String sql, List<Object> parameters) {
