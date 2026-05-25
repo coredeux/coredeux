@@ -54,7 +54,7 @@ final class NativeElasticsearchGateway implements ElasticsearchGateway {
                 request.document(entity);
                 return request;
             });
-            return response == null ? id : response.id();
+            return response.id();
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to save document to Elasticsearch", exception);
         } catch (RuntimeException exception) {
@@ -65,10 +65,7 @@ final class NativeElasticsearchGateway implements ElasticsearchGateway {
     @Override
     public void delete(String indexName, String id) {
         try {
-            DeleteResponse response = client.delete(request -> request.index(indexName).id(id));
-            if (response == null) {
-                return;
-            }
+            client.delete(request -> request.index(indexName).id(id));
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to delete document from Elasticsearch", exception);
         } catch (RuntimeException exception) {

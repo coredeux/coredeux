@@ -86,14 +86,13 @@ public class DefaultCoredeuxJdbcDataAccessService extends AbstractCoredeuxDataAc
             Object identifier = values.get(metadata.idColumn());
 
             if (identifier == null || (identifier instanceof String stringIdentifier && stringIdentifier.isBlank())) {
-            String sql = "insert into " + metadata.qualifiedTableName() + " (" + insertColumns(metadata, false)
+                String sql = "insert into " + metadata.qualifiedTableName() + " (" + insertColumns(metadata, false)
                         + ") values (" + insertPlaceholdersSql(metadata, false) + ")";
                 Object generated = insertAndReturnKey(sql, values, metadata, false);
                 if (generated != null) {
                     writeField(metadata.idField(), entity, convertValue(generated, metadata.idField().getType()));
-                    return String.valueOf(generated);
                 }
-                return null;
+                return generated == null ? null : String.valueOf(generated);
             }
 
             String sql = "insert into " + metadata.qualifiedTableName() + " (" + insertColumns(metadata, true)

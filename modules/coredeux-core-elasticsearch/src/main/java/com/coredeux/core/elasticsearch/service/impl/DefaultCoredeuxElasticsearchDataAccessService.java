@@ -86,7 +86,7 @@ public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDa
             Object identifier = extractIdentifier(entity);
             String resolvedId = gateway.index(indexName(entity.getClass()),
                     identifier == null ? null : String.valueOf(identifier), entity);
-            if (resolvedId != null) {
+            if (resolvedId != null && !resolvedId.isBlank()) {
                 setIdentifier(entity, resolvedId);
             }
             return resolvedId;
@@ -101,7 +101,7 @@ public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDa
         try {
             Object identifier = requireIdentifier(entity, "update");
             String resolvedId = gateway.index(indexName(entity.getClass()), String.valueOf(identifier), entity);
-            if (resolvedId != null) {
+            if (resolvedId != null && !resolvedId.isBlank()) {
                 setIdentifier(entity, resolvedId);
             }
         } catch (RuntimeException exception) {
