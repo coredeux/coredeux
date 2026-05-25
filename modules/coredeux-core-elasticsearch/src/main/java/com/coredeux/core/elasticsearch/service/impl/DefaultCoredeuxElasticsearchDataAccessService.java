@@ -32,6 +32,7 @@ import com.coredeux.core.service.CoredeuxDataAccessService;
  * Elasticsearch-backed implementation of {@link CoredeuxDataAccessService}
  * using the official Elasticsearch Java client.
  */
+@SuppressWarnings("java:S3011")
 public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDataAccessService {
 
     private static final Set<String> SUPPORTED_COMPARATORS = Set.of(
@@ -250,10 +251,10 @@ public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDa
             case "STARTSWITH" -> value != null ? QueryBuilders.prefix(prefix -> prefix.field(field).value(String.valueOf(value))) : null;
             case "ANYWHERECS" -> value != null ? QueryBuilders.wildcard(wildcard -> wildcard.field(field).value("*" + value + "*")) : null;
             case "ANYWHERE" -> value != null ? QueryBuilders.matchPhrase(matchPhrase -> matchPhrase.field(field).query(String.valueOf(value))) : null;
-            case "LESSTHANOREQUAL" -> value != null ? rangeQuery(field, null, null, null, value, false) : null;
-            case "LESSTHAN" -> value != null ? rangeQuery(field, null, null, value, null, false) : null;
-            case "GREATERTHANOREQUAL" -> value != null ? rangeQuery(field, value, null, null, null, false) : null;
-            case "GREATERTHAN" -> value != null ? rangeQuery(field, null, value, null, null, false) : null;
+            case "LESSTHANOREQUAL" -> value != null ? rangeQuery(field, null, null, null, value) : null;
+            case "LESSTHAN" -> value != null ? rangeQuery(field, null, null, value, null) : null;
+            case "GREATERTHANOREQUAL" -> value != null ? rangeQuery(field, value, null, null, null) : null;
+            case "GREATERTHAN" -> value != null ? rangeQuery(field, null, value, null, null) : null;
             case "ISNULL" -> QueryBuilders.bool(bool -> bool.mustNot(QueryBuilders.exists(exists -> exists.field(field))));
             case "ISNOTNULL" -> QueryBuilders.exists(exists -> exists.field(field));
             case "ISEMPTY" -> QueryBuilders.bool(bool -> bool.mustNot(QueryBuilders.exists(exists -> exists.field(field))));
@@ -289,7 +290,7 @@ public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDa
         return QueryBuilders.term(term -> term.field(field).value(String.valueOf(value)));
     }
 
-    protected Query rangeQuery(String field, Object gt, Object gte, Object lt, Object lte, boolean inclusive) {
+    protected Query rangeQuery(String field, Object gt, Object gte, Object lt, Object lte) {
         return QueryBuilders.range(range -> {
             range.field(field);
             if (gt != null) {

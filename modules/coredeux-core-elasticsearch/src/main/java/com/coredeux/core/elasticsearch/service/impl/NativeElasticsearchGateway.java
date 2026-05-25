@@ -106,7 +106,7 @@ final class NativeElasticsearchGateway implements ElasticsearchGateway {
             return response.hits().hits().stream()
                     .map(Hit::source)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IOException exception) {
             throw new IllegalStateException("Unable to search Elasticsearch documents", exception);
         } catch (RuntimeException exception) {

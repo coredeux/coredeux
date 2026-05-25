@@ -1,6 +1,7 @@
 package com.coredeux.core.module.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,7 +28,8 @@ class ValidatorsModuleHandlerTest {
         CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("validators").enabled(true)
                 .handlers(List.of("ignoredValidator")).build();
 
-        handler.execute(new Object(), definition, module, CoredeuxHookPhases.LOAD, OperationContext.empty());
+        assertDoesNotThrow(() -> handler.execute(new Object(), definition, module, CoredeuxHookPhases.LOAD,
+                OperationContext.empty()));
     }
 
     @Test

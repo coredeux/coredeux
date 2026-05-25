@@ -1,27 +1,10 @@
 package com.coredeux.export.service.impl;
 
-import java.math.BigDecimal;
-import java.time.temporal.TemporalAccessor;
-import java.util.Date;
+import com.coredeux.export.support.ExportValueSupport;
 
 public class ExportValueFormatter {
 
     public String format(Object value) {
-        if (value == null) {
-            return "";
-        }
-        if (value instanceof BigDecimal decimal) {
-            return decimal.toPlainString();
-        }
-        if (value instanceof Date date) {
-            return date.toInstant().toString();
-        }
-        if (value instanceof TemporalAccessor) {
-            return value.toString();
-        }
-        if (value instanceof Enum<?> enumValue) {
-            return enumValue.name();
-        }
-        return String.valueOf(value);
+        return ExportValueSupport.format(value);
     }
 }
