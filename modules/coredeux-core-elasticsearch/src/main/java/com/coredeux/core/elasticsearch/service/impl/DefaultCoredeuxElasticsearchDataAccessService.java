@@ -32,7 +32,6 @@ import com.coredeux.core.service.CoredeuxDataAccessService;
  * Elasticsearch-backed implementation of {@link CoredeuxDataAccessService}
  * using the official Elasticsearch Java client.
  */
-@SuppressWarnings("java:S3011")
 public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDataAccessService {
 
     private static final Set<String> SUPPORTED_COMPARATORS = Set.of(
