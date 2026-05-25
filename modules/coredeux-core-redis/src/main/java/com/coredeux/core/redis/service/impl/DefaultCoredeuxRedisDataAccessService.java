@@ -309,7 +309,7 @@ public class DefaultCoredeuxRedisDataAccessService extends AbstractCoredeuxDataA
             @SuppressWarnings({ "rawtypes", "unchecked" })
             Comparable<Object> right = (Comparable) comparable;
             int comparison = right.compareTo(fieldValue);
-            return comparison > 0 ? -1 : (comparison < 0 ? 1 : 0);
+            return Integer.signum(comparison);
         }
         return String.valueOf(fieldValue).compareTo(String.valueOf(value));
     }

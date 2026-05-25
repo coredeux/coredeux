@@ -84,11 +84,11 @@ public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDa
         validateEntity(entity, "save");
         try {
             Object identifier = extractIdentifier(entity);
-            String resolvedId = gateway.index(indexName(entity.getClass()),
-                    identifier == null ? null : String.valueOf(identifier), entity);
-            if (resolvedId != null && !resolvedId.isBlank()) {
-                setIdentifier(entity, resolvedId);
-            }
+            String resolvedId = Objects.requireNonNull(
+                    gateway.index(indexName(entity.getClass()), identifier == null ? null : String.valueOf(identifier),
+                            entity),
+                    "Elasticsearch index response id must not be null");
+            setIdentifier(entity, resolvedId);
             return resolvedId;
         } catch (RuntimeException exception) {
             throw wrap("Unable to save entity of type " + entity.getClass().getName(), exception);
@@ -100,10 +100,10 @@ public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDa
         validateEntity(entity, "update");
         try {
             Object identifier = requireIdentifier(entity, "update");
-            String resolvedId = gateway.index(indexName(entity.getClass()), String.valueOf(identifier), entity);
-            if (resolvedId != null && !resolvedId.isBlank()) {
-                setIdentifier(entity, resolvedId);
-            }
+            String resolvedId = Objects.requireNonNull(
+                    gateway.index(indexName(entity.getClass()), String.valueOf(identifier), entity),
+                    "Elasticsearch index response id must not be null");
+            setIdentifier(entity, resolvedId);
         } catch (RuntimeException exception) {
             throw wrap("Unable to update entity of type " + entity.getClass().getName(), exception);
         }
