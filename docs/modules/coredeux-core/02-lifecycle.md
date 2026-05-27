@@ -1,7 +1,7 @@
 # Lifecycle Model
 
 <!-- docs-nav-start -->
-[Previous: Overview](01-overview.md) | [Documentation Home](../../README.md) | [Next: Entity Definitions](03-entity-definitions.md)
+[Previous: Overview](/coredeux-core-overview) | [Documentation Home](/) | [Next: Entity Definitions](/03-entity-definitions)
 <!-- docs-nav-end -->
 
 Coredeux uses one small lifecycle vocabulary so services, modules, and future
@@ -155,5 +155,5 @@ That keeps the framework predictable for both human developers and future
 agent-driven tooling.
 
 <!-- docs-nav-start -->
-[Previous: Overview](01-overview.md) | [Documentation Home](../../README.md) | [Next: Entity Definitions](03-entity-definitions.md)
+[Previous: Overview](/coredeux-core-overview) | [Documentation Home](/) | [Next: Entity Definitions](/03-entity-definitions)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Add a Validator
 
 <!-- docs-nav-start -->
-[Previous: Add a Hook](08-add-hook.md) | [Documentation Home](../../README.md) | [Next: Add Audit](10-add-audit.md)
+[Previous: Add a Hook](/08-add-hook) | [Documentation Home](/) | [Next: Add Audit](/10-add-audit)
 <!-- docs-nav-end -->
 
 Validators stop bad entity state before the framework saves or updates it.
@@ -127,9 +127,9 @@ The only difference is how the bean is registered:
 
 ## What To Read Next
 
-- [Add Audit](10-add-audit.md)
+- [Add Audit](/10-add-audit)
 - [Adding a New Entity](11-add-new-entity.md)
 
 <!-- docs-nav-start -->
-[Previous: Add a Hook](08-add-hook.md) | [Documentation Home](../../README.md) | [Next: Add Audit](10-add-audit.md)
+[Previous: Add a Hook](/08-add-hook) | [Documentation Home](/) | [Next: Add Audit](/10-add-audit)
 <!-- docs-nav-end -->

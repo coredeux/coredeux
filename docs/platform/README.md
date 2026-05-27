@@ -1,7 +1,7 @@
 # Platform Documentation
 
 <!-- docs-nav-start -->
-[Previous: Native Tour Of The Demo](../miscellaneous/02-native-tour-of-the-demo.md) | [Documentation Home](../README.md) | [Next: Project](../project/README.md)
+[Previous: Native Tour Of The Demo](/02-native-tour-of-the-demo) | [Documentation Home](/) | [Next: Project](/project)
 <!-- docs-nav-end -->
 
 This section captures framework-level extension guidance for contributors who are changing Coredeux itself.
@@ -14,10 +14,10 @@ Use this platform section when you are adding or changing framework features tha
 
 ## Related Documentation
 
-- [Coredeux Core Reference](../modules/coredeux-core/13-reference.md)
-- [Coredeux Core Module System](../modules/coredeux-core/05-modules.md)
-- [Coredeux Core Module Guide](../modules/coredeux-core/README.md)
+- [Coredeux Core Reference](/13-reference)
+- [Coredeux Core Module System](/05-modules)
+- [Coredeux Core Module Guide](/coredeux-core)
 
 <!-- docs-nav-start -->
-[Previous: Native Tour Of The Demo](../miscellaneous/02-native-tour-of-the-demo.md) | [Documentation Home](../README.md) | [Next: Project](../project/README.md)
+[Previous: Native Tour Of The Demo](/02-native-tour-of-the-demo) | [Documentation Home](/) | [Next: Project](/project)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Tour Of The Native Demo
 
 <!-- docs-nav-start -->
-[Previous: Native Getting Started In 10 Minutes](01-native-getting-started-in-10-minutes.md) | [Documentation Home](../README.md) | [Next: Import Into An Existing Spring Boot App](03-import-into-an-existing-spring-boot-app.md)
+[Previous: Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes) | [Documentation Home](/) | [Next: Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app)
 <!-- docs-nav-end -->
 
 The native demo is the plain Java version of the Coredeux story.
@@ -18,7 +18,7 @@ If you want to compare it with the Spring Boot version of the demo, see:
 
 - [Getting Started In 10 Minutes](../02-getting-started-in-10-minutes.md)
 - [Tour Of The Demo](../03-tour-of-the-demo.md)
-- [Import Into An Existing Spring Boot App](03-import-into-an-existing-spring-boot-app.md)
+- [Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app)
 
 ## The Point Of The Demo
 
@@ -203,8 +203,8 @@ If you want the broader product story, continue with:
 
 - [What Is Coredeux?](../01-what-is-coredeux.md)
 - [Getting Started In 10 Minutes](../02-getting-started-in-10-minutes.md)
-- [Overview](../overview/README.md)
+- [Overview](/overview)
 
 <!-- docs-nav-start -->
-[Previous: Native Getting Started In 10 Minutes](01-native-getting-started-in-10-minutes.md) | [Documentation Home](../README.md) | [Next: Platform Documentation](../platform/README.md)
+[Previous: Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes) | [Documentation Home](/) | [Next: Platform Documentation](/platform)
 <!-- docs-nav-end -->

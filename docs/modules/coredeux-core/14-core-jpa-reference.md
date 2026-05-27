@@ -1,7 +1,7 @@
 # coredeux-core-jpa Reference
 
 <!-- docs-nav-start -->
-[Previous: coredeux-core Reference](13-reference.md) | [Documentation Home](../../README.md) | [Next: Coredeux Core JDBC](15-core-jdbc-reference.md)
+[Previous: coredeux-core Reference](/13-reference) | [Documentation Home](/) | [Next: Coredeux Core JDBC](/15-core-jdbc-reference)
 <!-- docs-nav-end -->
 
 This document is the detailed reference for `coredeux-core-jpa`.
@@ -617,5 +617,5 @@ If you are adopting Coredeux with JPA:
 4. add validators/hooks/audit only after the data-access path is working
 
 <!-- docs-nav-start -->
-[Previous: coredeux-core Reference](13-reference.md) | [Documentation Home](../../README.md) | [Next: Coredeux Core JDBC](15-core-jdbc-reference.md)
+[Previous: coredeux-core Reference](/13-reference) | [Documentation Home](/) | [Next: Coredeux Core JDBC](/15-core-jdbc-reference)
 <!-- docs-nav-end -->

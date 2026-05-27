@@ -1,7 +1,7 @@
 # Add Audit
 
 <!-- docs-nav-start -->
-[Previous: Add a Validator](09-add-validator.md) | [Documentation Home](../../README.md) | [Next: Adding a New Entity](11-add-new-entity.md)
+[Previous: Add a Validator](/09-add-validator) | [Documentation Home](/) | [Next: Adding a New Entity](/11-add-new-entity)
 <!-- docs-nav-end -->
 
 Audit handlers record meaningful business operations as the framework runs.
@@ -209,9 +209,9 @@ The only difference is how the bean is registered:
 
 ## What To Read Next
 
-- [Adding a New Entity](11-add-new-entity.md)
+- [Adding a New Entity](/11-add-new-entity)
 - [Adding a Core Module](12-add-core-module.md)
 
 <!-- docs-nav-start -->
-[Previous: Add a Validator](09-add-validator.md) | [Documentation Home](../../README.md) | [Next: Adding a New Entity](11-add-new-entity.md)
+[Previous: Add a Validator](/09-add-validator) | [Documentation Home](/) | [Next: Adding a New Entity](/11-add-new-entity)
 <!-- docs-nav-end -->

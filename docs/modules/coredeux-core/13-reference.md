@@ -1,7 +1,7 @@
 # coredeux-core Reference
 
 <!-- docs-nav-start -->
-[Previous: Adding a Core Module](12-add-core-module.md) | [Documentation Home](../../README.md) | [Next: Core JPA Reference](14-core-jpa-reference.md)
+[Previous: Adding a Core Module](/12-add-core-module) | [Documentation Home](/) | [Next: Core JPA Reference](/14-core-jpa-reference)
 <!-- docs-nav-end -->
 
 This is the technical reference for the Coredeux core layer and its storage
@@ -25,7 +25,7 @@ Use this document together with:
 - [Add a Validator](09-add-validator.md)
 - [Add Audit](10-add-audit.md)
 - [Adding a New Entity](11-add-new-entity.md)
-- [Adding a Core Module](12-add-core-module.md)
+- [Adding a Core Module](/12-add-core-module)
 
 ## What This Layer Is
 
@@ -862,5 +862,5 @@ The framework is intentionally explicit. That makes it predictable for humans
 and legible for agents.
 
 <!-- docs-nav-start -->
-[Previous: Adding a Core Module](12-add-core-module.md) | [Documentation Home](../../README.md) | [Next: Core JPA Reference](14-core-jpa-reference.md)
+[Previous: Adding a Core Module](/12-add-core-module) | [Documentation Home](/) | [Next: Core JPA Reference](/14-core-jpa-reference)
 <!-- docs-nav-end -->

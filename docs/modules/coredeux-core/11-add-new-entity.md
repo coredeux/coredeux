@@ -1,7 +1,7 @@
 # Adding a New Entity
 
 <!-- docs-nav-start -->
-[Previous: Add Audit](10-add-audit.md) | [Documentation Home](../../README.md) | [Next: Adding a Core Module](12-add-core-module.md)
+[Previous: Add Audit](/10-add-audit) | [Documentation Home](/) | [Next: Adding a Core Module](/12-add-core-module)
 <!-- docs-nav-end -->
 
 This guide shows the practical checklist for making a new entity work across
@@ -129,8 +129,8 @@ mvn -pl modules/coredeux-core -am test
 - [Add Or Choose A Data Access Service](06-add-data-access-service.md)
 - [Add a Hook](08-add-hook.md)
 - [Add a Validator](09-add-validator.md)
-- [Add Audit](10-add-audit.md)
+- [Add Audit](/10-add-audit)
 
 <!-- docs-nav-start -->
-[Previous: Add Audit](10-add-audit.md) | [Documentation Home](../../README.md) | [Next: Adding a Core Module](12-add-core-module.md)
+[Previous: Add Audit](/10-add-audit) | [Documentation Home](/) | [Next: Adding a Core Module](/12-add-core-module)
 <!-- docs-nav-end -->

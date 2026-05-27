@@ -1,7 +1,7 @@
 # Third-Party Notices
 
 <!-- docs-nav-start -->
-[Previous: Security Policy](security.md) | [Documentation Home](../README.md)
+[Previous: Security Policy](/security) | [Documentation Home](/)
 <!-- docs-nav-end -->
 
 Coredeux uses Docsify to host this documentation site.
@@ -15,5 +15,5 @@ This notice exists so the documentation site carries the same attribution that
 the rest of the repository expects for third-party tooling.
 
 <!-- docs-nav-start -->
-[Previous: Security Policy](security.md) | [Documentation Home](../README.md)
+[Previous: Security Policy](/security) | [Documentation Home](/)
 <!-- docs-nav-end -->

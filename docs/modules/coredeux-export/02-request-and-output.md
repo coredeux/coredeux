@@ -1,7 +1,7 @@
 # Export Request And Output
 
 <!-- docs-nav-start -->
-[Previous: Export Overview](01-overview.md) | [Documentation Home](../../README.md) | [Next: Export Runtime And Configuration](03-runtime-and-configuration.md)
+[Previous: Export Overview](/coredeux-export-overview) | [Documentation Home](/) | [Next: Export Runtime And Configuration](/03-runtime-and-configuration)
 <!-- docs-nav-end -->
 
 This page covers the request model, output formats, and the value shaping
@@ -252,5 +252,5 @@ The current code defaults to:
 The next page shows where those defaults come from in the runtime wiring.
 
 <!-- docs-nav-start -->
-[Previous: Export Overview](01-overview.md) | [Documentation Home](../../README.md) | [Next: Export Runtime And Configuration](03-runtime-and-configuration.md)
+[Previous: Export Overview](/coredeux-export-overview) | [Documentation Home](/) | [Next: Export Runtime And Configuration](/03-runtime-and-configuration)
 <!-- docs-nav-end -->

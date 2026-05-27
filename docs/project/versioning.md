@@ -1,7 +1,7 @@
 # Versioning And Branching
 
 <!-- docs-nav-start -->
-[Previous: Release Process](release-process.md) | [Documentation Home](../README.md) | [Next: Security Policy](security.md)
+[Previous: Release Process](/release-process) | [Documentation Home](/) | [Next: Security Policy](/security)
 <!-- docs-nav-end -->
 
 Coredeux uses semantic versions for released artifacts and `SNAPSHOT` versions
@@ -234,5 +234,5 @@ Keep `main` stable, use `develop` for `SNAPSHOT`, and create `release/x.y.z`
 only when you are ready to publish milestones.
 
 <!-- docs-nav-start -->
-[Previous: Release Process](release-process.md) | [Documentation Home](../README.md) | [Next: Security Policy](security.md)
+[Previous: Release Process](/release-process) | [Documentation Home](/) | [Next: Security Policy](/security)
 <!-- docs-nav-end -->

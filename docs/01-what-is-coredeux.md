@@ -1,7 +1,7 @@
 # What Is Coredeux?
 
 <!-- docs-nav-start -->
-[Previous: Documentation Home](README.md) | [Documentation Home](README.md) | [Next: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
+[Previous: Documentation Home](/) | [Documentation Home](/) | [Next: Getting Started In 10 Minutes](/02-getting-started-in-10-minutes)
 <!-- docs-nav-end -->
 
 Coredeux is a framework for enterprise Java applications that need a shared,
@@ -24,16 +24,16 @@ Use the next pages for the hands-on walkthrough and the deeper framework map:
 
 - [Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
 - [Tour Of The Demo](03-tour-of-the-demo.md)
-- [Overview](overview/README.md)
-- [Coredeux Core Reference](modules/coredeux-core/13-reference.md)
+- [Overview](/overview)
+- [Coredeux Core Reference](/13-reference)
 
 ## Where To Go Next
 
-- [Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
-- [Tour Of The Demo](03-tour-of-the-demo.md)
-- [Overview](overview/README.md)
-- [Coredeux Core Reference](modules/coredeux-core/13-reference.md)
+- [Getting Started In 10 Minutes](/02-getting-started-in-10-minutes)
+- [Tour Of The Demo](/03-tour-of-the-demo)
+- [Overview](/overview)
+- [Coredeux Core Reference](/13-reference)
 
 <!-- docs-nav-start -->
-[Previous: Documentation Home](README.md) | [Documentation Home](README.md) | [Next: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
+[Previous: Documentation Home](/) | [Documentation Home](/) | [Next: Getting Started In 10 Minutes](/02-getting-started-in-10-minutes)
 <!-- docs-nav-end -->

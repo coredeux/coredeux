@@ -1,17 +1,17 @@
 # Project
 
 <!-- docs-nav-start -->
-[Previous: Platform Documentation](../platform/README.md) | [Documentation Home](../README.md) | [Next: Governance Model](governance.md)
+[Previous: Platform Documentation](/platform) | [Documentation Home](/) | [Next: Governance Model](/governance)
 <!-- docs-nav-end -->
 
 This section contains project-level process and governance documents.
 
-- [Governance](governance.md)
-- [Release Process](release-process.md)
-- [Versioning And Branching](versioning.md)
-- [Security Policy](security.md)
-- [Third-Party Notices](third-party-notices.md)
+- [Governance](/governance)
+- [Release Process](/release-process)
+- [Versioning And Branching](/versioning)
+- [Security Policy](/security)
+- [Third-Party Notices](/third-party-notices)
 
 <!-- docs-nav-start -->
-[Previous: Platform Documentation](../platform/README.md) | [Documentation Home](../README.md) | [Next: Governance Model](governance.md)
+[Previous: Platform Documentation](/platform) | [Documentation Home](/) | [Next: Governance Model](/governance)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Getting Started In 10 Minutes
 
 <!-- docs-nav-start -->
-[Previous: What Is Coredeux?](01-what-is-coredeux.md) | [Documentation Home](README.md) | [Next: Tour Of The Demo](03-tour-of-the-demo.md)
+[Previous: What Is Coredeux?](/01-what-is-coredeux) | [Documentation Home](/) | [Next: Tour Of The Demo](/03-tour-of-the-demo)
 <!-- docs-nav-end -->
 
 This is the fastest way to meet Coredeux in a running application.
@@ -25,8 +25,8 @@ well-organized.
 
 If you want the plain Java version of the same story, see:
 
-- [Native Getting Started In 10 Minutes](miscellaneous/01-native-getting-started-in-10-minutes.md)
-- [Native Tour Of The Demo](miscellaneous/02-native-tour-of-the-demo.md)
+- [Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes)
+- [Native Tour Of The Demo](/02-native-tour-of-the-demo)
 
 ## What You Need
 
@@ -274,10 +274,10 @@ That is the shape Coredeux is building toward.
 
 If you want the architecture story behind what you just ran, continue with:
 
-- [Overview](overview/README.md)
+- [Overview](/overview)
 - [Coredeux Core Reference](modules/coredeux-core/13-reference.md)
 - [Lifecycle Model](modules/coredeux-core/02-lifecycle.md)
 
 <!-- docs-nav-start -->
-[Previous: What Is Coredeux?](01-what-is-coredeux.md) | [Documentation Home](README.md) | [Next: Tour Of The Demo](03-tour-of-the-demo.md)
+[Previous: What Is Coredeux?](/01-what-is-coredeux) | [Documentation Home](/) | [Next: Tour Of The Demo](/03-tour-of-the-demo)
 <!-- docs-nav-end -->

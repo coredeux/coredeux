@@ -1,7 +1,7 @@
 # Coredeux
 
 <!-- docs-nav-start -->
-[Documentation Home](README.md) | [Next: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
+[Documentation Home](/) | [Next: Getting Started In 10 Minutes](/02-getting-started-in-10-minutes)
 <!-- docs-nav-end -->
 
 Coredeux standardizes the repetitive infrastructure of enterprise Java
@@ -154,66 +154,66 @@ enough that both humans and agents can work with them safely.
 
 ## 01. Start Here
 
-- [Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
-- [Tour Of The Demo](03-tour-of-the-demo.md)
+- [Getting Started In 10 Minutes](/02-getting-started-in-10-minutes)
+- [Tour Of The Demo](/03-tour-of-the-demo)
 
 ## 02. Product Direction
 
-- [Overview](overview/README.md)
-- [Vision](overview/vision.md)
-- [Roadmap](overview/roadmap.md)
+- [Overview](/overview)
+- [Vision](/vision)
+- [Roadmap](/roadmap)
 
 ## 03. Coredeux Core
 
-- [Coredeux Core](modules/coredeux-core/README.md)
-- [Overview](modules/coredeux-core/01-overview.md)
-- [Lifecycle Model](modules/coredeux-core/02-lifecycle.md)
-- [Entity Definitions](modules/coredeux-core/03-entity-definitions.md)
-- [External Entity Definition Sources](modules/coredeux-core/04-external-entity-definition-source.md)
-- [Module System](modules/coredeux-core/05-modules.md)
-- [Add Or Choose A Data Access Service](modules/coredeux-core/06-add-data-access-service.md)
-- [Available Data Access Implementations](modules/coredeux-core/07-available-data-access-implementations.md)
-- [Add a Hook](modules/coredeux-core/08-add-hook.md)
-- [Add a Validator](modules/coredeux-core/09-add-validator.md)
-- [Add Audit](modules/coredeux-core/10-add-audit.md)
-- [Adding a New Entity](modules/coredeux-core/11-add-new-entity.md)
-- [Adding a Core Module](modules/coredeux-core/12-add-core-module.md)
-- [Reference](modules/coredeux-core/13-reference.md)
-- [Core JPA Reference](modules/coredeux-core/14-core-jpa-reference.md)
-- [Core JDBC Reference](modules/coredeux-core/15-core-jdbc-reference.md)
-- [Core Elasticsearch Reference](modules/coredeux-core/16-core-elasticsearch-reference.md)
-- [Core MongoDB Reference](modules/coredeux-core/17-core-mongodb-reference.md)
-- [Core Redis Reference](modules/coredeux-core/18-core-redis-reference.md)
-- [Property Resolution Order](modules/coredeux-core/19-property-resolution-order.md)
+- [Coredeux Core](/coredeux-core)
+- [Overview](/coredeux-core-overview)
+- [Lifecycle Model](/02-lifecycle)
+- [Entity Definitions](/03-entity-definitions)
+- [External Entity Definition Sources](/04-external-entity-definition-source)
+- [Module System](/05-modules)
+- [Add Or Choose A Data Access Service](/06-add-data-access-service)
+- [Available Data Access Implementations](/07-available-data-access-implementations)
+- [Add a Hook](/08-add-hook)
+- [Add a Validator](/09-add-validator)
+- [Add Audit](/10-add-audit)
+- [Adding a New Entity](/11-add-new-entity)
+- [Adding a Core Module](/12-add-core-module)
+- [Reference](/13-reference)
+- [Core JPA Reference](/14-core-jpa-reference)
+- [Core JDBC Reference](/15-core-jdbc-reference)
+- [Core Elasticsearch Reference](/16-core-elasticsearch-reference)
+- [Core MongoDB Reference](/17-core-mongodb-reference)
+- [Core Redis Reference](/18-core-redis-reference)
+- [Property Resolution Order](/19-property-resolution-order)
 
 ## 04. Import And Export
 
-- [Coredeux Import](modules/coredeux-import/01-overview.md)
-- [Coredeux Export](modules/coredeux-export/01-overview.md)
+- [Coredeux Import](/coredeux-import-overview)
+- [Coredeux Export](/coredeux-export-overview)
 
 ## 05. Native Demo Companion
 
-- [Native Getting Started In 10 Minutes](miscellaneous/01-native-getting-started-in-10-minutes.md)
-- [Native Tour Of The Demo](miscellaneous/02-native-tour-of-the-demo.md)
+- [Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes)
+- [Native Tour Of The Demo](/02-native-tour-of-the-demo)
 
 ## 06. Spring Boot Import Integration
 
-- [Import Into An Existing Spring Boot App](miscellaneous/03-import-into-an-existing-spring-boot-app.md)
+- [Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app)
 
 ## 07. Platform And Project
 
-- [Platform Documentation](platform/README.md)
-- [Project](project/README.md)
-- [Governance Model](project/governance.md)
-- [Release Process](project/release-process.md)
-- [Versioning And Branching](project/versioning.md)
-- [Security Policy](project/security.md)
-- [Third-Party Notices](project/third-party-notices.md)
+- [Platform Documentation](/platform)
+- [Project](/project)
+- [Governance Model](/governance)
+- [Release Process](/release-process)
+- [Versioning And Branching](/versioning)
+- [Security Policy](/security)
+- [Third-Party Notices](/third-party-notices)
 
 Use the core pages when you want the framework model, the module pages when
 you want concrete behavior, and the project pages when you need governance or
 release context.
 
 <!-- docs-nav-start -->
-[Documentation Home](README.md) | [Next: Getting Started In 10 Minutes](02-getting-started-in-10-minutes.md)
+[Documentation Home](/) | [Next: Getting Started In 10 Minutes](/02-getting-started-in-10-minutes)
 <!-- docs-nav-end -->
