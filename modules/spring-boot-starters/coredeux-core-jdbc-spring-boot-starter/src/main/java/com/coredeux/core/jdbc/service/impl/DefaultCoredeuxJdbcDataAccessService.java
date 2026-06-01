@@ -108,8 +108,9 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
                     if (generatedKey != null) {
                         setFieldValue(entity, metadata.idField(), convertIdentifier(generatedKey.toString(),
                                 metadata.idField().getType()));
+                        return String.valueOf(generatedKey);
                     }
-                    return generatedKey == null ? null : String.valueOf(generatedKey);
+                    return null;
                 }
                 namedParameterJdbcTemplate.update(insertSql, params);
                 return null;

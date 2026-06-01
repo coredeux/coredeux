@@ -91,11 +91,10 @@ public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDa
         validateEntity(entity, "save");
         try {
             IndexCoordinates coordinates = indexCoordinates(entity.getClass());
-            T saved = elasticsearchOperations.save(entity, coordinates);
-            Object identifier = extractIdentifier(saved != null ? saved : entity);
-            if (identifier != null) {
-                setIdentifier(entity, identifier);
-            }
+            T saved = Objects.requireNonNull(elasticsearchOperations.save(entity, coordinates),
+                    "Elasticsearch save response must not be null");
+            Object identifier = extractIdentifier(saved);
+            setIdentifier(entity, identifier);
             return identifier == null ? null : String.valueOf(identifier);
         } catch (RuntimeException exception) {
             throw wrap("Unable to save entity of type " + entity.getClass().getName(), exception);
@@ -108,12 +107,11 @@ public class DefaultCoredeuxElasticsearchDataAccessService implements CoredeuxDa
         validateEntity(entity, "update");
         try {
             IndexCoordinates coordinates = indexCoordinates(entity.getClass());
-            T saved = elasticsearchOperations.save(entity, coordinates);
-            if (saved != null) {
-                Object identifier = extractIdentifier(saved);
-                if (identifier != null) {
-                    setIdentifier(entity, identifier);
-                }
+            T saved = Objects.requireNonNull(elasticsearchOperations.save(entity, coordinates),
+                    "Elasticsearch save response must not be null");
+            Object identifier = extractIdentifier(saved);
+            if (identifier != null) {
+                setIdentifier(entity, identifier);
             }
         } catch (RuntimeException exception) {
             throw wrap("Unable to update entity of type " + entity.getClass().getName(), exception);

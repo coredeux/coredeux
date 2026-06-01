@@ -375,7 +375,7 @@ public class DefaultCoredeuxRedisDataAccessService implements CoredeuxDataAccess
         if (value instanceof Comparable<?> comparable) {
             @SuppressWarnings({ "rawtypes", "unchecked" })
             Comparable<Object> right = (Comparable) comparable;
-            return -right.compareTo(fieldValue);
+            return Integer.signum(right.compareTo(fieldValue));
         }
         return String.valueOf(fieldValue).compareTo(String.valueOf(value));
     }
