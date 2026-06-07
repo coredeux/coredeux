@@ -23,6 +23,11 @@ Detailed reference:
 - `DRLSourceResolver`
 - `DRLCache`
 - `RuleContext`
+- `JavaToDrlConverter`
+- `AnnotationBasedJavaToDrlConverter`
+- `@DrlDefinition`
+- `@DrlGlobal`
+- `@DrlRule`
 - `DefaultDRLService`
 - `ClasspathDRLSourceResolver`
 - `InMemoryDRLCache`
@@ -43,6 +48,97 @@ Typical rule files live under the classpath `rules/` folder and use the
 ```drl
 global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
 ```
+
+## Component Registry Access
+
+`CoredeuxComponentRegistry` is the safe application-component bridge exposed to
+rules. It gives rule code a stable API for resolving a named component by the
+contract it expects:
+
+```java
+SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
+```
+
+That keeps rule code independent from the actual host container:
+
+- in native/plain Java usage, `DefaultDRLService` can use
+  `InMemoryCoredeuxComponentRegistry`
+- in Spring Boot usage, the starter wires `SpringCoredeuxComponentRegistry`
+
+`InMemoryCoredeuxComponentRegistry` is backed by a map of explicitly registered
+objects. It is useful for non-Spring applications, tests, CLI tools, workers, or
+any host that wants to decide exactly which components rules can access.
+
+`SpringCoredeuxComponentRegistry` is backed by the Spring `ApplicationContext`.
+It resolves beans by name and type, giving rules application-context access
+without making `coredeux-drl` depend on Spring.
+
+The registry gives flexibility in two directions: rules can call application
+services when needed, and the application can swap the registry implementation
+without changing the rule source. Missing components or type mismatches fail
+fast instead of silently returning the wrong object.
+
+## Java-To-DRL Authoring
+
+For rules that are easier to maintain as Java-like source, use the annotation
+converter:
+
+```java
+package com.example.rules;
+
+import com.coredeux.core.registry.CoredeuxComponentRegistry;
+import com.coredeux.drl.converter.annotations.DrlDefinition;
+import com.coredeux.drl.converter.annotations.DrlGlobal;
+import com.coredeux.drl.converter.annotations.DrlRule;
+import com.coredeux.drl.model.RuleContext;
+import com.example.SampleService;
+
+@DrlDefinition("sampleRuleSource")
+public class SampleRuleSource {
+
+    @DrlGlobal
+    public CoredeuxComponentRegistry componentRegistry;
+
+    @DrlRule(name = "check", when = "$context : RuleContext(method == 'check')")
+    public void check(RuleContext $context) {
+        SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
+        $context.setOutput(sampleService.message());
+    }
+}
+```
+
+The generated DRL will look like this:
+
+```drl
+import java.lang.*;
+import com.coredeux.core.registry.CoredeuxComponentRegistry;
+import com.coredeux.drl.model.RuleContext;
+import com.example.SampleService;
+
+global CoredeuxComponentRegistry componentRegistry;
+
+rule "check"
+when
+   $context : RuleContext(method == 'check')
+then
+   SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
+   $context.setOutput(sampleService.message());
+end
+```
+
+The converter preserves normal imports, removes converter annotation imports,
+turns `@DrlGlobal` fields into DRL globals, and copies each annotated method
+body into a DRL `then` block.
+
+`@DrlWhen` was intentionally not added as a separate annotation. The `when`
+clause belongs to `@DrlRule`, keeping the rule name and condition together:
+
+```java
+@DrlRule(name = "check", when = "$context : RuleContext(method == 'check')")
+```
+
+Prefer single quotes inside the Drools condition when possible. That avoids the
+extra escaping required by Java string literals.
 
 ## Native Usage
 
@@ -75,6 +171,36 @@ Run the module tests with dependencies:
 ```powershell
 mvn -pl modules/coredeux-drl -am test
 ```
+
+## Drools Compatibility Notes
+
+The converter only makes authoring easier. The generated DRL is still compiled
+by Drools, so Drools Java dialect limitations still apply.
+
+Observed with the current POC:
+
+- Java 5 generics, enhanced `for`, enums, and classic `switch` work.
+- Java 7 diamond, try-with-resources, and multi-catch work.
+- Java 8 lambdas, method references, streams, and functional interfaces work.
+- Java 10 `var` works.
+- Java 14 switch expressions work.
+- Java 15 text blocks work when the Drools language level is high enough.
+- Java 21 library APIs can work when the application runs on a JDK that
+  provides those APIs.
+- Java 16 pattern matching for `instanceof` was rejected by Drools declaration
+  analysis.
+- Java 16 local records inside a rule consequence were rejected.
+- Java 21 record patterns and pattern switch were rejected.
+- Setting the language level to `21` or `25` did not unlock newer syntax in the
+  tested Drools version; it fell back to Java 11 detection.
+
+For fact typing:
+
+- A typed fact pattern such as `$psu : Psu()` exposes `$psu` as `Psu` in
+  `then`.
+- An `Object()` pattern must be cast before subtype methods are called.
+- Values read from `RuleContext.params` must be cast because `Map` returns
+  `Object`.
 
 ## Who Should Depend On This Module
 
