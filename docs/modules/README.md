@@ -13,6 +13,11 @@ and optional standalone modules.
 - [Core Elasticsearch Reference](/16-core-elasticsearch-reference)
 - [Core MongoDB Reference](/17-core-mongodb-reference)
 - [Core Redis Reference](/18-core-redis-reference)
+- [Coredeux DRL](/coredeux-drl)
+- [DRL Overview](/coredeux-drl-overview)
+- [Native Runtime](/coredeux-drl-native-runtime)
+- [Spring Boot Starter](/coredeux-drl-spring-boot-starter)
+- [DRL Reference](/coredeux-drl-reference)
 - [Import Overview](/coredeux-import-overview)
 - [Raw JSON Import](/02-raw-json-import)
 - [Text And Excel File Import](/03-text-and-excel-file-import)
@@ -24,6 +29,11 @@ and optional standalone modules.
 
 Use the module guides after the core concepts are familiar:
 
+- [Coredeux DRL](/coredeux-drl)
+- [DRL Overview](/coredeux-drl-overview)
+- [Native Runtime](/coredeux-drl-native-runtime)
+- [Spring Boot Starter](/coredeux-drl-spring-boot-starter)
+- [DRL Reference](/coredeux-drl-reference)
 - [Raw JSON Import](/02-raw-json-import)
 - [Text And Excel File Import](/03-text-and-excel-file-import)
 - [Import Reference](/coredeux-import-reference)

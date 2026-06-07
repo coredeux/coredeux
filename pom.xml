@@ -27,6 +27,7 @@
         <h2.version>2.2.224</h2.version>
         <jackson.version>2.17.0</jackson.version>
         <poi.version>5.2.5</poi.version>
+        <drools.version>10.1.0</drools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
         <sonar.organization>coredeux</sonar.organization>
@@ -89,11 +90,32 @@
                 <artifactId>poi-ooxml</artifactId>
                 <version>${poi.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.drools</groupId>
+                <artifactId>drools-engine-classic</artifactId>
+                <version>${drools.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.drools</groupId>
+                <artifactId>drools-compiler</artifactId>
+                <version>${drools.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.drools</groupId>
+                <artifactId>drools-mvel</artifactId>
+                <version>${drools.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.kie</groupId>
+                <artifactId>kie-internal</artifactId>
+                <version>${drools.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <modules>
 		<module>modules/coredeux-core</module>
+		<module>modules/coredeux-drl</module>
 		<module>modules/coredeux-core-jpa</module>
 		<module>modules/coredeux-import</module>
 		<module>modules/coredeux-export</module>

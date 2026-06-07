@@ -93,6 +93,7 @@ This repository contains the current building blocks for that direction:
 - core framework contracts and lifecycle context
 - entity definition loading and registry support
 - validator, hook, and audit contracts
+- dynamic runtime DRL logic with native and Spring Boot entry points
 - JPA, JDBC, MongoDB, Elasticsearch, and Redis data-access implementations
 - import and export support
 - Spring Boot starter modules for Spring-based hosts
@@ -191,16 +192,24 @@ enough that both humans and agents can work with them safely.
 - [Coredeux Import](/coredeux-import-overview)
 - [Coredeux Export](/coredeux-export-overview)
 
-## 05. Native Demo Companion
+## 05. Rules And Runtime Logic
+
+- [Coredeux DRL](/coredeux-drl)
+- [DRL Overview](/coredeux-drl-overview)
+- [Native Runtime](/coredeux-drl-native-runtime)
+- [Spring Boot Starter](/coredeux-drl-spring-boot-starter)
+- [DRL Reference](/coredeux-drl-reference)
+
+## 06. Native Demo Companion
 
 - [Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes)
 - [Native Tour Of The Demo](/02-native-tour-of-the-demo)
 
-## 06. Spring Boot Import Integration
+## 07. Spring Boot Import Integration
 
 - [Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app)
 
-## 07. Platform And Project
+## 08. Platform And Project
 
 - [Platform Documentation](/platform)
 - [Project](/project)

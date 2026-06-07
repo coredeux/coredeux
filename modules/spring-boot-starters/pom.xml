@@ -34,6 +34,7 @@
 
     <modules>
         <module>coredeux-core-spring-boot-starter</module>
+        <module>coredeux-drl-spring-boot-starter</module>
         <module>coredeux-import-spring-boot-starter</module>
         <module>coredeux-export-spring-boot-starter</module>
         <module>coredeux-core-jpa-spring-boot-starter</module>

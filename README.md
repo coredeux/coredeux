@@ -87,6 +87,10 @@ This repository includes the building blocks for that model:
 
 - `modules/coredeux-core`
   core framework contracts and runtime behavior
+- `modules/coredeux-drl`
+  dynamic runtime logic with a plain Java core module
+- `modules/spring-boot-starters/coredeux-drl-spring-boot-starter`
+  Spring Boot bridge for the DRL runtime
 - `modules/coredeux-import`
   raw JSON import support plus text and Excel import-file parsing
 - `modules/coredeux-export`
@@ -124,6 +128,8 @@ framework itself.
 - [Getting Started In 10 Minutes](docs/02-getting-started-in-10-minutes.md)
 - [Tour Of The Demo](docs/03-tour-of-the-demo.md)
 - [Coredeux Core Reference](docs/modules/coredeux-core/13-reference.md)
+- [Coredeux DRL](docs/modules/coredeux-drl/README.md)
+- [Coredeux DRL Reference](docs/modules/coredeux-drl/04-reference.md)
 - [Coredeux Import Reference](docs/modules/coredeux-import/04-reference.md)
 - [Coredeux Export Reference](docs/modules/coredeux-export/04-reference.md)
 
@@ -157,6 +163,18 @@ Run core Redis tests with dependencies:
 
 ```powershell
 mvn -pl modules/coredeux-core-redis -am test
+```
+
+Run core DRL tests with dependencies:
+
+```powershell
+mvn -pl modules/coredeux-drl -am test
+```
+
+Run the DRL Spring Boot starter tests with dependencies:
+
+```powershell
+mvn -pl modules/spring-boot-starters/coredeux-drl-spring-boot-starter -am test
 ```
 
 Run core Elasticsearch tests with dependencies:
