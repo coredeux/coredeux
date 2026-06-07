@@ -39,6 +39,10 @@ Use the module guides after the core concepts are familiar:
 - [Import Reference](/coredeux-import-reference)
 - [Export Overview](/coredeux-export-overview)
 
+## Tools
+
+- [Coredeux DRL DevTools](/coredeux-drl-devtools)
+
 <!-- docs-nav-start -->
 [Previous: Roadmap](/roadmap) | [Documentation Home](/) | [Next: Coredeux Core](/coredeux-core)
 <!-- docs-nav-end -->

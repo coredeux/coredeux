@@ -13,6 +13,9 @@ It auto-configures:
 - `DRLService`
 - `SpringCoredeuxComponentRegistry` through the Coredeux core starter
 
+That means most Spring applications only need the starter on the classpath and
+the DRL file in the expected location.
+
 ## Defaults
 
 The starter uses classpath-based rule lookup by default:
@@ -33,6 +36,31 @@ coredeux.drl.java-language-level=19
 That means Spring Boot users can keep the runtime defaults while still
 overriding them in `application.properties` or `application.yml`.
 
+Example `application.yml`:
+
+```yaml
+coredeux:
+  drl:
+    classpath-prefix: rules/
+    classpath-suffix: .drl
+    java-compiler: NATIVE
+    java-language-level: "19"
+```
+
+## Property Precedence
+
+The starter reads Spring configuration at startup and applies it to the DRL
+runtime before rule execution begins.
+
+Practical precedence is:
+
+1. values provided in Spring `application.properties` or `application.yml`
+2. any pre-existing system property
+3. the runtime default (`NATIVE` / `19`)
+
+That lets you override behavior without changing code, while still keeping the
+same defaults in native hosts and tests.
+
 ## Spring Registry Access
 
 With the Spring starter, the default `CoredeuxComponentRegistry` implementation
@@ -42,6 +70,37 @@ That gives rule code the same convenience as the earlier Spring-based design:
 rules can resolve beans on demand instead of having every dependency injected
 explicitly into the DRL service.
 
+The important part is that the rules ask for capabilities, not for the Spring
+container itself. That keeps the rule source clean and makes the same rule text
+work in both native and Spring environments.
+
+Example rule usage:
+
+```drl
+global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
+
+rule "check"
+when
+   $context : com.coredeux.drl.model.RuleContext(method == "check")
+then
+   com.example.SampleService sampleService =
+       componentRegistry.getComponent("sampleService", com.example.SampleService.class);
+   $context.setOutput(sampleService.message());
+end
+```
+
+## When You Should Override The Starter
+
+You can override the starter's defaults by providing your own beans if you need
+to:
+
+- resolve DRL from a different source
+- replace the DRL service implementation
+- use a different component registry strategy
+
+If you only need custom rule text location or compiler settings, properties are
+usually the simplest option.
+
 ## When To Use It
 
 Use the starter when:
@@ -50,6 +109,14 @@ Use the starter when:
 - you want DRL to use Spring-managed beans and services
 - you want the same runtime behavior as the native module, but with Spring
   auto-configuration
+
+## What A Spring Developer Should Remember
+
+- the starter gives you runtime convenience, not a different rule language
+- the rule execution flow is still the same `ruleId -> source -> compile -> cache -> execute`
+- Spring only changes how the registry and configuration are supplied
+- if the external rule source changes, purge the runtime cache just like you
+  would in native mode
 
 <!-- docs-nav-start -->
 [Previous: Native Runtime](/coredeux-drl-native-runtime) | [Documentation Home](/) | [Next: Reference](/coredeux-drl-reference)

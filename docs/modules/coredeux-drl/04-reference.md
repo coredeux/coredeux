@@ -1,10 +1,20 @@
 # Reference
 
 <!-- docs-nav-start -->
-[Previous: Spring Boot Starter](/coredeux-drl-spring-boot-starter) | [Documentation Home](/) | [Next: Coredeux Import](/coredeux-import-overview)
+[Previous: Spring Boot Starter](/coredeux-drl-spring-boot-starter) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/coredeux-drl-devtools)
 <!-- docs-nav-end -->
 
 This page is the quick reference for the DRL runtime.
+
+## Runtime At A Glance
+
+```text
+ruleId -> DRLSourceResolver -> DRL text -> compile -> cache -> execute
+```
+
+The important thing to remember is that the runtime is not tied to one
+storage system. The resolver abstraction lets you map a rule id to DRL from a
+classpath file, a database row, a remote store, or any other source you choose.
 
 ## Main Contracts
 
@@ -13,11 +23,30 @@ This page is the quick reference for the DRL runtime.
 - `DRLCache`
 - `RuleContext`
 - `CoredeuxComponentRegistry`
-- `JavaToDrlConverter`
-- `AnnotationBasedJavaToDrlConverter`
-- `@DrlDefinition`
-- `@DrlGlobal`
-- `@DrlRule`
+
+## DRLService API
+
+The runtime service has a small surface area on purpose:
+
+```java
+void execute(String ruleId, RuleContext context);
+void execute(String ruleId, RuleContext context, Object... facts);
+void purgeCache();
+void purgeCache(String ruleId);
+boolean isCached(String ruleId);
+```
+
+Use `execute(ruleId, context)` when the rule only needs the context.
+
+Use `execute(ruleId, context, facts...)` when the rule also needs business
+objects or other domain facts.
+
+Use `isCached(ruleId)` when you want to know whether the compiled DRL is already
+in memory.
+
+Use `purgeCache(ruleId)` after updating one rule source.
+
+Use `purgeCache()` when you want a full refresh.
 
 ## Default Behavior
 
@@ -43,6 +72,10 @@ coredeux.drl.java-compiler=NATIVE
 coredeux.drl.java-language-level=19
 ```
 
+In Spring Boot applications, the starter can read the same keys from
+`application.properties` or `application.yml` and apply them before runtime
+bootstrap.
+
 ## Rule Shape
 
 Typical DRL files declare the registry global:
@@ -52,6 +85,36 @@ global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
 ```
 
 The `then` block can then resolve approved Coredeux components on demand.
+
+## RuleContext Contract
+
+`RuleContext` is the object rules read from and write to during execution.
+
+It carries:
+
+- `method`: the method name or rule selection key
+- `params`: arbitrary named inputs
+- `output`: the rule result
+- `exception`: a captured exception from the rule
+- `firedRules`: how many rules ran for the execution
+
+Convenience helpers:
+
+```java
+RuleContext context = RuleContext.method("check")
+        .param("entity", entity);
+```
+
+After execution, read the result back from the same object:
+
+```java
+Object output = context.getOutput();
+int firedRules = context.getFiredRules();
+Exception exception = context.getException();
+```
+
+This design keeps the API mutable by reference, which makes it easy to use in
+validation hooks and command-style operations.
 
 ## Component Registry
 
@@ -98,148 +161,44 @@ This gives rules useful flexibility:
 - applications control what rule code can resolve by choosing the registry
   contents or registry implementation
 
-## Java-To-DRL Converter
-
-Use the converter when you want to author rule source as Java-like code and
-generate DRL from it.
+## End-To-End Example
 
 ```java
-package com.example.rules;
+DRLSourceResolver sourceResolver = new ClasspathDRLSourceResolver();
+CoredeuxComponentRegistry registry = InMemoryCoredeuxComponentRegistry.builder()
+        .component("sampleService", new SampleService())
+        .build();
+DRLService drlService = new DefaultDRLService(sourceResolver, registry);
 
-import com.coredeux.core.registry.CoredeuxComponentRegistry;
-import com.coredeux.drl.converter.annotations.DrlDefinition;
-import com.coredeux.drl.converter.annotations.DrlGlobal;
-import com.coredeux.drl.converter.annotations.DrlRule;
-import com.coredeux.drl.model.RuleContext;
-import com.example.SampleService;
-
-@DrlDefinition("sampleRuleSource")
-public class SampleRuleSource {
-
-    @DrlGlobal
-    public CoredeuxComponentRegistry componentRegistry;
-
-    @DrlRule(name = "check", when = "$context : RuleContext(method == 'check')")
-    public void check(RuleContext $context) {
-        SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
-        $context.setOutput(sampleService.message());
-    }
-}
+RuleContext context = RuleContext.method("check").param("entity", entity);
+drlService.execute("sample-rule", context);
 ```
 
-The generated DRL will look like this:
+That short flow is the heart of the runtime:
 
-```drl
-import java.lang.*;
-import com.coredeux.core.registry.CoredeuxComponentRegistry;
-import com.coredeux.drl.model.RuleContext;
-import com.example.SampleService;
+1. identify the rule by id
+2. resolve the stored DRL
+3. compile and cache it
+4. execute it with context and facts
+5. read the output back from the same `RuleContext`
 
-global CoredeuxComponentRegistry componentRegistry;
+The Java-to-DRL converter and its annotations live in
+`coredeux-drl-devtools`.
 
-rule "check"
-when
-   $context : RuleContext(method == 'check')
-then
-   SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
-   $context.setOutput(sampleService.message());
-end
-```
+## Threading Notes
 
-Rendering behavior:
+- the `DRLService` instance can be reused across calls
+- a new `KieSession` is created for every execution
+- the compiled cache is concurrent
+- `RuleContext` is mutable and should be treated as one request object
+- do not share the same `RuleContext` across concurrent executions
+- if multiple workers may update rule source, decide in advance who calls
+  `purgeCache(...)`
 
-- `@DrlDefinition` sets the rule id.
-- `@DrlGlobal` fields become DRL `global` declarations.
-- `@DrlRule` methods become DRL `rule` blocks.
-- The `when` attribute is copied as the DRL `when` condition.
-- The method body is copied into the DRL `then` block.
-- Converter annotation imports are removed from the generated DRL.
-- Other imports are preserved.
+## Related Tooling
 
-Prefer single quotes inside `when` conditions:
-
-```java
-@DrlRule(name = "check", when = "$context : RuleContext(method == 'check')")
-```
-
-That avoids escaping double quotes inside Java annotation strings.
-
-## Authoring Rules
-
-Do:
-
-- keep each rule method body self-contained
-- import every runtime type used by the rule
-- use typed Drools fact bindings when you need subtype methods
-- cast values read from `RuleContext.params`
-- inspect or log generated DRL when debugging
-- purge the cache after updating external rule source
-
-Avoid:
-
-- relying on helper methods in the Java source class unless they are real
-  imported runtime methods
-- treating Java compile success as Drools compile success
-- using `Object()` fact patterns without casts
-- hiding complex rule selection inside one very large rule
-- using Java syntax newer than the configured Drools language level
-
-## Drools Java Dialect Limits
-
-The converter does not replace Drools compilation. It only produces DRL text.
-The generated `then` block is still compiled by the Drools Java dialect.
-
-Observed in the Java compatibility POC:
-
-- Java 5 generics, enhanced `for`, enums, and classic `switch` worked.
-- Java 7 diamond, try-with-resources, and multi-catch worked.
-- Java 8 lambdas, method references, streams, and functional interfaces worked.
-- Java 10 `var` worked.
-- Java 14 switch expressions worked.
-- Java 15 text blocks worked at language level 19.
-- Java 21 library APIs worked when the host JDK supplied the API; this is API
-  usage, not Java 21 syntax.
-- Java 16 pattern matching for `instanceof` failed in Drools declaration
-  analysis.
-- Java 16 local records inside the consequence failed.
-- Java 21 record patterns failed.
-- Java 21 pattern switch over sealed/record types failed.
-- Asking the tested Drools version for language level `21` or `25` fell back to
-  Java 11 detection, so it did not enable newer syntax.
-
-Practical recommendation: keep rule consequences close to Java 8-15 style,
-prefer explicit types and casts, and verify generated DRL with tests before
-publishing it to an external source.
-
-## Fact Typing
-
-Typed fact patterns are safest:
-
-```drl
-when
-   $psu : Psu()
-then
-   $context.setOutput($psu.getSkuCode());
-end
-```
-
-If a fact is bound as `Object`, cast it first:
-
-```drl
-when
-   $fact : Object()
-then
-   Psu psu = (Psu) $fact;
-   $context.setOutput(psu.getSkuCode());
-end
-```
-
-Values from `RuleContext.params` also need casts because map lookup returns
-`Object`:
-
-```drl
-Psu psu = (Psu) $context.getParams().get("entity");
-```
+If you are authoring annotated Java-like rule source, see
+`coredeux-drl-devtools`.
 
 ## Update Strategy
 
@@ -250,6 +209,13 @@ When a rule changes, purge the cache explicitly:
 - `purgeCache(ruleId)`
 - `purgeCache()`
 
+Good practice:
+
+- purge a single rule when one source changes
+- purge everything when many rules were reloaded together
+- call `isCached(ruleId)` if you want to assert that compilation has already
+  happened
+
 <!-- docs-nav-start -->
-[Previous: Spring Boot Starter](/coredeux-drl-spring-boot-starter) | [Documentation Home](/) | [Next: Coredeux Import](/coredeux-import-overview)
+[Previous: Spring Boot Starter](/coredeux-drl-spring-boot-starter) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/coredeux-drl-devtools)
 <!-- docs-nav-end -->

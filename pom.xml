@@ -116,6 +116,7 @@
     <modules>
 		<module>modules/coredeux-core</module>
 		<module>modules/coredeux-drl</module>
+		<module>modules/coredeux-drl-devtools</module>
 		<module>modules/coredeux-core-jpa</module>
 		<module>modules/coredeux-import</module>
 		<module>modules/coredeux-export</module>

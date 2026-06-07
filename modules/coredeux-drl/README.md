@@ -23,11 +23,6 @@ Detailed reference:
 - `DRLSourceResolver`
 - `DRLCache`
 - `RuleContext`
-- `JavaToDrlConverter`
-- `AnnotationBasedJavaToDrlConverter`
-- `@DrlDefinition`
-- `@DrlGlobal`
-- `@DrlRule`
 - `DefaultDRLService`
 - `ClasspathDRLSourceResolver`
 - `InMemoryDRLCache`
@@ -78,67 +73,8 @@ services when needed, and the application can swap the registry implementation
 without changing the rule source. Missing components or type mismatches fail
 fast instead of silently returning the wrong object.
 
-## Java-To-DRL Authoring
-
-For rules that are easier to maintain as Java-like source, use the annotation
-converter:
-
-```java
-package com.example.rules;
-
-import com.coredeux.core.registry.CoredeuxComponentRegistry;
-import com.coredeux.drl.converter.annotations.DrlDefinition;
-import com.coredeux.drl.converter.annotations.DrlGlobal;
-import com.coredeux.drl.converter.annotations.DrlRule;
-import com.coredeux.drl.model.RuleContext;
-import com.example.SampleService;
-
-@DrlDefinition("sampleRuleSource")
-public class SampleRuleSource {
-
-    @DrlGlobal
-    public CoredeuxComponentRegistry componentRegistry;
-
-    @DrlRule(name = "check", when = "$context : RuleContext(method == 'check')")
-    public void check(RuleContext $context) {
-        SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
-        $context.setOutput(sampleService.message());
-    }
-}
-```
-
-The generated DRL will look like this:
-
-```drl
-import java.lang.*;
-import com.coredeux.core.registry.CoredeuxComponentRegistry;
-import com.coredeux.drl.model.RuleContext;
-import com.example.SampleService;
-
-global CoredeuxComponentRegistry componentRegistry;
-
-rule "check"
-when
-   $context : RuleContext(method == 'check')
-then
-   SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
-   $context.setOutput(sampleService.message());
-end
-```
-
-The converter preserves normal imports, removes converter annotation imports,
-turns `@DrlGlobal` fields into DRL globals, and copies each annotated method
-body into a DRL `then` block.
-
-`@DrlWhen` was intentionally not added as a separate annotation. The `when`
-clause belongs to `@DrlRule`, keeping the rule name and condition together:
-
-```java
-@DrlRule(name = "check", when = "$context : RuleContext(method == 'check')")
-```
-
-Prefer single quotes inside the Drools condition when possible. That avoids the
-extra escaping required by Java string literals.
+For Java-to-DRL authoring and conversion tools, see
+`coredeux-drl-devtools`.
 
 ## Native Usage
 
@@ -174,8 +110,9 @@ mvn -pl modules/coredeux-drl -am test
 
 ## Drools Compatibility Notes
 
-The converter only makes authoring easier. The generated DRL is still compiled
-by Drools, so Drools Java dialect limitations still apply.
+The runtime still has Drools Java dialect limitations. The converter and its
+authoring-time annotations now live in `coredeux-drl-devtools`, but the rules
+they generate must still compile inside Drools.
 
 Observed with the current POC:
 
@@ -210,3 +147,6 @@ Depend on `coredeux-drl` if your application or module:
 - wants to compile and cache rule sets by unique identifier
 - wants a plain Java DRL engine without Spring dependencies
 - wants to reuse Coredeux component registry access from rule code
+
+For authoring-time conversion of annotated Java-like rule sources, use
+`coredeux-drl-devtools`.

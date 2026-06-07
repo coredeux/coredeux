@@ -13,8 +13,7 @@ At a high level the runtime does four things:
 - compiles the DRL into a cached `KieBase`
 - creates a fresh `KieSession` per execution
 - exposes the Coredeux component registry to rules as a global
-- optionally converts annotated Java-like source into DRL before storage or
-  execution
+- keeps Java-to-DRL authoring in the separate devtools module
 
 ```mermaid
 flowchart LR
@@ -27,6 +26,23 @@ flowchart LR
   F --> H["componentRegistry global"]
 ```
 
+## End-to-End Flow
+
+The runtime path is intentionally simple:
+
+1. your application picks a `ruleId`
+2. the `DRLSourceResolver` turns that id into DRL text
+3. `coredeux-drl` compiles the DRL into a `KieBase`
+4. the compiled rule set is cached by `ruleId`
+5. each execution creates a fresh `KieSession`
+6. the runtime inserts the `RuleContext` plus any extra facts
+7. the rule session gets the `componentRegistry` global
+8. the rules run and write results back through the context or facts
+
+That shape matters because it keeps the runtime predictable: source lookup is
+separate from compilation, compilation is separate from execution, and
+execution is separate from storage.
+
 The module is intentionally split so the core runtime stays plain Java while
 the Spring Boot starter can layer on environment and application-context
 integration.
@@ -34,15 +50,6 @@ integration.
 The same `componentRegistry` global works in both worlds: native applications
 can back it with `InMemoryCoredeuxComponentRegistry`, while Spring Boot
 applications get `SpringCoredeuxComponentRegistry` through the starter.
-
-## What Makes It Useful
-
-The runtime is meant for cases where you want:
-
-- hot-swappable business logic
-- runtime compilation without restarting the application
-- rule-based dispatch by identifier
-- direct access to selected Coredeux components from rule code
 
 ## What The Rules Look Like
 
@@ -57,10 +64,30 @@ global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
 Then the consequence can resolve beans or services on demand through the
 registry.
 
-For teams that prefer IDE-assisted Java authoring, the module also includes an
-annotation-based Java-to-DRL converter. The annotations act as source markers:
-the converter reads the Java source, renders DRL, and strips the marker
-annotations from the generated output.
+Typical rule source also binds a `RuleContext`:
+
+```drl
+rule "check"
+when
+   $context : RuleContext(method == "check")
+then
+   $context.setOutput("ok");
+end
+```
+
+If the rule needs additional business objects, you pass them as facts when you
+call `execute(...)`.
+
+For IDE-assisted Java authoring and source-to-DRL conversion, see
+`coredeux-drl-devtools`.
+
+## What A New Developer Should Remember
+
+- use `ruleId` as the lookup key, not raw DRL text
+- keep generated DRL in an external source you control
+- invalidate the cache when the stored DRL changes
+- prefer the component registry over hard-wiring container access into rules
+- treat `RuleContext` as the main result carrier
 
 ## Where To Go Next
 

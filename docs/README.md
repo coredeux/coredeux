@@ -200,16 +200,20 @@ enough that both humans and agents can work with them safely.
 - [Spring Boot Starter](/coredeux-drl-spring-boot-starter)
 - [DRL Reference](/coredeux-drl-reference)
 
-## 06. Native Demo Companion
+## 06. Tools
+
+- [Coredeux DRL DevTools](/coredeux-drl-devtools)
+
+## 07. Native Demo Companion
 
 - [Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes)
 - [Native Tour Of The Demo](/02-native-tour-of-the-demo)
 
-## 07. Spring Boot Import Integration
+## 08. Spring Boot Import Integration
 
 - [Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app)
 
-## 08. Platform And Project
+## 09. Platform And Project
 
 - [Platform Documentation](/platform)
 - [Project](/project)

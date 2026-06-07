@@ -9,7 +9,6 @@ import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.drl.config.DrlRuntimeBootstrap;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.impl.DefaultDRLService;
-import com.coredeux.drl.service.impl.DemoService;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +27,7 @@ class AnnotationBasedJavaToDrlConverterTest {
                     import com.coredeux.drl.converter.annotations.DrlGlobal;
                     import com.coredeux.drl.converter.annotations.DrlRule;
                     import com.coredeux.drl.model.RuleContext;
-                    import com.coredeux.drl.service.impl.DemoService;
+                    import com.coredeux.drl.converter.DemoService;
 
                     @DrlDefinition("demoRuleSource")
                     public class DemoRuleSource {

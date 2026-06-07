@@ -12,33 +12,29 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>coredeux-drl</artifactId>
+    <artifactId>coredeux-drl-devtools</artifactId>
     <packaging>jar</packaging>
 
-    <name>Coredeux DRL</name>
-    <description>Dynamic Runtime Logic support for Coredeux</description>
+    <name>Coredeux DRL DevTools</name>
+    <description>Authoring and conversion tools for Coredeux DRL sources</description>
 
     <dependencies>
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.26.3</version>
+        </dependency>
         <dependency>
             <groupId>com.coredeux</groupId>
             <artifactId>coredeux-core</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.drools</groupId>
-            <artifactId>drools-engine-classic</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.drools</groupId>
-            <artifactId>drools-compiler</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.drools</groupId>
-            <artifactId>drools-mvel</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.kie</groupId>
-            <artifactId>kie-internal</artifactId>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-drl</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
