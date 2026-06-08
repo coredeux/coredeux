@@ -58,8 +58,10 @@ CoredeuxComponentRegistry componentRegistry = InMemoryCoredeuxComponentRegistry.
 
 DRLService drlService = new DefaultDRLService(sourceResolver, componentRegistry);
 
-RuleContext context = RuleContext.method("check").param("entity", sampleEntity);
-drlService.execute("sample-rule", context, sampleEntity);
+RuleContext context = RuleContext.method("check")
+        .param("entity", sampleEntity)
+        .fact(sampleEntity);
+drlService.execute("sample-rule", context);
 
 Object output = context.getOutput();
 int firedRules = context.getFiredRules();
@@ -86,8 +88,24 @@ where the caller wants a mutable result object instead of a new return type.
 
 ## Working With Facts
 
-Use the `execute(ruleId, context, facts...)` overload when the rule needs more
-than the context.
+Put additional session facts on the `RuleContext` with `.fact(...)` before you
+call `execute(...)`.
+
+If you want to compile and run a source string immediately without resolver
+lookup or cache storage, use `executeSource(...)`:
+
+```java
+RuleContext context = RuleContext.method("check")
+        .fact(sampleEntity);
+drlService.executeSource("""
+        rule "check"
+        when
+            $context : RuleContext(method == "check")
+        then
+            $context.setOutput("ok");
+        end
+        """, context);
+```
 
 Typed facts are easiest to work with:
 

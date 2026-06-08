@@ -30,7 +30,8 @@ The runtime service has a small surface area on purpose:
 
 ```java
 void execute(String ruleId, RuleContext context);
-void execute(String ruleId, RuleContext context, Object... facts);
+void execute(String ruleId, String source, RuleContext context);
+void executeSource(String source, RuleContext context);
 void purgeCache();
 void purgeCache(String ruleId);
 boolean isCached(String ruleId);
@@ -38,8 +39,12 @@ boolean isCached(String ruleId);
 
 Use `execute(ruleId, context)` when the rule only needs the context.
 
-Use `execute(ruleId, context, facts...)` when the rule also needs business
-objects or other domain facts.
+Use `execute(ruleId, source, context)` when you already have the DRL text and
+want to compile it, store the compiled version in cache, and execute it under a
+known rule id.
+
+Use `executeSource(source, context)` when you want to compile and run a source
+string immediately without resolver lookup or cache storage.
 
 Use `isCached(ruleId)` when you want to know whether the compiled DRL is already
 in memory.
@@ -94,6 +99,7 @@ It carries:
 
 - `method`: the method name or rule selection key
 - `params`: arbitrary named inputs
+- `facts`: additional objects inserted into the rule session
 - `output`: the rule result
 - `exception`: a captured exception from the rule
 - `firedRules`: how many rules ran for the execution
@@ -102,7 +108,8 @@ Convenience helpers:
 
 ```java
 RuleContext context = RuleContext.method("check")
-        .param("entity", entity);
+        .param("entity", entity)
+        .fact(entity);
 ```
 
 After execution, read the result back from the same object:
@@ -115,6 +122,48 @@ Exception exception = context.getException();
 
 This design keeps the API mutable by reference, which makes it easy to use in
 validation hooks and command-style operations.
+
+The rule session facts come from `RuleContext.getFacts()`, so the calling code
+can decide what gets inserted without changing the service signature.
+
+You can use that same shape anywhere you execute a rule:
+
+```java
+RuleContext context = RuleContext.method("check")
+        .param("entity", entity)
+        .fact(entity);
+drlService.execute("sample-rule", context);
+```
+
+To compile and cache caller-provided source under a known rule id:
+
+```java
+RuleContext context = RuleContext.method("check")
+        .fact(entity);
+drlService.execute("sample-rule", """
+        rule "sample-rule"
+        when
+            $context : RuleContext(method == "check")
+        then
+            $context.setOutput("ok");
+        end
+        """, context);
+```
+
+To compile and run source immediately without cache or resolver:
+
+```java
+RuleContext context = RuleContext.method("check")
+        .fact(entity);
+drlService.executeSource("""
+        rule "check"
+        when
+            $context : RuleContext(method == "check")
+        then
+            $context.setOutput("ok");
+        end
+        """, context);
+```
 
 ## Component Registry
 
@@ -170,7 +219,9 @@ CoredeuxComponentRegistry registry = InMemoryCoredeuxComponentRegistry.builder()
         .build();
 DRLService drlService = new DefaultDRLService(sourceResolver, registry);
 
-RuleContext context = RuleContext.method("check").param("entity", entity);
+RuleContext context = RuleContext.method("check")
+        .param("entity", entity)
+        .fact(entity);
 drlService.execute("sample-rule", context);
 ```
 
@@ -179,7 +230,7 @@ That short flow is the heart of the runtime:
 1. identify the rule by id
 2. resolve the stored DRL
 3. compile and cache it
-4. execute it with context and facts
+4. execute it with context and facts from the same `RuleContext`
 5. read the output back from the same `RuleContext`
 
 The Java-to-DRL converter and its annotations live in
