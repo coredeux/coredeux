@@ -80,6 +80,7 @@ It carries:
 - the current method name
 - arbitrary `params`
 - the output value
+- a human-readable `message`
 - a captured exception
 - the number of fired rules
 
@@ -103,6 +104,7 @@ drlService.executeSource("""
             $context : RuleContext(method == "check")
         then
             $context.setOutput("ok");
+            $context.setMessage("Rule executed successfully.");
         end
         """, context);
 ```

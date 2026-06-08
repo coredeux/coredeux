@@ -5,7 +5,8 @@ Coredeux.
 
 It resolves DRL by rule id, compiles the rule set once, caches the compiled
 `KieBase`, and executes it against a mutable `RuleContext` plus any extra
-facts you attach with `.fact(...)`.
+facts you attach with `.fact(...)`. The context can also carry a human-readable
+`message` for agent and tool integrations alongside the typed `output`.
 
 The module stays Spring-free. Native applications can wire the resolver and the
 component registry directly, while Spring Boot applications should use the

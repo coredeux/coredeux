@@ -101,6 +101,7 @@ It carries:
 - `params`: arbitrary named inputs
 - `facts`: additional objects inserted into the rule session
 - `output`: the rule result
+- `message`: a human-readable explanation for tools or agents
 - `exception`: a captured exception from the rule
 - `firedRules`: how many rules ran for the execution
 
@@ -116,6 +117,7 @@ After execution, read the result back from the same object:
 
 ```java
 Object output = context.getOutput();
+String message = context.getMessage();
 int firedRules = context.getFiredRules();
 Exception exception = context.getException();
 ```

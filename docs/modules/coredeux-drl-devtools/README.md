@@ -86,6 +86,7 @@ public class SampleRuleSource {
     public void check(RuleContext $context) {
         SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
         $context.setOutput(sampleService.message());
+        $context.setMessage("Check rule completed successfully.");
     }
 }
 ```
@@ -109,6 +110,7 @@ when
 then
    SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
    $context.setOutput(sampleService.message());
+   $context.setMessage("Check rule completed successfully.");
 end
 ```
 

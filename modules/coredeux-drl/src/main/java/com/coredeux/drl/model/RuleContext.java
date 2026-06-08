@@ -9,9 +9,9 @@ import java.util.Map;
  * Mutable execution context passed into DRL rules.
  *
  * <p>The context carries the rule method name, named parameters, arbitrary
- * facts, and rule execution results such as output, exceptions, and fired rule
- * count. Instances are passed by reference into the Drools session so rule
- * consequences can update the same object directly.
+ * facts, and rule execution results such as output, message, exceptions, and
+ * fired rule count. Instances are passed by reference into the Drools session
+ * so rule consequences can update the same object directly.
  */
 public class RuleContext {
 
@@ -19,6 +19,7 @@ public class RuleContext {
     private Map<String, Object> params = new HashMap<>();
     private List<Object> facts = new ArrayList<>();
     private Object output;
+    private String message;
     private Exception exception;
     private int firedRules;
 
@@ -140,6 +141,27 @@ public class RuleContext {
      */
     public void setOutput(Object output) {
         this.output = output;
+    }
+
+    /**
+     * Returns the human-readable message populated by a rule consequence.
+     *
+     * <p>This is intended for agent and tool flows where the caller needs a
+     * short explanatory string in addition to or instead of a typed output.
+     *
+     * @return the current message, or {@code null} if none has been set
+     */
+    public String getMessage() {
+        return message;
+    }
+
+    /**
+     * Sets the human-readable message populated by a rule consequence.
+     *
+     * @param message the text to expose after rule execution
+     */
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     /**

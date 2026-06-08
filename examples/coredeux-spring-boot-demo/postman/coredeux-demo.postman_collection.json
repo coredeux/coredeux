@@ -2,7 +2,7 @@
   "info": {
     "name": "Coredeux Spring Boot Demo API",
     "_postman_id": "9f9135dd-fb54-45c7-a6bb-2cb3ec183b4a",
-    "description": "Sample CRUD and export collection for the Coredeux Spring Boot demo application. Entity paths use fully qualified class names because Coredeux resolves entity definitions by fullClassName.",
+    "description": "Sample CRUD and export collection for the Coredeux Spring Boot demo application. Entity paths use fully qualified class names because Coredeux resolves entity definitions by fullClassName.\n\nAdds DRL runtime and source-management endpoints for the Spring Boot demo.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -69,6 +69,14 @@
     {
       "key": "exportUid",
       "value": ""
+    },
+    {
+      "key": "drlRuleId",
+      "value": "demoGreetingRuleSource"
+    },
+    {
+      "key": "drlInlineRuleId",
+      "value": "demoInlineGreetingRule"
     }
   ],
   "item": [
@@ -708,6 +716,359 @@
             "method": "GET",
             "url": "{{baseUrl}}/api/export/{{exportUid}}/download"
           }
+        }
+      ]
+    },
+    {
+      "name": "DRL",
+      "item": [
+        {
+          "name": "List Rule Sources",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/drl/rules"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Convert Annotated Java Source",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/drl/rules/convert",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl;\\n\\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\\nimport com.coredeux.drl.converter.annotations.DrlRule;\\nimport com.coredeux.drl.model.RuleContext;\\nimport com.coredeux.demo.drl.DemoGreetingService;\\n\\n@DrlDefinition(\\\"demoGreetingRuleSource\\\")\\npublic class DemoRuleSource {\\n\\n    @DrlGlobal\\n    public CoredeuxComponentRegistry componentRegistry;\\n\\n    @DrlRule(name = \\\"greet\\\", when = \\\"$context : RuleContext(method == 'greet')\\\")\\n    public void greet(RuleContext $context) {\\n        DemoGreetingService greetingService = componentRegistry.getComponent(\\\"demoGreetingService\\\",\\n                DemoGreetingService.class);\\n        $context.setOutput(greetingService.message());\\n        $context.setMessage(\\\"Greeting rule executed successfully.\\\");\\n    }\\n\\n    @DrlRule(name = \\\"countFacts\\\", when = \\\"$context : RuleContext(method == 'countFacts')\\\")\\n    public void countFacts(RuleContext $context) {\\n        int count = $context.getFacts() == null ? 0 : $context.getFacts().size();\\n        $context.setOutput(count);\\n        $context.setMessage(\\\"Counted \\\" + count + \\\" fact(s) for the sample rule.\\\");\\n    }\\n}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set(\"drlRuleId\", body.code); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upsert Raw DRL Rule",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/drl/rules/{{drlInlineRuleId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Inline DRL rule stored in the database\",\n  \"drl\": \"package com.coredeux.demo.drl;\\n\\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\\nimport com.coredeux.drl.model.RuleContext;\\nimport com.coredeux.demo.drl.DemoGreetingService;\\n\\nglobal CoredeuxComponentRegistry componentRegistry;\\n\\nrule \\\"greet\\\"\\nwhen\\n    $context : RuleContext(method == \\\"greet\\\")\\nthen\\n    DemoGreetingService greetingService = componentRegistry.getComponent(\\\"demoGreetingService\\\", DemoGreetingService.class);\\n    $context.setOutput(greetingService.message());\\n    $context.setMessage(\\\"Greeting rule executed successfully.\\\");\\nend\\n\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set(\"drlInlineRuleId\", body.code); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Converted Rule Source",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/drl/rules/{{drlRuleId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute Converted Rule - greet",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/drl/rules/{{drlRuleId}}/execute",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"greet\",\n  \"params\": {},\n  \"facts\": []\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"output is present\", function () { pm.expect(body.output).to.exist; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute Converted Rule - countFacts",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/drl/rules/{{drlRuleId}}/execute",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"countFacts\",\n  \"params\": {},\n  \"facts\": [\n    \"alpha\",\n    \"beta\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"facts are counted\", function () { pm.expect(body.output).to.eql(2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute Sample Rule - Count Facts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"params\": {},\n  \"facts\": [\n    \"alpha\",\n    \"beta\"\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/drl/sample/count-facts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"sample count matches facts\", function () { pm.expect(body.output).to.eql(2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute Sample Rule - Greet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"params\": {},\n  \"facts\": []\n}"
+            },
+            "url": "{{baseUrl}}/api/drl/sample/greet"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"sample output matches greeting\", function () { pm.expect(body.output).to.eql(\"Hello from the Coredeux DRL native demo\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute Stored Raw Rule With Source",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/drl/rules/{{drlInlineRuleId}}/execute-source",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl;\\n\\nimport com.coredeux.drl.model.RuleContext;\\n\\nrule \\\"cachedGreeting\\\"\\nwhen\\n    $context : RuleContext(method == \\\"greet\\\")\\nthen\\n    $context.setOutput(\\\"Hello from cached DRL source\\\");\\nend\\n\",\n  \"context\": {\n    \"method\": \"greet\",\n    \"params\": {},\n    \"facts\": []\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"inline source output is present\", function () { pm.expect(body.output).to.exist; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Execute Inline DRL Source",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/drl/execute-source",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl;\\n\\nimport com.coredeux.drl.model.RuleContext;\\n\\nrule \\\"inlineGreeting\\\"\\nwhen\\n    $context : RuleContext(method == \\\"greet\\\")\\nthen\\n    $context.setOutput(\\\"Hello from inline DRL source\\\");\\nend\\n\",\n  \"context\": {\n    \"method\": \"greet\",\n    \"params\": {},\n    \"facts\": []\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"inline output is present\", function () { pm.expect(body.output).to.eql(\"Hello from inline DRL source\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cache Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/drl/cache/{{drlInlineRuleId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Purge Rule Cache",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/drl/cache/{{drlInlineRuleId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Purge All Cache",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/drl/cache"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Raw Rule Source",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/drl/rules/{{drlInlineRuleId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

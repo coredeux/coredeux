@@ -30,6 +30,7 @@ class DefaultDRLServiceComponentRegistryTest {
                                 componentRegistry.getComponent("demoService",
                                         com.coredeux.drl.service.impl.DemoService.class);
                         $context.setOutput(demoService.message());
+                        $context.setMessage("Component registry sample executed.");
                     end
                     """;
 
@@ -43,6 +44,7 @@ class DefaultDRLServiceComponentRegistryTest {
             service.execute("check", context);
 
             assertEquals("ok", context.getOutput());
+            assertEquals("Component registry sample executed.", context.getMessage());
             assertEquals(1, context.getFiredRules());
         } finally {
             restoreProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY, previousCompiler);

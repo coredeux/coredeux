@@ -64,6 +64,16 @@
         </dependency>
         <dependency>
             <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-drl-spring-boot-starter</artifactId>
+            <version>${coredeux.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-drl-devtools</artifactId>
+            <version>${coredeux.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coredeux</groupId>
             <artifactId>coredeux-import-spring-boot-starter</artifactId>
             <version>${coredeux.version}</version>
         </dependency>

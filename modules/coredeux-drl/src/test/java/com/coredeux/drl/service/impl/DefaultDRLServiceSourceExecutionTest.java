@@ -22,6 +22,7 @@ class DefaultDRLServiceSourceExecutionTest {
                 $demoService : com.coredeux.drl.service.impl.DemoService()
             then
                 $context.setOutput($demoService.message());
+                $context.setMessage("Inline source executed successfully.");
             end
             """;
 
@@ -41,6 +42,7 @@ class DefaultDRLServiceSourceExecutionTest {
             service.executeSource(INLINE_SOURCE, context);
 
             assertEquals("ok", context.getOutput());
+            assertEquals("Inline source executed successfully.", context.getMessage());
             assertEquals(1, context.getFiredRules());
             assertEquals(0, resolver.resolveCount.get());
             assertEquals(false, service.isCached("sample-fact-rule"));
@@ -65,6 +67,7 @@ class DefaultDRLServiceSourceExecutionTest {
             service.execute("sample-fact-rule", INLINE_SOURCE, first);
 
             assertEquals("ok", first.getOutput());
+            assertEquals("Inline source executed successfully.", first.getMessage());
             assertEquals(1, first.getFiredRules());
             assertTrue(service.isCached("sample-fact-rule"));
             assertEquals(0, resolver.resolveCount.get());
@@ -74,6 +77,7 @@ class DefaultDRLServiceSourceExecutionTest {
             service.execute("sample-fact-rule", second);
 
             assertEquals("ok", second.getOutput());
+            assertEquals("Inline source executed successfully.", second.getMessage());
             assertEquals(1, second.getFiredRules());
             assertEquals(0, resolver.resolveCount.get());
         } finally {
