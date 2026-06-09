@@ -128,7 +128,7 @@ class CoredeuxDrlAutoConfigurationTest {
             DRLSourceResolver resolver = configuration.coredeuxDrlSourceResolver(environment);
 
             assertEquals("NATIVE", DrlRuntimeBootstrap.resolveJavaCompiler());
-            assertEquals("19", DrlRuntimeBootstrap.resolveJavaLanguageLevel());
+            assertEquals(expectedLanguageLevelForCurrentRuntime(), DrlRuntimeBootstrap.resolveJavaLanguageLevel());
             assertTrue(resolver.resolve("sample-rule")
                     .contains("global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;"));
         } finally {
@@ -157,6 +157,10 @@ class CoredeuxDrlAutoConfigurationTest {
         } catch (ReflectiveOperationException exception) {
             throw new IllegalStateException("Unable to reset DRL bootstrap state for the test", exception);
         }
+    }
+
+    private String expectedLanguageLevelForCurrentRuntime() {
+        return Runtime.version().feature() >= 19 ? "19" : "17";
     }
 
     @Configuration(proxyBeanMethods = false)
