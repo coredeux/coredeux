@@ -2,6 +2,8 @@ package com.coredeux.spring.boot.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
@@ -39,6 +41,44 @@ class CoredeuxWebAutoConfigurationTest {
             } finally {
                 RequestContextHolder.resetRequestAttributes();
             }
+        });
+    }
+
+    @Test
+    void fallsBackToParametersAndAlternateTenantHeaders() {
+        contextRunner.run(context -> {
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.addHeader("X-Request-Id", " ");
+            request.addParameter("requestId", "req-2");
+            request.addHeader("X-Correlation-Id", " ");
+            request.addParameter("correlationId", "corr-2");
+            request.addHeader("X-User-Id", " ");
+            request.addParameter("userId", "user-2");
+            request.addHeader("X-Tenant-Id", " ");
+            request.addParameter("siteId", "tenant-2");
+            request.addPreferredLocale(Locale.CANADA_FRENCH);
+            RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+            try {
+                CoredeuxRequestContextResolver resolver = context.getBean(CoredeuxRequestContextResolver.class);
+                RequestContext requestContext = resolver.resolve();
+
+                assertThat(requestContext.getRequestId()).isEqualTo("req-2");
+                assertThat(requestContext.getCorrelationId()).isEqualTo("corr-2");
+                assertThat(requestContext.getUserId()).isEqualTo("user-2");
+                assertThat(requestContext.getTenantId()).isEqualTo("tenant-2");
+                assertThat(requestContext.getLocale()).isEqualTo(Locale.CANADA_FRENCH);
+            } finally {
+                RequestContextHolder.resetRequestAttributes();
+            }
+        });
+    }
+
+    @Test
+    void returnsNullWhenNoServletRequestAttributesAreAvailable() {
+        contextRunner.run(context -> {
+            CoredeuxRequestContextResolver resolver = context.getBean(CoredeuxRequestContextResolver.class);
+            assertThat(resolver.resolve()).isNull();
         });
     }
 }

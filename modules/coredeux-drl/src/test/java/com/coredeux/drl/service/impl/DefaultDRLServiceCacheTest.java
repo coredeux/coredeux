@@ -1,6 +1,8 @@
 package com.coredeux.drl.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,6 +50,20 @@ class DefaultDRLServiceCacheTest {
             restoreProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY, previousCompiler);
             restoreProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY, previousLanguageLevel);
         }
+    }
+
+    @Test
+    void ignoresNullAndBlankCacheKeys() {
+        DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
+
+        assertFalse(service.isCached(null));
+        assertFalse(service.isCached(" "));
+
+        service.purgeCache(null);
+        service.purgeCache(" ");
+
+        assertFalse(service.isCached(null));
+        assertFalse(service.isCached(" "));
     }
 
     private void restoreProperty(String name, String previousValue) {

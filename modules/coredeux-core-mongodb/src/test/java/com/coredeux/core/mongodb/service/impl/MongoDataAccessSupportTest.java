@@ -1,6 +1,7 @@
 package com.coredeux.core.mongodb.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,6 +24,7 @@ import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
+import com.coredeux.core.mongodb.testentity.SampleMongoEntity;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
@@ -117,6 +119,39 @@ class MongoDataAccessSupportTest {
         assertSame(existing, service.wrap("message", existing));
         assertThrows(CoredeuxValidationException.class,
                 () -> service.wrap("message", new CoredeuxValidationException("x")));
+    }
+
+    @Test
+    void shouldCoverDocumentAndReflectionHelpers() throws Exception {
+        SampleMongoEntity entity = new SampleMongoEntity();
+        entity.setId("1");
+        entity.setName("Alpha");
+        entity.setAge(10);
+        entity.setTags(List.of("one", "two"));
+
+        assertEquals("sample_mongo_entities", service.collectionName(SampleMongoEntity.class));
+        assertEquals("sample_mongo_entities", service.mongoDocumentName(SampleMongoEntity.class));
+        assertTrue(service.fieldHasAnnotation(SampleMongoEntity.class.getDeclaredField("id"),
+                "org.springframework.data.annotation.Id"));
+        assertFalse(service.fieldHasAnnotation(SampleMongoEntity.class.getDeclaredField("name"),
+                "org.springframework.data.annotation.Id"));
+        SampleMongoEntity copy = new SampleMongoEntity();
+        service.copyProperties(entity, copy);
+        assertEquals("Alpha", copy.getName());
+        assertNotNull(service.buildSearchFilter(null));
+        assertNotNull(service.buildSearchFilter(List.of()));
+        assertEquals("1", service.normalizeDocumentId(new Document("_id", "1"), SampleMongoEntity.class).get("id"));
+        assertNotNull(service.normalizeDocument(new Document("id", "1").append("name", "Alpha")));
+        assertNotNull(service.generateIdentifier(SampleMongoEntity.class, SampleMongoEntity.class.getDeclaredField("id")));
+
+        UUID uuid = UUID.randomUUID();
+        assertEquals(uuid, service.convertIdentifier(uuid.toString(), UUID.class));
+        assertEquals(new BigInteger("1"), service.convertIdentifier("1", BigInteger.class));
+        assertEquals(new BigDecimal("1.5"), service.convertIdentifier("1.5", BigDecimal.class));
+        assertEquals(Boolean.TRUE, service.convertIdentifier("true", boolean.class));
+        assertTrue(service.resolveQueryTemplate("{\"name\": {{name}}}", Map.of("name", "Alpha")).contains("Alpha"));
+        assertThrows(CoredeuxValidationException.class,
+                () -> service.resolveQueryTemplate("{\"name\": {{missing}}}", Map.of("name", "Alpha")));
     }
 
     private SearchParams param(String field, String comparator, Object value) {

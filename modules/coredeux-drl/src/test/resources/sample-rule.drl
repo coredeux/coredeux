@@ -1,8 +1,11 @@
-global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
+package rules.sample;
+
+import com.coredeux.drl.model.RuleContext;
 
 rule "sample-rule"
 when
-    $context : com.coredeux.drl.model.RuleContext(method == "sample-rule")
+    $context : RuleContext(method == "sample-rule")
 then
-    $context.setOutput("ok");
+    $context.setOutput("classpath-default");
+    $context.setMessage("classpath-default");
 end

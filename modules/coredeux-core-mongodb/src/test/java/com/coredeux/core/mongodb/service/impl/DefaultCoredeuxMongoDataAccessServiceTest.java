@@ -2,6 +2,7 @@ package com.coredeux.core.mongodb.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -173,6 +175,58 @@ class DefaultCoredeuxMongoDataAccessServiceTest {
         assertNotNull(filter);
     }
 
+    @Test
+    void shouldCoverNestedReflectionAndFailureBranches() throws Exception {
+        DefaultCoredeuxMongoDataAccessService helperService = new DefaultCoredeuxMongoDataAccessService(mongoDatabase);
+        assertEquals("sample_mongo_entities", helperService.collectionName(SampleMongoEntity.class));
+        assertEquals("custom_name", helperService.collectionName(AnnotatedDocument.class));
+        assertEquals("custom_name", helperService.mongoDocumentName(AnnotatedDocument.class));
+        assertEquals(null, helperService.mongoDocumentName(UnannotatedDocument.class));
+        assertTrue(helperService.fieldHasAnnotation(SampleMongoEntity.class.getDeclaredField("id"),
+                "org.springframework.data.annotation.Id"));
+        assertFalse(helperService.fieldHasAnnotation(SampleMongoEntity.class.getDeclaredField("name"),
+                "org.springframework.data.annotation.Id"));
+
+        Document document = new Document("id", "1").append("name", "Alpha");
+        assertEquals("1", helperService.normalizeDocumentId(new Document("_id", "1"), SampleMongoEntity.class).get("id"));
+        assertEquals("1", helperService.normalizeDocument(document).get("_id"));
+        assertEquals("1", helperService.normalizeMongoId("1", String.class));
+        assertNotNull(helperService.generateIdentifier(SampleMongoEntity.class, SampleMongoEntity.class.getDeclaredField("id")));
+        assertNotNull(helperService.resolveQueryTemplate("{\"name\": {{name}}}", Map.of("name", "Alpha")));
+        assertThrows(CoredeuxValidationException.class,
+                () -> helperService.resolveQueryTemplate("{\"name\": {{missing}}}", Map.of("name", "Alpha")));
+
+        Field inherited = DefaultCoredeuxMongoDataAccessService.ReflectionUtils.findField(ChildDocument.class, "parentValue");
+        assertNotNull(inherited);
+        ChildDocument child = new ChildDocument();
+        DefaultCoredeuxMongoDataAccessService.ReflectionUtils.doWithFields(ChildDocument.class, field -> {
+            DefaultCoredeuxMongoDataAccessService.ReflectionUtils.makeAccessible(field);
+            DefaultCoredeuxMongoDataAccessService.ReflectionUtils.getField(field, child);
+            DefaultCoredeuxMongoDataAccessService.ReflectionUtils.setField(field, child, null);
+        });
+
+        MongoCollection<Document> failingCollection = mock(MongoCollection.class);
+        when(mongoDatabase.getCollection(anyString())).thenReturn(failingCollection);
+        when(failingCollection.find(any(Bson.class))).thenThrow(new IllegalStateException("boom"));
+        when(failingCollection.replaceOne(any(Bson.class), any(Document.class), any())).thenThrow(new IllegalStateException("boom"));
+        when(failingCollection.deleteOne(any(Bson.class))).thenThrow(new IllegalStateException("boom"));
+        when(failingCollection.countDocuments()).thenThrow(new IllegalStateException("boom"));
+        when(failingCollection.countDocuments(any(Bson.class))).thenThrow(new IllegalStateException("boom"));
+
+        DefaultCoredeuxMongoDataAccessService failingService = new DefaultCoredeuxMongoDataAccessService(mongoDatabase);
+        SampleMongoEntity entity = sample("1", "Alpha", 10, List.of("one"));
+        assertThrows(CoredeuxDataAccessException.class, () -> failingService.load("1", SampleMongoEntity.class));
+        assertThrows(CoredeuxDataAccessException.class, () -> failingService.save(entity));
+        assertThrows(CoredeuxDataAccessException.class, () -> failingService.update(entity));
+        assertThrows(CoredeuxDataAccessException.class, () -> failingService.remove(entity));
+        assertThrows(CoredeuxDataAccessException.class,
+                () -> failingService.loadAll(List.of(), SampleMongoEntity.class, 10, 1));
+        assertThrows(CoredeuxDataAccessException.class,
+                () -> failingService.query("{\"name\": {{name}}}", Map.of("name", "Alpha"),
+                        SampleMongoEntity.class, 10, 1));
+        assertThrows(CoredeuxDataAccessException.class, () -> failingService.refresh(entity));
+    }
+
     private SampleMongoEntity sample(String id, String name, Integer age, List<String> tags) {
         SampleMongoEntity entity = new SampleMongoEntity();
         entity.setId(id);
@@ -185,5 +239,20 @@ class DefaultCoredeuxMongoDataAccessServiceTest {
     private static class SampleObjectIdEntity {
         @org.springframework.data.annotation.Id
         private ObjectId id;
+    }
+
+    @org.springframework.data.mongodb.core.mapping.Document("custom_name")
+    private static class AnnotatedDocument {
+    }
+
+    private static class UnannotatedDocument {
+    }
+
+    private static class ParentDocument {
+        private String parentValue;
+    }
+
+    private static class ChildDocument extends ParentDocument {
+        private String childValue;
     }
 }

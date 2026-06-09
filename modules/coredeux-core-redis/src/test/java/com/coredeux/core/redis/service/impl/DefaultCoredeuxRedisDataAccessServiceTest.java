@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -176,6 +177,43 @@ class DefaultCoredeuxRedisDataAccessServiceTest {
         assertNotNull(created.getId());
     }
 
+    @Test
+    void shouldCoverNestedHelpersAndFailureBranches() throws Exception {
+        assertTrue(DefaultCoredeuxRedisDataAccessService.CollectionUtils.isEmpty((List<?>) null));
+        assertTrue(DefaultCoredeuxRedisDataAccessService.CollectionUtils.isEmpty(List.of()));
+        assertTrue(DefaultCoredeuxRedisDataAccessService.CollectionUtils.isEmpty((Map<?, ?>) null));
+        assertTrue(DefaultCoredeuxRedisDataAccessService.CollectionUtils.isEmpty(Map.of()));
+
+        HelperSource source = new HelperSource();
+        HelperTarget target = new HelperTarget();
+        DefaultCoredeuxRedisDataAccessService.BeanUtils.copyProperties(source, target);
+        assertEquals("Alpha", target.name);
+        assertEquals(10, target.age);
+
+        Field inherited = DefaultCoredeuxRedisDataAccessService.ReflectionUtils.findField(ChildEntity.class, "parentValue");
+        assertNotNull(inherited);
+        DefaultCoredeuxRedisDataAccessService.ReflectionUtils.doWithFields(ChildEntity.class, field -> {
+            DefaultCoredeuxRedisDataAccessService.ReflectionUtils.makeAccessible(field);
+        });
+        Field sourceNameField = HelperSource.class.getDeclaredField("name");
+        DefaultCoredeuxRedisDataAccessService.ReflectionUtils.makeAccessible(sourceNameField);
+        assertEquals("Alpha", DefaultCoredeuxRedisDataAccessService.ReflectionUtils.getField(sourceNameField, source));
+        Field targetNameField = HelperTarget.class.getDeclaredField("name");
+        DefaultCoredeuxRedisDataAccessService.ReflectionUtils.makeAccessible(targetNameField);
+        DefaultCoredeuxRedisDataAccessService.ReflectionUtils.setField(targetNameField, target, "Updated");
+        assertEquals("Updated", target.name);
+
+        when(commands.get(anyString())).thenThrow(new IllegalStateException("boom"));
+        assertThrows(CoredeuxDataAccessException.class, () -> dataAccessService.load("1", SampleRedisEntity.class));
+
+        when(commands.keys(anyString())).thenThrow(new IllegalStateException("boom"));
+        assertThrows(CoredeuxDataAccessException.class,
+                () -> dataAccessService.loadAll(List.of(), SampleRedisEntity.class, 10, 1));
+
+        when(commands.set(anyString(), anyString())).thenThrow(new IllegalStateException("boom"));
+        assertThrows(CoredeuxDataAccessException.class, () -> dataAccessService.save(sample(null, "X", 1, "p")));
+    }
+
     private void persistSamples() {
         save(sample(null, "Alpha", 10, "one"));
         save(sample(null, "Beta", 20, "two"));
@@ -201,5 +239,24 @@ class DefaultCoredeuxRedisDataAccessServiceTest {
 
     private String redisKey(String id) {
         return "SampleRedisEntity:" + id;
+    }
+
+    private static class HelperSource {
+        private String name = "Alpha";
+        private int age = 10;
+        private static String ignored = "x";
+    }
+
+    private static class HelperTarget {
+        private String name;
+        private int age;
+    }
+
+    private static class ParentEntity {
+        private String parentValue;
+    }
+
+    private static class ChildEntity extends ParentEntity {
+        private String childValue;
     }
 }

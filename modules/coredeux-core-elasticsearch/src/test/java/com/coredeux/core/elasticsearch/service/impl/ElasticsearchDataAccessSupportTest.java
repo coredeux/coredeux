@@ -1,6 +1,7 @@
 package com.coredeux.core.elasticsearch.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -105,8 +106,8 @@ class ElasticsearchDataAccessSupportTest {
         assertEquals(Boolean.TRUE, service.convertIdentifier("true", Boolean.class));
         assertEquals(uuid, service.convertIdentifier(uuid.toString(), UUID.class));
         assertEquals(TestEnum.ONE, service.convertIdentifier("ONE", TestEnum.class));
-        assertThrows(CoredeuxValidationException.class, () -> service.convertIdentifier("abc", FactoryId.class));
-        assertEquals(null, service.invokeStringFactory(ConstructorId.class, "abc"));
+        assertEquals(new FactoryId("abc"), service.convertIdentifier("abc", FactoryId.class));
+        assertEquals(new ConstructorId("abc"), service.invokeStringFactory(ConstructorId.class, "abc"));
 
         Field field = service.identifierField(IdentifierEntity.class);
         assertEquals("id", field.getName());
@@ -131,6 +132,71 @@ class ElasticsearchDataAccessSupportTest {
                 () -> service.wrap("message", new CoredeuxValidationException("x")));
     }
 
+    @Test
+    void shouldCoverQueryHelpersAndPredicateBranches() {
+        assertNotNull(service.buildStructuredQuery(null));
+        List<SearchParams> nullOnly = new java.util.ArrayList<>();
+        nullOnly.add(null);
+        assertNotNull(service.buildStructuredQuery(nullOnly));
+        assertEquals("demo-SampleElasticsearchEntity", service.indexName(SampleElasticsearchEntity.class));
+        assertTrue(service.isPagingEnabled(1, 1));
+        assertFalse(service.isPagingEnabled(0, 0));
+        assertEquals(List.of(), service.defaultResults(null));
+        assertEquals("value", service.normalizeRequired(" value ", "message"));
+        assertThrows(CoredeuxValidationException.class, () -> service.normalizeRequired(" ", "message"));
+        assertNotNull(service.termQuery("flag", true));
+        assertNotNull(service.termQuery("count", 1));
+        assertNotNull(service.termQuery("count", 1L));
+        assertNotNull(service.termQuery("count", (short) 1));
+        assertNotNull(service.termQuery("count", (byte) 1));
+        assertNotNull(service.termQuery("count", 1.0f));
+        assertNotNull(service.termQuery("count", 1.0d));
+        assertNotNull(service.termQuery("name", "Alpha"));
+        assertNotNull(service.containsQuery("tags", List.of("one", "two")));
+        assertNotNull(service.containsQuery("tags", "one"));
+        assertNotNull(service.notContainsQuery("tags", List.of("one", "two")));
+        assertNotNull(service.notContainsQuery("tags", "one"));
+        assertNotNull(service.rangeQuery("age", 10, null, null, null));
+        assertNotNull(service.extractQuerySource("{\"query\":{\"term\":{\"age\":10}}}"));
+        assertEquals("{\"term\":{\"age\":10}}", service.extractJsonValue("{\"term\":{\"age\":10}}", 0));
+        assertNotNull(service.resolveQuery("{\"query\":{\"term\":{\"age\":10}}}"));
+        assertThrows(CoredeuxValidationException.class,
+                () -> service.buildCriteria(param("name", "UNKNOWN", "x")));
+    }
+
+    @Test
+    void shouldCoverIdentifierConversionJsonLiteralAndFactoryBranches() {
+        assertEquals("abc", service.convertIdentifier("abc", String.class));
+        assertEquals(1L, service.convertIdentifier("1", Long.class));
+        assertEquals(1, service.convertIdentifier("1", int.class));
+        assertEquals((short) 1, service.convertIdentifier("1", Short.class));
+        assertEquals((byte) 1, service.convertIdentifier("1", byte.class));
+        assertEquals(new BigInteger("1"), service.convertIdentifier("1", BigInteger.class));
+        assertEquals(new BigDecimal("1.5"), service.convertIdentifier("1.5", BigDecimal.class));
+        assertEquals(Boolean.TRUE, service.convertIdentifier("true", Boolean.class));
+        assertEquals(TestEnum.ONE, service.convertIdentifier("ONE", TestEnum.class));
+        assertEquals(ValueOfFactory.valueOf("x"), service.invokeStringFactory(ValueOfFactory.class, "x"));
+        assertEquals(OfFactory.of("x"), service.invokeStringFactory(OfFactory.class, "x"));
+        assertEquals(FromStringFactory.fromString("x"), service.invokeStringFactory(FromStringFactory.class, "x"));
+        assertEquals(new ConstructorFactory("x"), service.invokeStringFactory(ConstructorFactory.class, "x"));
+        assertEquals(null, service.invokeStringFactory(NoFactory.class, "x"));
+        assertThrows(CoredeuxValidationException.class, () -> service.convertIdentifier("x", NoFactory.class));
+
+        assertEquals("\"alpha\"", service.toJsonLiteral("alpha"));
+        assertEquals("\"A\"", service.toJsonLiteral('A'));
+        assertEquals("true", service.toJsonLiteral(true));
+        assertEquals("1", service.toJsonLiteral(1));
+        assertEquals("{\"name\":\"Alpha\"}", service.toJsonLiteral(Map.of("name", "Alpha")));
+        assertEquals("[1,2]", service.toJsonLiteral(List.of(1, 2)));
+        assertEquals("[1,2]", service.toJsonLiteral(new int[] { 1, 2 }));
+        assertEquals("a\\\"b\\\\c\\n", service.escapeJson("a\"b\\c\n"));
+
+        assertEquals(null, service.containsQuery("tags", List.of()));
+        assertEquals(null, service.notContainsQuery("tags", List.of()));
+        assertThrows(CoredeuxValidationException.class,
+                () -> service.resolveQueryTemplate("{\"name\":{{missing}}}", Map.of("name", "Alpha")));
+    }
+
     private SearchParams param(String field, String comparator, Object value) {
         return SearchParams.builder().field(field).comparator(comparator).value(value).build();
     }
@@ -139,20 +205,44 @@ class ElasticsearchDataAccessSupportTest {
         ONE
     }
 
-    record FactoryId(String value) {
-        static FactoryId of(String value) {
+    public record FactoryId(String value) {
+        public static FactoryId of(String value) {
             return new FactoryId(value);
         }
     }
 
-    record ConstructorId(String value) {
+    public record ValueOfFactory(String value) {
+        public static ValueOfFactory valueOf(String value) {
+            return new ValueOfFactory(value);
+        }
     }
 
-    static class IdentifierEntity {
+    public record OfFactory(String value) {
+        public static OfFactory of(String value) {
+            return new OfFactory(value);
+        }
+    }
+
+    public record FromStringFactory(String value) {
+        public static FromStringFactory fromString(String value) {
+            return new FromStringFactory(value);
+        }
+    }
+
+    public record ConstructorFactory(String value) {
+    }
+
+    public static class NoFactory {
+    }
+
+    public record ConstructorId(String value) {
+    }
+
+    public static class IdentifierEntity {
         private String id;
     }
 
-    static class NoIdentifierEntity {
+    public static class NoIdentifierEntity {
         private String id;
     }
 }

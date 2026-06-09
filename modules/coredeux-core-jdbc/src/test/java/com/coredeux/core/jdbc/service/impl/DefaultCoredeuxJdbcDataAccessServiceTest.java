@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -166,6 +168,49 @@ class DefaultCoredeuxJdbcDataAccessServiceTest {
         assertTrue(dataAccessService.supportedComparators(SampleJdbcEntity.class).contains("ANYWHERE"));
     }
 
+    @Test
+    void shouldCoverMetadataExtractionAndConnectionBackedDataSource() throws Exception {
+        JdbcDataSource plainDataSource = new JdbcDataSource();
+        plainDataSource.setURL("jdbc:h2:mem:coredeux_jdbc_helper_" + UUID.randomUUID() + ";MODE=PostgreSQL;DB_CLOSE_DELAY=-1");
+        plainDataSource.setUser("sa");
+        plainDataSource.setPassword("");
+
+        try (Connection connection = plainDataSource.getConnection()) {
+            DefaultCoredeuxJdbcDataAccessService.ConnectionBackedDataSource connectionDataSource =
+                    new DefaultCoredeuxJdbcDataAccessService.ConnectionBackedDataSource(connection);
+            assertSame(connection, connectionDataSource.getConnection());
+            assertSame(connection, connectionDataSource.getConnection("sa", ""));
+            assertNotNull(connectionDataSource.getParentLogger());
+            assertDoesNotThrow(() -> connectionDataSource.getLogWriter());
+            connectionDataSource.setLogWriter(null);
+            connectionDataSource.setLoginTimeout(1);
+            assertEquals(0, connectionDataSource.getLoginTimeout());
+            assertTrue(connectionDataSource.isWrapperFor(DefaultCoredeuxJdbcDataAccessService.ConnectionBackedDataSource.class));
+            assertSame(connectionDataSource,
+                    connectionDataSource.unwrap(DefaultCoredeuxJdbcDataAccessService.ConnectionBackedDataSource.class));
+        }
+
+        DefaultCoredeuxJdbcDataAccessService dataSourceService =
+                new DefaultCoredeuxJdbcDataAccessService((Object) plainDataSource, "");
+        assertNotNull(dataSourceService);
+
+        Object templateFacade = new Object() {
+            public JdbcTemplate getJdbcTemplate() {
+                return new JdbcTemplate(plainDataSource);
+            }
+        };
+        assertNotNull(new DefaultCoredeuxJdbcDataAccessService(templateFacade, ""));
+        assertThrows(IllegalArgumentException.class, () -> new DefaultCoredeuxJdbcDataAccessService(new Object(), ""));
+        assertEquals("sample_table", dataAccessService.resolveTableName(SchemaEntity.class));
+        assertEquals("entity_id", dataAccessService.resolveColumnName(SchemaEntity.class.getDeclaredField("id")));
+        assertThrows(CoredeuxValidationException.class,
+                () -> dataAccessService.buildMetadata(NoFieldsEntity.class));
+        assertThrows(CoredeuxValidationException.class,
+                () -> dataAccessService.metadata(NoIdentifierEntity.class));
+        assertThrows(CoredeuxValidationException.class,
+                () -> dataAccessService.metadata(OnlyTransientEntity.class));
+    }
+
     private void persistSamples() {
         jdbcTemplate.update("insert into sample_jdbc_entities(name, age, json_payload) values (?, ?, ?)",
                 "Alpha", 10, "common");
@@ -190,5 +235,28 @@ class DefaultCoredeuxJdbcDataAccessServiceTest {
         dataSource.setUser("sa");
         dataSource.setPassword("");
         return dataSource;
+    }
+
+    @jakarta.persistence.Table(name = "sample_table")
+    private static class SchemaEntity {
+        @jakarta.persistence.Id
+        @jakarta.persistence.Column(name = "entity_id")
+        private Long id;
+
+        @jakarta.persistence.Column(name = "display_name")
+        private String name;
+    }
+
+    private static class NoFieldsEntity {
+        private static String staticField;
+    }
+
+    private static class NoIdentifierEntity {
+        private String name;
+    }
+
+    private static class OnlyTransientEntity {
+        @jakarta.persistence.Transient
+        private String ignored;
     }
 }

@@ -1,6 +1,7 @@
 package com.coredeux.spring.boot.autoconfigure;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
@@ -42,6 +44,30 @@ class CoredeuxAutoConfigurationTest {
             assertThat(registry.getComponent("sampleDataAccess", CoredeuxDataAccessService.class))
                     .isSameAs(context.getBean("sampleDataAccess"));
         });
+    }
+
+    @Test
+    void wrapsMissingBeansWhenRegistryCannotResolveThem() {
+        contextRunner.run(context -> {
+            CoredeuxComponentRegistry registry = context.getBean(CoredeuxComponentRegistry.class);
+
+            assertThatThrownBy(() -> registry.getComponent("missingDataAccess", CoredeuxDataAccessService.class))
+                    .isInstanceOf(CoredeuxStrategyException.class)
+                    .hasMessageContaining("Unable to resolve Coredeux component: missingDataAccess");
+        });
+    }
+
+    @Test
+    void backsOffWhenComponentRegistryAlreadyExists() {
+        CoredeuxComponentRegistry customRegistry = new CoredeuxComponentRegistry() {
+            @Override
+            public <T> T getComponent(String name, Class<T> type) {
+                return null;
+            }
+        };
+
+        contextRunner.withBean(CoredeuxComponentRegistry.class, () -> customRegistry)
+                .run(context -> assertThat(context.getBean(CoredeuxComponentRegistry.class)).isSameAs(customRegistry));
     }
 
     static class SampleEntity {

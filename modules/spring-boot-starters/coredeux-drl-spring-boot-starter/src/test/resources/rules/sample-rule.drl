@@ -8,4 +8,5 @@ then
             componentRegistry.getComponent("sampleService",
                     com.coredeux.spring.boot.autoconfigure.drl.SampleService.class);
     $context.setOutput(sampleService.message());
+    $context.setMessage(sampleService.message());
 end

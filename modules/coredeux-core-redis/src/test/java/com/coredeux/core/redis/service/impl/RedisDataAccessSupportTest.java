@@ -159,6 +159,32 @@ class RedisDataAccessSupportTest {
                 () -> service.wrap("message", new CoredeuxValidationException("x")));
     }
 
+    @Test
+    void shouldCoverReflectionAndComparisonHelpers() throws Exception {
+        Entity entity = new Entity("1", "Alpha", 10);
+        entity.tags = List.of("one", "two");
+        entity.aliases = new String[] { "A", "B" };
+        entity.details = new Details("nested");
+
+        DefaultCoredeuxRedisDataAccessService emptyPrefixService =
+                new DefaultCoredeuxRedisDataAccessService(mock(StatefulRedisConnection.class), "");
+
+        assertEquals("Entity", emptyPrefixService.redisNamespace(Entity.class));
+        assertEquals("Entity:1", emptyPrefixService.redisKey(Entity.class, "1"));
+        assertEquals("Entity:seq", emptyPrefixService.redisSequenceKey(Entity.class));
+        assertEquals("nested", emptyPrefixService.resolveFieldValue(entity, "details.value"));
+        assertTrue(emptyPrefixService.equalsValue(10, 10L));
+        assertTrue(emptyPrefixService.contains(entity.aliases, "A"));
+        assertTrue(emptyPrefixService.contains(entity.tags, List.of("one", "two")));
+        assertFalse(emptyPrefixService.isEmpty(entity.tags));
+        assertTrue(emptyPrefixService.isEmpty(List.of()));
+        assertEquals(0, emptyPrefixService.compareNumbers(10, 10L));
+        assertTrue(emptyPrefixService.compare(11, 10) > 0);
+        assertEquals(List.of(), emptyPrefixService.page(List.of(), 10, 1));
+        assertThrows(CoredeuxValidationException.class, () -> emptyPrefixService.compare(null, 1));
+        assertThrows(CoredeuxValidationException.class, () -> emptyPrefixService.resolveFieldValue(entity, "details.missing"));
+    }
+
     private SearchParams param(String field, String comparator, Object value) {
         return SearchParams.builder().field(field).comparator(comparator).value(value).build();
     }

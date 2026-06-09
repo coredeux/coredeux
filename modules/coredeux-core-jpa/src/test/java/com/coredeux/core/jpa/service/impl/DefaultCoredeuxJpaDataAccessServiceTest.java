@@ -25,6 +25,10 @@ import com.coredeux.core.search.SearchResult;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 class DefaultCoredeuxJpaDataAccessServiceTest {
 
@@ -260,6 +264,46 @@ class DefaultCoredeuxJpaDataAccessServiceTest {
                 SampleJpaEntity.class, 10, 1));
 
         assertEquals(3, result.getResults().size());
+    }
+
+    @Test
+    void shouldCoverHelperBranchesAndCriteriaUtilities() {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<SampleJpaEntity> criteriaQuery = criteriaBuilder.createQuery(SampleJpaEntity.class);
+        Root<SampleJpaEntity> root = criteriaQuery.from(SampleJpaEntity.class);
+
+        assertEquals(Long.class, dataAccessService.resolveIdentifierType(SampleJpaEntity.class));
+        assertTrue(dataAccessService.buildPredicates(null, criteriaBuilder, root).isEmpty());
+        List<SearchParams> nullOnly = new java.util.ArrayList<>();
+        nullOnly.add(null);
+        assertTrue(dataAccessService.buildPredicates(nullOnly, criteriaBuilder, root).isEmpty());
+        assertNotNull(dataAccessService.buildPredicate(
+                SearchParams.builder().field("name").comparator("EQUALS").value("Alpha").build(),
+                criteriaBuilder, root));
+        assertNotNull(dataAccessService.buildPredicate(
+                SearchParams.builder().field("tags").comparator("CONTAINS").value("one").build(),
+                criteriaBuilder, root));
+        assertThrows(CoredeuxValidationException.class, () -> dataAccessService.buildPredicate(
+                SearchParams.builder().field("name").comparator("UNKNOWN").value("x").build(),
+                criteriaBuilder, root));
+        assertThrows(CoredeuxValidationException.class,
+                () -> dataAccessService.asCollectionExpression(root.get("name"), "CONTAINS"));
+        assertDoesNotThrow(() -> dataAccessService.asCollectionExpression(root.get("tags"), "CONTAINS"));
+        assertNotNull(dataAccessService.like(criteriaBuilder, root.get("name"), "Al", true, true));
+        assertNotNull(dataAccessService.like(criteriaBuilder, root.get("name"), "Al", false, false));
+        assertNotNull(dataAccessService.compare(criteriaBuilder, root.get("age"), 10,
+                DefaultCoredeuxJpaDataAccessService.ComparisonType.GREATER_THAN));
+        assertThrows(CoredeuxValidationException.class,
+                () -> dataAccessService.compare(criteriaBuilder, root.get("name"), new Object(),
+                        DefaultCoredeuxJpaDataAccessService.ComparisonType.GREATER_THAN));
+        assertNotNull(dataAccessService.resolvePath(root, "name"));
+        assertDoesNotThrow(() -> dataAccessService.applyPaging(entityManager.createQuery(
+                "select e from SampleJpaEntity e", SampleJpaEntity.class), -1, -1));
+        TypedQuery<SampleJpaEntity> pagedQuery = entityManager.createQuery("select e from SampleJpaEntity e",
+                SampleJpaEntity.class);
+        dataAccessService.applyPaging(pagedQuery, 5, 2);
+        assertEquals(5, pagedQuery.getMaxResults());
+        assertEquals(5, pagedQuery.getFirstResult());
     }
 
     private void persistSamples() {

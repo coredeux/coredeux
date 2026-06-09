@@ -63,6 +63,34 @@ class CoredeuxPropertiesLoaderTest {
     }
 
     @Test
+    void shouldLoadRootMapWhenCoredeuxSectionIsMissing() {
+        CoredeuxProperties properties = loader.load(inputStream("""
+                export:
+                  default-format: CSV
+                """));
+
+        assertEquals("CSV", properties.string("export.default-format"));
+    }
+
+    @Test
+    void shouldReturnEmptyPropertiesForNonMapYamlAndNullPath() throws Exception {
+        CoredeuxProperties root = loader.load(inputStream("- alpha\n- beta\n"));
+        CoredeuxProperties emptyFromNullPath = loader.load((Path) null);
+
+        assertTrue(root.asMap().isEmpty());
+        assertTrue(emptyFromNullPath.asMap().isEmpty());
+        assertNull(emptyFromNullPath.value("missing.path"));
+    }
+
+    @Test
+    void shouldReturnEmptyPropertiesWhenInputStreamProducesScalar() {
+        CoredeuxProperties properties = loader.load(inputStream("plain-value"));
+
+        assertTrue(properties.asMap().isEmpty());
+        assertNull(properties.value("anything"));
+    }
+
+    @Test
     void shouldReturnEmptyPropertiesWhenInputStreamIsNull() {
         CoredeuxProperties properties = loader.load((java.io.InputStream) null);
 

@@ -2,51 +2,59 @@ package com.coredeux.demo.web;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.util.List;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
-import com.coredeux.core.definition.CoredeuxStorageDefinition;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
-import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
-import com.coredeux.demo.domain.Customer;
+import com.coredeux.core.registry.EntityDefinitionRegistry;
 
 class DemoEntityResolverTest {
 
-    private static final String CUSTOMER_CLASS_NAME = Customer.class.getName();
+    private final EntityDefinitionRegistry registry = mock(EntityDefinitionRegistry.class);
+    private final DefaultCoredeuxReflectionHelperService reflectionHelperService = new DefaultCoredeuxReflectionHelperService();
+    private final DemoEntityResolver resolver = new DemoEntityResolver(registry, reflectionHelperService);
 
     @Test
-    void shouldResolveByFullClassNameAndIdentifierType() {
-        DemoEntityResolver resolver = new DemoEntityResolver(
-                new InMemoryEntityDefinitionRegistry(List.of(CoredeuxEntityDefinition.builder()
-                        .name("customer")
-                        .fullClassName(CUSTOMER_CLASS_NAME)
-                        .identifier("pk")
-                        .storage(CoredeuxStorageDefinition.builder().dataAccessService("demo").build())
-                        .build())),
-                new DefaultCoredeuxReflectionHelperService());
+    void shouldResolveDefinitionAndType() {
+        CoredeuxEntityDefinition definition = mock(CoredeuxEntityDefinition.class);
+        when(definition.getFullClassName()).thenReturn("java.lang.String");
+        when(registry.findByFullClassName("java.lang.String")).thenReturn(java.util.Optional.of(definition));
 
-        assertEquals(CUSTOMER_CLASS_NAME, resolver.resolveDefinition(CUSTOMER_CLASS_NAME).getFullClassName());
-        assertEquals(Customer.class, resolver.resolveType(CUSTOMER_CLASS_NAME));
-        assertEquals(Long.class,
-                resolver.resolveIdentifierType(Customer.class, resolver.resolveDefinition(CUSTOMER_CLASS_NAME)));
+        assertEquals(definition, resolver.resolveDefinition("java.lang.String"));
+        assertEquals(String.class, resolver.resolveType("java.lang.String"));
     }
 
     @Test
-    void shouldFailForUnknownOrNonUniqueFriendlyName() {
-        DemoEntityResolver resolver = new DemoEntityResolver(
-                new InMemoryEntityDefinitionRegistry(List.of(CoredeuxEntityDefinition.builder()
-                        .name("customer")
-                        .fullClassName(CUSTOMER_CLASS_NAME)
-                        .identifier("pk")
-                        .storage(CoredeuxStorageDefinition.builder().dataAccessService("demo").build())
-                        .build())),
-                new DefaultCoredeuxReflectionHelperService());
+    void shouldHandleIdentifierLookupAndAssignment() {
+        CoredeuxEntityDefinition definition = mock(CoredeuxEntityDefinition.class);
+        when(definition.getIdentifier()).thenReturn("id");
+        SampleEntity entity = new SampleEntity();
+        entity.id = "abc";
 
+        assertEquals("abc", resolver.getIdentifierValue(entity, definition));
+        resolver.applyIdentifier(entity, definition, "xyz");
+        assertEquals("xyz", entity.id);
+        assertEquals(String.class, resolver.resolveIdentifierType(SampleEntity.class, definition));
+    }
+
+    @Test
+    void shouldRejectInvalidRequests() {
+        assertThrows(CoredeuxValidationException.class, () -> resolver.resolveDefinition(" "));
+
+        CoredeuxEntityDefinition definition = mock(CoredeuxEntityDefinition.class);
+        when(definition.getIdentifier()).thenReturn("id");
+        when(registry.findByFullClassName("missing")).thenReturn(java.util.Optional.empty());
         assertThrows(CoredeuxValidationException.class, () -> resolver.resolveDefinition("missing"));
-        assertThrows(CoredeuxValidationException.class, () -> resolver.resolveDefinition("customer"));
+        assertThrows(CoredeuxValidationException.class, () -> resolver.applyIdentifier(new Object(), definition, "1"));
+        assertThrows(CoredeuxValidationException.class,
+                () -> resolver.resolveIdentifierType(Object.class, definition));
+    }
+
+    static class SampleEntity {
+        String id;
     }
 }

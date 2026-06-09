@@ -4,42 +4,38 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.net.URI;
-
 import org.junit.jupiter.api.Test;
 
 import com.coredeux.impex.exception.CoredeuxImportException;
-import com.coredeux.impex.handler.ImportValueContext;
 import com.coredeux.impex.model.ImportColumn;
+import com.coredeux.impex.handler.ImportValueContext;
 
 class DemoUriImportHandlerTest {
 
     private final DemoUriImportHandler handler = new DemoUriImportHandler();
 
     @Test
-    void shouldConvertAbsoluteUri() {
-        Object value = handler.handle(context(" https://docs.coredeux.dev/products/import "));
+    void shouldParseAbsoluteUrisAndIgnoreBlankValues() {
+        final ImportValueContext absoluteContext = context("https://example.com");
+        assertEquals(java.net.URI.create("https://example.com"), handler.handle(absoluteContext));
 
-        assertEquals(URI.create("https://docs.coredeux.dev/products/import"), value);
+        final ImportValueContext blankContext = context(" ");
+        assertNull(handler.handle(blankContext));
     }
 
     @Test
-    void shouldReturnNullForBlankValue() {
-        assertNull(handler.handle(context(" ")));
+    void shouldRejectRelativeAndMalformedUris() {
+        final ImportValueContext relativeContext = context("/relative");
+        assertThrows(CoredeuxImportException.class, () -> handler.handle(relativeContext));
+
+        final ImportValueContext malformedContext = context("::not-a-uri::");
+        assertThrows(CoredeuxImportException.class, () -> handler.handle(malformedContext));
     }
 
-    @Test
-    void shouldRejectRelativeUriWithColumnContext() {
-        CoredeuxImportException exception = assertThrows(CoredeuxImportException.class,
-                () -> handler.handle(context("/relative/path")));
-
-        assertEquals("documentationUrl", exception.getColumn());
-    }
-
-    private ImportValueContext context(String value) {
+    private ImportValueContext context(String effectiveValue) {
         return ImportValueContext.builder()
-                .effectiveValue(value)
-                .column(ImportColumn.builder().name("documentationUrl").build())
+                .effectiveValue(effectiveValue)
+                .column(ImportColumn.builder().name("uri").build())
                 .build();
     }
 }

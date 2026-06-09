@@ -45,6 +45,30 @@ class LegacyDateImportHandlerTest {
         assertEquals("legacySignupDate", exception.getColumn());
     }
 
+    @Test
+    void shouldApplyTimezoneMetadataWhenPresent() {
+        Object value = handler.handle(context("2026-05-04 10:15:00", Map.of(
+                "dateFormat", "yyyy-MM-dd HH:mm:ss",
+                "timezone", "UTC")));
+
+        assertEquals(Date.class, value.getClass());
+    }
+
+    @Test
+    void shouldRejectUnexpectedTargetType() {
+        CoredeuxImportException exception = assertThrows(CoredeuxImportException.class,
+                () -> handler.handle(ImportValueContext.builder()
+                        .effectiveValue("2026-05-04")
+                        .expectedType(String.class)
+                        .column(com.coredeux.impex.model.ImportColumn.builder()
+                                .name("legacySignupDate")
+                                .metadata(Map.of("dateFormat", "yyyy-MM-dd"))
+                                .build())
+                        .build()));
+
+        assertEquals("legacySignupDate", exception.getColumn());
+    }
+
     private ImportValueContext context(String value, Map<String, Object> metadata) {
         return ImportValueContext.builder()
                 .effectiveValue(value)

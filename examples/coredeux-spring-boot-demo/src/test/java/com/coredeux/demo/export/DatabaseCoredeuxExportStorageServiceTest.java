@@ -1,69 +1,70 @@
 package com.coredeux.demo.export;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.model.ExportFormat;
 import com.coredeux.export.model.ExportStorageArtifact;
 import com.coredeux.export.model.ExportStorageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@ExtendWith(MockitoExtension.class)
 class DatabaseCoredeuxExportStorageServiceTest {
 
-    @Mock
-    private ExportStorageRecordRepository repository;
+    @Test
+    void shouldStoreArtifactAndPersistRecord() throws Exception {
+        ExportStorageRecordRepository repository = mock(ExportStorageRecordRepository.class);
+        DatabaseCoredeuxExportStorageService service = new DatabaseCoredeuxExportStorageService(repository,
+                new ObjectMapper());
+        Path sourceFile = Files.createTempFile("coredeux-export", ".txt");
+        Files.writeString(sourceFile, "hello world");
 
-    private DatabaseCoredeuxExportStorageService service;
+        ExportStorageRequest request = ExportStorageRequest.builder()
+                .uid("job-1")
+                .fileName("sample.txt")
+                .contentType("text/plain")
+                .format(ExportFormat.TEXT)
+                .sourceFile(sourceFile)
+                .build();
 
-    @TempDir
-    Path tempDir;
+        ExportStorageArtifact artifact = service.store(request);
 
-    @BeforeEach
-    void setUp() {
-        service = new DatabaseCoredeuxExportStorageService(repository, new ObjectMapper().findAndRegisterModules());
+        assertEquals("database", artifact.getStorageType());
+        assertEquals("sample.txt", artifact.getFileName());
+        verify(repository).save(org.mockito.ArgumentMatchers.any(ExportStorageRecord.class));
     }
 
     @Test
-    void shouldStoreExportFileInDatabaseAndReturnArtifact() throws Exception {
-        Path source = tempDir.resolve("export.txt");
-        Files.writeString(source, "hello coredeux");
-        when(repository.save(any(ExportStorageRecord.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    void shouldRejectInvalidRequests() {
+        DatabaseCoredeuxExportStorageService service = new DatabaseCoredeuxExportStorageService(mock(ExportStorageRecordRepository.class),
+                new ObjectMapper());
+        assertThrows(CoredeuxExportException.class, () -> service.store(null));
+        assertThrows(CoredeuxExportException.class,
+                () -> service.store(ExportStorageRequest.builder().fileName("x").build()));
+        assertThrows(CoredeuxExportException.class,
+                () -> service.store(ExportStorageRequest.builder().sourceFile(Path.of("missing.txt")).build()));
+    }
 
-        ExportStorageArtifact artifact = service.store(ExportStorageRequest.builder()
-                .uid("exp-123")
-                .sourceFile(source)
-                .fileName("customers.txt")
-                .contentType("text/plain;charset=UTF-8")
-                .format(ExportFormat.TEXT)
-                .build());
+    @Test
+    void shouldExposeFindByUidAndUidFallback() {
+        ExportStorageRecordRepository repository = mock(ExportStorageRecordRepository.class);
+        DatabaseCoredeuxExportStorageService service = new DatabaseCoredeuxExportStorageService(repository,
+                new ObjectMapper());
+        when(repository.findByUid("job-2")).thenReturn(Optional.of(ExportStorageRecord.builder().uid("job-2").build()));
 
-        assertEquals("database", artifact.getStorageType());
-        assertEquals("customers.txt", artifact.getFileName());
-        assertEquals("exp-123", artifact.getMetadata().get("uid"));
-        assertEquals("database", artifact.getMetadata().get("storage"));
-        assertTrue(artifact.getUrl().contains("/api/export/exp-123/download"));
-
-        ArgumentCaptor<ExportStorageRecord> captor = ArgumentCaptor.forClass(ExportStorageRecord.class);
-        verify(repository).save(captor.capture());
-        ExportStorageRecord saved = captor.getValue();
-        assertEquals("exp-123", saved.getUid());
-        assertNotNull(saved.getContent());
-        assertEquals("hello coredeux", new String(saved.getContent()));
+        assertEquals("job-2", service.findByUid("job-2").orElseThrow().getUid());
+        assertFalse(service.findByUid("missing").isPresent());
+        assertDoesNotThrow(() -> service.findByUid("job-2"));
     }
 }

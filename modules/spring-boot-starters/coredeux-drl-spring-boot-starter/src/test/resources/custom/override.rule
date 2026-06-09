@@ -1,0 +1,12 @@
+package rules.custom;
+
+import com.coredeux.drl.model.RuleContext;
+
+rule "sampleRule"
+when
+    $context : RuleContext(method == "sample")
+then
+    // classpath-custom
+    $context.setOutput("classpath-custom");
+    $context.setMessage("classpath-custom");
+end

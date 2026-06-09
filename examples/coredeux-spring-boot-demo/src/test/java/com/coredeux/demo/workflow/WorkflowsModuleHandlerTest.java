@@ -23,6 +23,11 @@ import com.coredeux.demo.domain.Product;
 class WorkflowsModuleHandlerTest {
 
     @Test
+    void shouldExposeModuleName() {
+        assertEquals("workflows", new WorkflowsModuleHandler(new StaticApplicationContext()).getModuleName());
+    }
+
+    @Test
     void shouldInvokeConfiguredWorkflowForMatchingPhase() {
         StaticApplicationContext applicationContext = new StaticApplicationContext();
         DemoCustomerApprovalWorkflow workflow = new DemoCustomerApprovalWorkflow();
@@ -56,6 +61,46 @@ class WorkflowsModuleHandlerTest {
     }
 
     @Test
+    void shouldRunWhenPhaseConfigurationIsMissing() {
+        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        DemoCustomerApprovalWorkflow workflow = new DemoCustomerApprovalWorkflow();
+        applicationContext.getBeanFactory().registerSingleton("customerApprovalWorkflow", workflow);
+
+        WorkflowsModuleHandler handler = new WorkflowsModuleHandler(applicationContext);
+        CoredeuxModuleDefinition moduleDefinition = CoredeuxModuleDefinition.builder()
+                .name("workflows")
+                .enabled(true)
+                .handlers(List.of("customerApprovalWorkflow"))
+                .config(Map.of())
+                .build();
+
+        handler.execute(Customer.builder().name("Alice").build(), customerDefinition(), moduleDefinition,
+                CoredeuxHookPhases.AFTER_SAVE, operationContext(CoredeuxLifecycleOperations.UPSERT, "42"));
+
+        assertEquals(1, workflow.getEvents().size());
+    }
+
+    @Test
+    void shouldSkipBlankHandlerNames() {
+        StaticApplicationContext applicationContext = new StaticApplicationContext();
+        DemoCustomerApprovalWorkflow workflow = new DemoCustomerApprovalWorkflow();
+        applicationContext.getBeanFactory().registerSingleton("customerApprovalWorkflow", workflow);
+
+        WorkflowsModuleHandler handler = new WorkflowsModuleHandler(applicationContext);
+        CoredeuxModuleDefinition moduleDefinition = CoredeuxModuleDefinition.builder()
+                .name("workflows")
+                .enabled(true)
+                .handlers(List.of(" "))
+                .config(Map.of("phases", List.of(CoredeuxHookPhases.AFTER_SAVE)))
+                .build();
+
+        handler.execute(Customer.builder().name("Alice").build(), customerDefinition(), moduleDefinition,
+                CoredeuxHookPhases.AFTER_SAVE, operationContext(CoredeuxLifecycleOperations.UPSERT, "42"));
+
+        assertTrue(workflow.getEvents().isEmpty());
+    }
+
+    @Test
     void shouldRejectWorkflowBeanForUnsupportedEntityType() {
         StaticApplicationContext applicationContext = new StaticApplicationContext();
         applicationContext.getBeanFactory().registerSingleton("customerApprovalWorkflow",
@@ -69,6 +114,18 @@ class WorkflowsModuleHandlerTest {
                         operationContext(CoredeuxLifecycleOperations.UPSERT, null)));
 
         assertTrue(exception.getMessage().contains("does not support entity type"));
+    }
+
+    @Test
+    void shouldRejectMissingWorkflowBean() {
+        WorkflowsModuleHandler handler = new WorkflowsModuleHandler(new StaticApplicationContext());
+
+        CoredeuxStrategyException exception = assertThrows(CoredeuxStrategyException.class,
+                () -> handler.execute(Customer.builder().name("Alice").build(), customerDefinition(),
+                        workflowModule(CoredeuxHookPhases.AFTER_SAVE), CoredeuxHookPhases.AFTER_SAVE,
+                        operationContext(CoredeuxLifecycleOperations.UPSERT, null)));
+
+        assertTrue(exception.getMessage().contains("Unable to resolve workflow handler bean"));
     }
 
     @Test

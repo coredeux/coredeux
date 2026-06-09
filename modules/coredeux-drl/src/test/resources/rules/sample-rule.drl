@@ -5,4 +5,5 @@ when
     $context : com.coredeux.drl.model.RuleContext(method == "sample-rule")
 then
     $context.setOutput("ok");
+    $context.setMessage("ok");
 end

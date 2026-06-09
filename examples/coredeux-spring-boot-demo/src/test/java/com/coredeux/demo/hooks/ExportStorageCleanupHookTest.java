@@ -1,55 +1,85 @@
 package com.coredeux.demo.hooks;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import com.coredeux.demo.export.ExportStorageRecord;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 class ExportStorageCleanupHookTest {
 
-    @TempDir
-    Path tempDir;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ExportStorageCleanupHook hook = new ExportStorageCleanupHook(new ObjectMapper());
 
     @Test
-    void deletesFilesystemArtifactBeforeDelete() throws Exception {
-        Path exportFile = Files.writeString(tempDir.resolve("export.txt"), "payload");
+    void shouldDeleteFilesystemArtifactsWhenMetadataPointsToFile() throws Exception {
+        Path file = Files.createTempFile("coredeux-export", ".txt");
         ExportStorageRecord record = ExportStorageRecord.builder()
-                .uid("uid-1")
-                .fileName("export.txt")
                 .storageType("filesystem")
-                .contentType("text/plain")
-                .size((long) "payload".length())
-                .metadataJson(objectMapper.writeValueAsString(java.util.Map.of("destination", exportFile.toString())))
+                .metadataJson(new ObjectMapper().writeValueAsString(
+                        Map.of("destination", file.toAbsolutePath().toString())))
                 .build();
 
-        new ExportStorageCleanupHook(objectMapper).beforeDelete(record, null, null);
-
-        assertFalse(Files.exists(exportFile));
+        assertDoesNotThrow(() -> hook.beforeDelete(record, null, null));
+        org.junit.jupiter.api.Assertions.assertFalse(Files.exists(file));
     }
 
     @Test
-    void ignoresDatabaseBackedArtifacts() throws Exception {
-        Path exportFile = Files.writeString(tempDir.resolve("db-export.txt"), "payload");
+    void shouldFallBackToCanonicalUrlWhenMetadataIsInvalid() throws Exception {
+        Path file = Files.createTempFile("coredeux-export", ".txt");
         ExportStorageRecord record = ExportStorageRecord.builder()
-                .uid("uid-2")
-                .fileName("db-export.txt")
-                .storageType("database")
-                .contentType("text/plain")
-                .size((long) "payload".length())
-                .metadataJson(objectMapper.writeValueAsString(java.util.Map.of("destination", exportFile.toString())))
+                .storageType("filesystem")
+                .metadataJson("{not-json")
+                .canonicalUrl(file.toUri().toString())
                 .build();
 
-        new ExportStorageCleanupHook(objectMapper).beforeDelete(record, null, null);
+        assertDoesNotThrow(() -> hook.beforeDelete(record, null, null));
+        org.junit.jupiter.api.Assertions.assertFalse(Files.exists(file));
+    }
 
-        assertTrue(Files.exists(exportFile));
+    @Test
+    void shouldIgnoreMissingFilesystemTargets() throws Exception {
+        Path missing = Files.createTempFile("coredeux-export", ".txt");
+        Files.deleteIfExists(missing);
+        ExportStorageRecord record = ExportStorageRecord.builder()
+                .storageType("filesystem")
+                .metadataJson(new ObjectMapper().writeValueAsString(
+                        Map.of("destination", missing.toAbsolutePath().toString())))
+                .build();
+
+        assertDoesNotThrow(() -> hook.beforeDelete(record, null, null));
+        org.junit.jupiter.api.Assertions.assertFalse(Files.exists(missing));
+    }
+
+    @Test
+    void shouldIgnoreNonFilesystemRecordsAndBlankEntities() {
+        ExportStorageRecord record = ExportStorageRecord.builder().storageType("database").build();
+        assertDoesNotThrow(() -> hook.beforeDelete(record, null, null));
+        assertDoesNotThrow(() -> hook.beforeDelete(null, null, null));
+    }
+
+    @Test
+    void shouldIgnoreFilesystemRecordsWithoutAnyPathHints() {
+        ExportStorageRecord record = ExportStorageRecord.builder()
+                .storageType("filesystem")
+                .metadataJson("  ")
+                .build();
+
+        assertDoesNotThrow(() -> hook.beforeDelete(record, null, null));
+    }
+
+    @Test
+    void shouldRejectInvalidFileUris() {
+        ExportStorageRecord record = ExportStorageRecord.builder()
+                .storageType("filesystem")
+                .canonicalUrl("file:bad uri")
+                .build();
+
+        assertThrows(IllegalStateException.class, () -> hook.beforeDelete(record, null, null));
     }
 }

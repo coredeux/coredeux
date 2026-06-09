@@ -2,6 +2,7 @@ package com.coredeux.core.jpa.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -101,6 +102,19 @@ class PostgresCoredeuxJpaDataAccessServiceTest {
     }
 
     @Test
+    void shouldCoverAdditionalJsonAndLookupBranches() {
+        assertFalse(dataAccessService.containsJsonComparators(null));
+        assertFalse(dataAccessService.containsJsonComparators(List.of(
+                SearchParams.builder().field("name").comparator(" ").build())));
+        assertNotNull(dataAccessService.findField(SampleJpaEntity.class, "name"));
+        assertNotNull(dataAccessService.findField(SubclassEntity.class, "parentField"));
+        assertEquals("entity_alias.json_payload::text",
+                dataAccessService.buildJsonTextExpression(SampleJpaEntity.class, "payload"));
+        assertEquals("entity_alias.json_payload #>> '{customer,name}'",
+                dataAccessService.buildJsonTextExpression(SampleJpaEntity.class, "payload.customer.name"));
+    }
+
+    @Test
     void shouldFailForInvalidJsonbConfiguration() {
         assertThrows(CoredeuxValidationException.class,
                 () -> dataAccessService.buildJsonTextCondition(SampleJpaEntity.class,
@@ -140,5 +154,12 @@ class PostgresCoredeuxJpaDataAccessServiceTest {
         entity.setPayload(payload);
         entity.setTags(tags == null ? List.of() : List.of(tags));
         return entity;
+    }
+
+    static class ParentEntity {
+        private String parentField;
+    }
+
+    static class SubclassEntity extends ParentEntity {
     }
 }

@@ -28,6 +28,13 @@ class ClasspathDRLSourceResolverTest {
     }
 
     @Test
+    void fallsBackToDefaultPrefixAndSuffixWhenNullsAreProvided() {
+        ClasspathDRLSourceResolver resolver = new ClasspathDRLSourceResolver(getClass().getClassLoader(), null, null);
+
+        assertTrue(resolver.resolve("sample-rule").contains("rule \"sample-rule\""));
+    }
+
+    @Test
     void rejectsBlankRuleIdsAndMissingResources() {
         ClasspathDRLSourceResolver resolver = new ClasspathDRLSourceResolver(getClass().getClassLoader(), "rules/", ".drl");
 

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -82,6 +83,23 @@ class ValidatorsModuleHandlerTest {
         assertTrue(exception.getMessage().contains("does not support entity type"));
     }
 
+    @Test
+    void shouldSkipBlankValidatorsAndNullValidationErrors() {
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        applicationContext.registerSingleton("nullValidator", new NullValidator());
+        ValidatorsModuleHandler handler = new ValidatorsModuleHandler(applicationContext);
+        CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
+        List<String> handlers = new ArrayList<>();
+        handlers.add(" ");
+        handlers.add(null);
+        handlers.add("nullValidator");
+        CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("validators").enabled(true)
+                .handlers(handlers).build();
+
+        assertDoesNotThrow(() -> handler.execute(new Object(), definition, module, CoredeuxHookPhases.BEFORE_SAVE,
+                OperationContext.empty()));
+    }
+
     private static final class RecordingValidator implements CoredeuxEntityValidator<Object> {
 
         private final List<ValidationError> errors;
@@ -102,6 +120,15 @@ class ValidatorsModuleHandlerTest {
         public List<ValidationError> validate(SampleEntity entity, CoredeuxEntityDefinition definition,
                 OperationContext context) {
             return List.of();
+        }
+    }
+
+    private static final class NullValidator implements CoredeuxEntityValidator<Object> {
+
+        @Override
+        public List<ValidationError> validate(Object entity, CoredeuxEntityDefinition definition,
+                OperationContext context) {
+            return null;
         }
     }
 

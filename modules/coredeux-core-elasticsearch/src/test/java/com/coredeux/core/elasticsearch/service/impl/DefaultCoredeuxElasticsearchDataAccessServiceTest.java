@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -152,6 +153,59 @@ class DefaultCoredeuxElasticsearchDataAccessServiceTest {
 
         assertDoesNotThrow(() -> dataAccessService.loadAll(List.of(), SampleElasticsearchEntity.class, -1, -1));
         verify(gateway).search(anyString(), any(Query.class), eq(SampleElasticsearchEntity.class), eq(-1), eq(-1));
+    }
+
+    @Test
+    void shouldCoverGatewayFailureBranchesAndHelperUtilities() {
+        ElasticsearchGateway failingGateway = mock(ElasticsearchGateway.class);
+        DefaultCoredeuxElasticsearchDataAccessService failingService =
+                new DefaultCoredeuxElasticsearchDataAccessService(failingGateway, "demo");
+        SampleElasticsearchEntity entity = sample("entity-1", "Alpha", 10, "one");
+
+        when(failingGateway.get(anyString(), anyString(), eq(SampleElasticsearchEntity.class)))
+                .thenThrow(new IllegalStateException("boom"));
+        when(failingGateway.index(anyString(), any(), any()))
+                .thenThrow(new IllegalStateException("boom"));
+        doThrow(new IllegalStateException("boom")).when(failingGateway).delete(anyString(), anyString());
+        when(failingGateway.count(anyString(), any(Query.class)))
+                .thenThrow(new IllegalStateException("boom"));
+        when(failingGateway.search(anyString(), any(Query.class), eq(SampleElasticsearchEntity.class), any(int.class), any(int.class)))
+                .thenThrow(new IllegalStateException("boom"));
+
+        assertThrows(CoredeuxDataAccessException.class,
+                () -> failingService.load("entity-1", SampleElasticsearchEntity.class));
+        assertThrows(CoredeuxDataAccessException.class, () -> failingService.save(entity));
+        assertThrows(CoredeuxDataAccessException.class, () -> failingService.update(entity));
+        assertThrows(CoredeuxDataAccessException.class, () -> failingService.remove(entity));
+        assertThrows(CoredeuxDataAccessException.class,
+                () -> failingService.loadAll(List.of(), SampleElasticsearchEntity.class, 10, 1));
+        assertThrows(CoredeuxDataAccessException.class,
+                () -> failingService.query("{\"query\":{\"match_all\":{}}}", Map.of(), SampleElasticsearchEntity.class, 10, 1));
+
+        assertEquals("demo-SampleElasticsearchEntity", failingService.indexName(SampleElasticsearchEntity.class));
+        assertEquals(List.of(), failingService.defaultResults(null));
+        assertEquals("Alpha", failingService.normalizeRequired(" Alpha ", "message"));
+        assertThrows(CoredeuxValidationException.class, () -> failingService.normalizeRequired(" ", "message"));
+        assertTrue(failingService.isPagingEnabled(1, 1));
+        assertFalse(failingService.isPagingEnabled(0, 1));
+        assertNotNull(failingService.rangeQuery("age", 10, null, null, null));
+        assertNotNull(failingService.termQuery("flag", true));
+        assertNotNull(failingService.termQuery("count", 1));
+        assertNotNull(failingService.termQuery("count", 1L));
+        assertNotNull(failingService.termQuery("count", (short) 1));
+        assertNotNull(failingService.termQuery("count", (byte) 1));
+        assertNotNull(failingService.termQuery("count", 1.0f));
+        assertNotNull(failingService.termQuery("count", 1.0d));
+        assertNotNull(failingService.containsQuery("tags", List.of("one", "two")));
+        assertNotNull(failingService.containsQuery("tags", "one"));
+        assertNotNull(failingService.notContainsQuery("tags", List.of("one", "two")));
+        assertNotNull(failingService.notContainsQuery("tags", "one"));
+        assertEquals("{\"term\":{\"age\":10}}", failingService.extractJsonValue("{\"term\":{\"age\":10}}", 0));
+        assertEquals("{\"term\":{\"age\":10}}", failingService.extractQuerySource("{\"query\":{\"term\":{\"age\":10}}}"));
+        assertEquals("{\"match_all\":{}}", failingService.extractQuerySource("{\"match_all\":{}}"));
+        assertNotNull(failingService.resolveQueryTemplate("{\"name\":{{name}}}", Map.of("name", "Alpha")));
+        assertEquals("1", failingService.convertIdentifier("1", String.class));
+        assertThrows(CoredeuxValidationException.class, () -> failingService.resolveQuery("{not-json}"));
     }
 
     private SampleElasticsearchEntity sample(String id, String name, Integer age, String payload) {

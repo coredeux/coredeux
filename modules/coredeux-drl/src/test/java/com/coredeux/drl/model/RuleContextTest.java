@@ -2,6 +2,7 @@ package com.coredeux.drl.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 class RuleContextTest {
 
     @Test
-    void supportsFluentMutationAndDefensiveCopies() {
+    void shouldBuildAndMutateTheExecutionEnvelope() {
         RuleContext context = RuleContext.method("check")
                 .param("entity", "original")
                 .fact("first-fact")
@@ -58,5 +59,28 @@ class RuleContextTest {
         assertTrue(context.getParams().isEmpty());
         assertTrue(context.getFacts().isEmpty());
         assertEquals("output", context.getOutput());
+    }
+
+    @Test
+    void shouldResetNullCollectionsAndExposeFluentFactInsertions() {
+        RuleContext context = new RuleContext();
+
+        context.setMethod("sample");
+        context.setParams(null);
+        context.setFacts(null);
+        context.fact("one").fact("two");
+
+        assertEquals("sample", context.getMethod());
+        assertTrue(context.getParams().isEmpty());
+        assertEquals(List.of("one", "two"), context.getFacts());
+        assertFalse(context.getFacts().contains(null));
+
+        context.param("x", null);
+        assertTrue(context.getParams().containsKey("x"));
+        assertNull(context.getParams().get("missing"));
+
+        RuleContext created = RuleContext.method("created");
+        assertEquals("created", created.getMethod());
+        assertSame(created, created.param("k", "v"));
     }
 }
