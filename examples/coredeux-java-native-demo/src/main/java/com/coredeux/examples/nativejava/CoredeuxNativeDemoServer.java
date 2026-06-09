@@ -21,6 +21,9 @@ import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
+import com.coredeux.drl.converter.DrlConversionException;
+import com.coredeux.drl.model.RuleContext;
+import com.coredeux.drl.service.DRLService;
 import com.coredeux.export.model.ExportFormat;
 import com.coredeux.export.model.ExportRequest;
 import com.coredeux.export.model.ExportResponse;
@@ -31,6 +34,11 @@ import com.coredeux.impex.model.ImportRequest;
 import com.coredeux.impex.model.ImportResponse;
 import com.coredeux.impex.parser.excel.CoredeuxExcelImportParser;
 import com.coredeux.impex.parser.text.CoredeuxTextImportParser;
+import com.coredeux.examples.nativejava.drl.DrlConversionRequest;
+import com.coredeux.examples.nativejava.drl.DrlRuleNotFoundException;
+import com.coredeux.examples.nativejava.drl.DrlRuleRecord;
+import com.coredeux.examples.nativejava.drl.DrlRuleUpsertRequest;
+import com.coredeux.examples.nativejava.drl.DrlSourceExecutionRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -49,6 +57,8 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
     private static final String ENTITY_PATH = "/api/entities";
     private static final String IMPORT_PATH = "/api/import";
     private static final String EXPORT_PATH = "/api/export";
+    private static final String DRL_PATH = "/api/drl";
+    private static final String DRL_SAMPLE_PATH = "/api/drl/sample";
     private static final String OPENAPI_PATH = "/v3/api-docs";
     private static final String SWAGGER_UI_PATH = "/swagger-ui.html";
     private static final String SAMPLE_IMPORT_PATH = "samples/postgres-customers.import";
@@ -98,6 +108,8 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
         server.createContext(ENTITY_PATH, this::handleEntities);
         server.createContext(IMPORT_PATH, this::handleImport);
         server.createContext(EXPORT_PATH, this::handleExport);
+        server.createContext(DRL_PATH, this::handleDrl);
+        server.createContext(DRL_SAMPLE_PATH, this::handleDrlSample);
     }
 
     private void handleHealth(HttpExchange exchange) throws IOException {
@@ -322,6 +334,98 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
                                 "404", errorResponse(),
                                 "409", errorResponse()))));
 
+        paths.put("/api/drl/rules", Map.of(
+                "get", operation(
+                        "List DRL rules",
+                        "Lists the persisted DRL rule sources.",
+                        null,
+                        Map.of("200", jsonResponse("DrlRuleRecordArray")))));
+
+        paths.put("/api/drl/rules/{ruleId}", Map.of(
+                "get", operation(
+                        "Read DRL rule",
+                        "Reads a single DRL rule source by code.",
+                        List.of(parameter("ruleId", "path", "Rule code", true, refSchema("string"))),
+                        Map.of("200", jsonResponse("DrlRuleRecord"), "404", errorResponse())),
+                "put", operation(
+                        "Upsert DRL rule",
+                        "Creates or updates a DRL rule source.",
+                        List.of(parameter("ruleId", "path", "Rule code", true, refSchema("string"))),
+                        Map.of("200", jsonResponse("DrlRuleRecord"), "400", errorResponse()),
+                        refSchema("DrlRuleUpsertRequest")),
+                "delete", operation(
+                        "Delete DRL rule",
+                        "Deletes a DRL rule source by code.",
+                        List.of(parameter("ruleId", "path", "Rule code", true, refSchema("string"))),
+                        Map.of("204", Map.of("description", "Rule deleted"), "404", errorResponse()))));
+
+        paths.put("/api/drl/rules/convert", Map.of(
+                "post", operation(
+                        "Convert annotated Java to DRL",
+                        "Converts annotated Java source into DRL and stores it.",
+                        null,
+                        Map.of("200", jsonResponse("DrlRuleRecord"), "400", errorResponse()),
+                        refSchema("DrlConversionRequest"))));
+
+        paths.put("/api/drl/rules/{ruleId}/execute", Map.of(
+                "post", operation(
+                        "Execute DRL rule",
+                        "Executes a cached or resolver-backed DRL rule by code.",
+                        List.of(parameter("ruleId", "path", "Rule code", true, refSchema("string"))),
+                        Map.of("200", jsonResponse("RuleContext"), "404", errorResponse()),
+                        refSchema("RuleContext"))));
+
+        paths.put("/api/drl/rules/{ruleId}/execute-source", Map.of(
+                "post", operation(
+                        "Compile, cache, and execute DRL source",
+                        "Compiles caller-provided DRL source, caches it by rule code, and executes it.",
+                        List.of(parameter("ruleId", "path", "Rule code", true, refSchema("string"))),
+                        Map.of("200", jsonResponse("RuleContext"), "400", errorResponse()),
+                        refSchema("DrlSourceExecutionRequest"))));
+
+        paths.put("/api/drl/execute-source", Map.of(
+                "post", operation(
+                        "Compile and execute DRL source",
+                        "Compiles and executes caller-provided DRL source without caching it.",
+                        null,
+                        Map.of("200", jsonResponse("RuleContext"), "400", errorResponse()),
+                        refSchema("DrlSourceExecutionRequest"))));
+
+        paths.put("/api/drl/cache", Map.of(
+                "delete", operation(
+                        "Clear DRL cache",
+                        "Removes all cached compiled DRL rule bases.",
+                        null,
+                        Map.of("204", Map.of("description", "Cache cleared")))));
+
+        paths.put("/api/drl/cache/{ruleId}", Map.of(
+                "get", operation(
+                        "Check DRL cache",
+                        "Checks whether a rule code is currently cached.",
+                        List.of(parameter("ruleId", "path", "Rule code", true, refSchema("string"))),
+                        Map.of("200", jsonResponse("CacheStatus"), "404", errorResponse())),
+                "delete", operation(
+                        "Remove DRL cache entry",
+                        "Removes one cached DRL rule base.",
+                        List.of(parameter("ruleId", "path", "Rule code", true, refSchema("string"))),
+                        Map.of("204", Map.of("description", "Cache entry removed")))));
+
+        paths.put("/api/drl/sample/greet", Map.of(
+                "post", operation(
+                        "Execute sample greet rule",
+                        "Executes the seeded sample rule using the greet method and returns the populated RuleContext.",
+                        null,
+                        Map.of("200", jsonResponse("RuleContext"), "400", errorResponse()),
+                        refSchema("RuleContext"))));
+
+        paths.put("/api/drl/sample/count-facts", Map.of(
+                "post", operation(
+                        "Execute sample count facts rule",
+                        "Executes the seeded sample rule using the countFacts method and returns the populated RuleContext.",
+                        null,
+                        Map.of("200", jsonResponse("RuleContext"), "400", errorResponse()),
+                        refSchema("RuleContext"))));
+
         return paths;
     }
 
@@ -342,6 +446,33 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
         schemas.put("ImportResponse", objectSchema(Map.of(), List.of()));
         schemas.put("ExportRequest", objectSchema(Map.of(), List.of()));
         schemas.put("ExportResponse", objectSchema(Map.of(), List.of()));
+        schemas.put("DrlRuleRecord", objectSchema(Map.of(
+                "id", Map.of("type", "integer", "format", "int64"),
+                "code", Map.of("type", "string"),
+                "description", Map.of("type", "string"),
+                "drl", Map.of("type", "string")), List.of("code", "drl")));
+        schemas.put("DrlRuleRecordArray", Map.of(
+                "type", "array",
+                "items", Map.of("$ref", "#/components/schemas/DrlRuleRecord")));
+        schemas.put("DrlRuleUpsertRequest", objectSchema(Map.of(
+                "description", Map.of("type", "string"),
+                "drl", Map.of("type", "string")), List.of("drl")));
+        schemas.put("DrlConversionRequest", objectSchema(Map.of(
+                "source", Map.of("type", "string")), List.of("source")));
+        schemas.put("DrlSourceExecutionRequest", objectSchema(Map.of(
+                "source", Map.of("type", "string"),
+                "context", Map.of("$ref", "#/components/schemas/RuleContext")), List.of("source", "context")));
+        schemas.put("RuleContext", objectSchema(Map.of(
+                "method", Map.of("type", "string"),
+                "params", Map.of("type", "object", "additionalProperties", Map.of("type", "object")),
+                "facts", Map.of("type", "array", "items", Map.of("type", "object")),
+                "output", Map.of(),
+                "message", Map.of("type", "string"),
+                "exception", Map.of(),
+                "firedRules", Map.of("type", "integer", "format", "int32")), List.of()));
+        schemas.put("CacheStatus", objectSchema(Map.of(
+                "ruleId", Map.of("type", "string"),
+                "cached", Map.of("type", "boolean")), List.of("ruleId", "cached")));
         return schemas;
     }
 
@@ -617,6 +748,214 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
         downloadExport(exchange, response);
     }
 
+    private void handleDrl(HttpExchange exchange) throws IOException {
+        String path = exchange.getRequestURI().getPath();
+        try {
+            if (path.equals(DRL_PATH + "/rules") || path.equals(DRL_PATH + "/rules/")) {
+                handleDrlRules(exchange);
+                return;
+            }
+            if (path.equals(DRL_PATH + "/rules/convert")) {
+                handleDrlConvert(exchange);
+                return;
+            }
+            if (path.startsWith(DRL_PATH + "/rules/")) {
+                handleDrlRule(exchange, path.substring((DRL_PATH + "/rules/").length()));
+                return;
+            }
+            if (path.equals(DRL_PATH + "/execute-source")) {
+                handleDrlExecuteSource(exchange);
+                return;
+            }
+            if (path.equals(DRL_PATH + "/cache") || path.equals(DRL_PATH + "/cache/")) {
+                handleDrlCache(exchange);
+                return;
+            }
+            if (path.startsWith(DRL_PATH + "/cache/")) {
+                handleDrlCacheRule(exchange, path.substring((DRL_PATH + "/cache/").length()));
+                return;
+            }
+            sendError(exchange, 404, "Unknown DRL endpoint: " + path);
+        } catch (DrlRuleNotFoundException exception) {
+            sendError(exchange, 404, exception.getMessage());
+        } catch (DrlConversionException exception) {
+            sendError(exchange, 400, exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            sendError(exchange, 400, exception.getMessage());
+        }
+    }
+
+    private void handleDrlRules(HttpExchange exchange) throws IOException {
+        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "GET");
+            return;
+        }
+        writeJson(exchange, 200, runtime.drlRuleSourceService().findAll());
+    }
+
+    private void handleDrlConvert(HttpExchange exchange) throws IOException {
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "POST");
+            return;
+        }
+        DrlConversionRequest request = readJson(exchange, DrlConversionRequest.class);
+        writeJson(exchange, 200, runtime.drlRuleSourceService().convertAndSave(request.getSource()));
+    }
+
+    private void handleDrlRule(HttpExchange exchange, String tail) throws IOException {
+        String normalizedTail = trimLeadingSlash(tail);
+        if (normalizedTail.isBlank()) {
+            sendError(exchange, 400, "Rule code must not be blank");
+            return;
+        }
+        int slash = normalizedTail.indexOf('/');
+        String ruleId = slash < 0 ? normalizedTail : normalizedTail.substring(0, slash);
+        String remainder = slash < 0 ? "" : normalizedTail.substring(slash + 1);
+        if (remainder.isBlank()) {
+            switch (exchange.getRequestMethod().toUpperCase()) {
+                case "GET" -> readDrlRule(exchange, ruleId);
+                case "PUT" -> upsertDrlRule(exchange, ruleId);
+                case "DELETE" -> deleteDrlRule(exchange, ruleId);
+                default -> methodNotAllowed(exchange, "GET", "PUT", "DELETE");
+            }
+            return;
+        }
+
+        switch (remainder) {
+            case "execute" -> executeDrlRule(exchange, ruleId);
+            case "execute-source" -> executeDrlRuleWithSource(exchange, ruleId);
+            default -> sendError(exchange, 404, "Unknown DRL endpoint: " + DRL_PATH + "/rules/" + ruleId + "/" + remainder);
+        }
+    }
+
+    private void readDrlRule(HttpExchange exchange, String ruleId) throws IOException {
+        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "GET");
+            return;
+        }
+        writeJson(exchange, 200, runtime.drlRuleSourceService().findByCode(ruleId)
+                .orElseThrow(() -> new DrlRuleNotFoundException(ruleId)));
+    }
+
+    private void upsertDrlRule(HttpExchange exchange, String ruleId) throws IOException {
+        if (!"PUT".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "PUT");
+            return;
+        }
+        DrlRuleUpsertRequest request = readJson(exchange, DrlRuleUpsertRequest.class);
+        writeJson(exchange, 200, runtime.drlRuleSourceService().save(ruleId,
+                request == null ? null : request.getDescription(),
+                request == null ? null : request.getDrl()));
+    }
+
+    private void deleteDrlRule(HttpExchange exchange, String ruleId) throws IOException {
+        if (!"DELETE".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "DELETE");
+            return;
+        }
+        runtime.drlRuleSourceService().delete(ruleId);
+        runtime.drlService().purgeCache(ruleId);
+        exchange.sendResponseHeaders(204, -1);
+        exchange.close();
+    }
+
+    private void executeDrlRule(HttpExchange exchange, String ruleId) throws IOException {
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "POST");
+            return;
+        }
+        RuleContext context = readJson(exchange, RuleContext.class);
+        runtime.drlService().execute(ruleId, context);
+        writeJson(exchange, 200, context);
+    }
+
+    private void executeDrlRuleWithSource(HttpExchange exchange, String ruleId) throws IOException {
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "POST");
+            return;
+        }
+        DrlSourceExecutionRequest request = readJson(exchange, DrlSourceExecutionRequest.class);
+        RuleContext context = request == null ? null : request.getContext();
+        runtime.drlService().execute(ruleId, request == null ? null : request.getSource(), context);
+        writeJson(exchange, 200, context);
+    }
+
+    private void handleDrlExecuteSource(HttpExchange exchange) throws IOException {
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "POST");
+            return;
+        }
+        DrlSourceExecutionRequest request = readJson(exchange, DrlSourceExecutionRequest.class);
+        RuleContext context = request == null ? null : request.getContext();
+        runtime.drlService().executeSource(request == null ? null : request.getSource(), context);
+        writeJson(exchange, 200, context);
+    }
+
+    private void handleDrlCache(HttpExchange exchange) throws IOException {
+        if (!"DELETE".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "DELETE");
+            return;
+        }
+        runtime.drlService().purgeCache();
+        exchange.sendResponseHeaders(204, -1);
+        exchange.close();
+    }
+
+    private void handleDrlCacheRule(HttpExchange exchange, String tail) throws IOException {
+        String ruleId = trimLeadingSlash(tail);
+        if (ruleId.isBlank()) {
+            sendError(exchange, 400, "Rule code must not be blank");
+            return;
+        }
+        switch (exchange.getRequestMethod().toUpperCase()) {
+            case "GET" -> writeJson(exchange, 200, Map.of(
+                    "ruleId", ruleId,
+                    "cached", runtime.drlService().isCached(ruleId)));
+            case "DELETE" -> {
+                runtime.drlService().purgeCache(ruleId);
+                exchange.sendResponseHeaders(204, -1);
+                exchange.close();
+            }
+            default -> methodNotAllowed(exchange, "GET", "DELETE");
+        }
+    }
+
+    private void handleDrlSample(HttpExchange exchange) throws IOException {
+        String path = exchange.getRequestURI().getPath();
+        try {
+            if (path.equals(DRL_SAMPLE_PATH + "/greet")) {
+                executeSampleDrlRule(exchange, "greet");
+                return;
+            }
+            if (path.equals(DRL_SAMPLE_PATH + "/count-facts")) {
+                executeSampleDrlRule(exchange, "countFacts");
+                return;
+            }
+            sendError(exchange, 404, "Unknown DRL sample endpoint: " + path);
+        } catch (DrlRuleNotFoundException exception) {
+            sendError(exchange, 404, exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            sendError(exchange, 400, exception.getMessage());
+        }
+    }
+
+    private void executeSampleDrlRule(HttpExchange exchange, String method) throws IOException {
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "POST");
+            return;
+        }
+        RuleContext context = readJsonOrNull(exchange, RuleContext.class);
+        if (context == null) {
+            context = RuleContext.method(method);
+        } else if (context.getMethod() == null || context.getMethod().isBlank()) {
+            context.setMethod(method);
+        } else {
+            context.setMethod(method);
+        }
+        runtime.drlService().execute("demoGreetingRuleSource", context);
+        writeJson(exchange, 200, context);
+    }
+
     private void downloadExport(HttpExchange exchange, ExportResponse response) throws IOException {
         if (response == null || response.getStorage() == null
                 || response.getStorage().getAbsolutePath() == null
@@ -689,6 +1028,14 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
         byte[] body = exchange.getRequestBody().readAllBytes();
         if (body.length == 0) {
             throw new IOException("Request body must not be empty");
+        }
+        return objectMapper.readValue(body, type);
+    }
+
+    private <T> T readJsonOrNull(HttpExchange exchange, Class<T> type) throws IOException {
+        byte[] body = exchange.getRequestBody().readAllBytes();
+        if (body.length == 0) {
+            return null;
         }
         return objectMapper.readValue(body, type);
     }

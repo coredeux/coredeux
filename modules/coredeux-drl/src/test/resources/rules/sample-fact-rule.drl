@@ -1,0 +1,9 @@
+global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
+
+rule "sample-fact-rule"
+when
+    $context : com.coredeux.drl.model.RuleContext(method == "sample-fact-rule")
+    $demoService : com.coredeux.drl.service.impl.DemoService()
+then
+    $context.setOutput($demoService.message());
+end

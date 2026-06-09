@@ -41,6 +41,8 @@ import com.coredeux.demo.hooks.DemoLifecycleHook;
 import com.coredeux.demo.validation.CustomerEmailValidator;
 import com.coredeux.demo.workflow.DemoCustomerApprovalWorkflow;
 import com.coredeux.demo.workflow.WorkflowsModuleHandler;
+import com.coredeux.drl.service.DRLService;
+import com.coredeux.drl.service.impl.DefaultDRLService;
 import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler;
 import com.coredeux.export.log.CoredeuxExportLogServiceResolver;
@@ -80,6 +82,9 @@ import io.lettuce.core.codec.StringCodec;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
+import com.coredeux.examples.nativejava.drl.DemoGreetingService;
+import com.coredeux.examples.nativejava.drl.NativeDrlRuleSourceService;
+
 public final class CoredeuxNativeRuntime implements AutoCloseable {
 
     private final EntityDefinitionRegistry entityDefinitionRegistry;
@@ -89,6 +94,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
     private final CoredeuxModuleService coredeuxModuleService;
     private final CoredeuxImportService coredeuxImportService;
     private final CoredeuxExportService coredeuxExportService;
+    private final NativeDrlRuleSourceService drlRuleSourceService;
+    private final DRLService drlService;
     private final DefaultCoredeuxExportWorker coredeuxExportWorker;
     private final Thread exportWorkerSchedulerThread;
     private final CoredeuxReflectionHelperService reflectionHelperService;
@@ -100,6 +107,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
             CoredeuxModuleService coredeuxModuleService,
             CoredeuxImportService coredeuxImportService,
             CoredeuxExportService coredeuxExportService,
+            NativeDrlRuleSourceService drlRuleSourceService,
+            DRLService drlService,
             DefaultCoredeuxExportWorker coredeuxExportWorker,
             Thread exportWorkerSchedulerThread,
             CoredeuxReflectionHelperService reflectionHelperService) {
@@ -110,6 +119,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
         this.coredeuxModuleService = coredeuxModuleService;
         this.coredeuxImportService = coredeuxImportService;
         this.coredeuxExportService = coredeuxExportService;
+        this.drlRuleSourceService = drlRuleSourceService;
+        this.drlService = drlService;
         this.coredeuxExportWorker = coredeuxExportWorker;
         this.exportWorkerSchedulerThread = exportWorkerSchedulerThread;
         this.reflectionHelperService = reflectionHelperService;
@@ -162,11 +173,16 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
                 .component("demoLifecycleHook", new DemoLifecycleHook())
                 .component("demoAuditHandler", new DemoAuditHandler())
                 .component("customerApprovalWorkflow", new DemoCustomerApprovalWorkflow())
+                .component("demoGreetingService", new DemoGreetingService())
                 .component("demoUriImportHandler", new com.coredeux.demo.imports.DemoUriImportHandler())
                 .component("legacyDateImportHandler", new com.coredeux.demo.imports.LegacyDateImportHandler())
                 .component("dateFormatExportHandler", new com.coredeux.demo.export.DateFormatExportHandler())
                 .component("exportStorageCleanupHook", new com.coredeux.demo.hooks.ExportStorageCleanupHook(new com.fasterxml.jackson.databind.ObjectMapper()))
                 .build();
+
+        NativeDrlRuleSourceService drlRuleSourceService = new NativeDrlRuleSourceService(entityManagerFactory);
+        drlRuleSourceService.seedSampleRule();
+        DRLService drlService = new DefaultDRLService(drlRuleSourceService, components);
 
         CoredeuxReflectionHelperService reflectionHelperService = new DefaultCoredeuxReflectionHelperService();
         List<CoredeuxEntityModuleHandler> moduleHandlers = List.of(
@@ -199,7 +215,7 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
         Thread exportWorkerSchedulerThread = scheduleExportWorker(coredeuxProperties, exportWorker);
 
         return new CoredeuxNativeRuntime(coredeuxProperties, registry, customerDataAccess, coredeuxService,
-                moduleService, coredeuxImportService, coredeuxExportService, exportWorker,
+                moduleService, coredeuxImportService, coredeuxExportService, drlRuleSourceService, drlService, exportWorker,
                 exportWorkerSchedulerThread, reflectionHelperService);
     }
 
@@ -233,6 +249,14 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
 
     public CoredeuxExportService coredeuxExportService() {
         return coredeuxExportService;
+    }
+
+    public NativeDrlRuleSourceService drlRuleSourceService() {
+        return drlRuleSourceService;
+    }
+
+    public DRLService drlService() {
+        return drlService;
     }
 
     public DefaultCoredeuxExportWorker coredeuxExportWorker() {

@@ -60,6 +60,16 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-drl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-drl-devtools</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
         </dependency>

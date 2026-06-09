@@ -5,7 +5,7 @@
 <!-- docs-nav-end -->
 
 This tutorial shows how to add Coredeux import to an existing Spring Boot
-application that already uses Java 17, JPA, and PostgreSQL.
+application that already uses Java 21, JPA, and PostgreSQL.
 
 It is intentionally narrow:
 

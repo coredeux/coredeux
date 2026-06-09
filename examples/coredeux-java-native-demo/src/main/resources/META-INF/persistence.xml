@@ -13,6 +13,7 @@
         <class>com.coredeux.demo.domain.CustomerOrder</class>
         <class>com.coredeux.demo.domain.OrderItem</class>
         <class>com.coredeux.demo.export.ExportStorageRecord</class>
+        <class>com.coredeux.examples.nativejava.drl.DrlRuleRecord</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>

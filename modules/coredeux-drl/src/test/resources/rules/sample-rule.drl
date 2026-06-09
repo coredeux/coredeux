@@ -1,0 +1,8 @@
+global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
+
+rule "sample-rule"
+when
+    $context : com.coredeux.drl.model.RuleContext(method == "sample-rule")
+then
+    $context.setOutput("ok");
+end

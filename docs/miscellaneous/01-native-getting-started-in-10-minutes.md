@@ -59,7 +59,7 @@ That is enough because the native demo stack brings up:
 - PostgreSQL
 - `coredeux-java-native-demo`
 
-If you want to work on the source later, Java 17 and Maven are useful, but they
+If you want to work on the source later, Java 21 and Maven are useful, but they
 are not required for the first ten minutes.
 
 ## 1. Start The Native Demo Stack
