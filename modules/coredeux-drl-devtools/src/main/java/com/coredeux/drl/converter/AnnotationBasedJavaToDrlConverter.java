@@ -6,6 +6,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.MemberValuePair;
 import com.github.javaparser.ast.expr.StringLiteralExpr;
@@ -182,8 +183,8 @@ public class AnnotationBasedJavaToDrlConverter implements JavaToDrlConverter {
         return annotation.asNormalAnnotationExpr().getPairs().stream()
                 .filter(pair -> pair.getNameAsString().equals(attributeName))
                 .map(MemberValuePair::getValue)
-                .filter(value -> value.isStringLiteralExpr())
-                .map(value -> value.asStringLiteralExpr())
+                .filter(Expression::isStringLiteralExpr)
+                .map(Expression::asStringLiteralExpr)
                 .map(StringLiteralExpr::asString)
                 .findFirst();
     }

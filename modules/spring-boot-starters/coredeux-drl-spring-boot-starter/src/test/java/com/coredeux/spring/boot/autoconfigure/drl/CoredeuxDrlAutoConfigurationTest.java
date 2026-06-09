@@ -7,7 +7,6 @@ import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
-import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.drl.config.DrlRuntimeBootstrap;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;

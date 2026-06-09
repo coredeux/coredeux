@@ -31,6 +31,8 @@ import org.kie.internal.utils.KieHelper;
  */
 public class DefaultDRLService implements DRLService {
 
+    private static final String COMPONENT_REGISTRY = "componentRegistry";
+
     static {
         DrlRuntimeBootstrap.initialize();
     }
@@ -72,7 +74,7 @@ public class DefaultDRLService implements DRLService {
     public DefaultDRLService(DRLSourceResolver sourceResolver, CoredeuxComponentRegistry componentRegistry,
             DRLCache cache) {
         this.sourceResolver = Objects.requireNonNull(sourceResolver, "sourceResolver");
-        this.componentRegistry = Objects.requireNonNull(componentRegistry, "componentRegistry");
+        this.componentRegistry = Objects.requireNonNull(componentRegistry, COMPONENT_REGISTRY);
         this.cache = Objects.requireNonNull(cache, "cache");
     }
 
@@ -188,7 +190,7 @@ public class DefaultDRLService implements DRLService {
     private void executeCompiled(CompiledDRLRule compiledRule, RuleContext context) {
         try (KieSession session = compiledRule.kieBase().newKieSession()) {
             if (compiledRule.requiresComponentRegistry()) {
-                session.setGlobal("componentRegistry", componentRegistry);
+                session.setGlobal(COMPONENT_REGISTRY, componentRegistry);
             }
             session.insert(context);
             List<Object> facts = context.getFacts();
@@ -216,8 +218,8 @@ public class DefaultDRLService implements DRLService {
     private boolean requiresComponentRegistry(KieBase kieBase) {
         return kieBase.getKiePackages().stream()
                 .flatMap(kiePackage -> kiePackage.getGlobalVariables().stream())
-                .map(global -> global.getName())
-                .anyMatch("componentRegistry"::equals);
+                .map(org.kie.api.definition.rule.Global::getName)
+                .anyMatch(COMPONENT_REGISTRY::equals);
     }
 
     /**

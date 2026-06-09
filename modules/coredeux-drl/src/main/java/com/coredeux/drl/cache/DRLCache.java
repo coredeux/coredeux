@@ -3,8 +3,6 @@ package com.coredeux.drl.cache;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.kie.api.KieBase;
-
 /**
  * Cache contract for compiled DRL bases.
  *
