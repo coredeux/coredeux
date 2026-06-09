@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
+import com.coredeux.drl.cache.CompiledDRLRule;
 import com.coredeux.drl.cache.DRLCache;
 import com.coredeux.drl.cache.InMemoryDRLCache;
 import com.coredeux.drl.config.DrlRuntimeBootstrap;
@@ -84,7 +85,8 @@ public class DefaultDRLService implements DRLService {
      */
     @Override
     public void execute(String ruleId, RuleContext context) {
-        executeCompiled(cache.computeIfAbsent(ruleId, () -> compile(ruleId)), context);
+        CompiledDRLRule compiledRule = cache.computeIfAbsent(ruleId, () -> compile(ruleId));
+        executeCompiled(compiledRule, context);
     }
 
     /**
@@ -97,9 +99,9 @@ public class DefaultDRLService implements DRLService {
      */
     @Override
     public void execute(String ruleId, String source, RuleContext context) {
-        KieBase kieBase = compile(ruleId, source);
-        cache.put(ruleId, kieBase);
-        executeCompiled(kieBase, context);
+        CompiledDRLRule compiledRule = compile(ruleId, source);
+        cache.put(ruleId, compiledRule);
+        executeCompiled(compiledRule, context);
     }
 
     /**
@@ -146,9 +148,9 @@ public class DefaultDRLService implements DRLService {
      * Compiles DRL by resolving it from the configured source resolver.
      *
      * @param ruleId the rule identifier to resolve
-     * @return the compiled rule base
+     * @return the compiled rule bundle
      */
-    private KieBase compile(String ruleId) {
+    private CompiledDRLRule compile(String ruleId) {
         return compile(ruleId, sourceResolver.resolve(ruleId));
     }
 
@@ -157,9 +159,9 @@ public class DefaultDRLService implements DRLService {
      *
      * @param ruleId label used in any compilation error messages
      * @param drl the DRL source to compile
-     * @return the compiled rule base
+     * @return the compiled rule bundle
      */
-    private KieBase compile(String ruleId, String drl) {
+    private CompiledDRLRule compile(String ruleId, String drl) {
         KieHelper helper = new KieHelper();
         helper.addContent(requireSource(drl, ruleId), ResourceType.DRL);
 
@@ -172,20 +174,23 @@ public class DefaultDRLService implements DRLService {
                     + System.lineSeparator() + errors);
         }
 
-        return helper.build();
+        KieBase kieBase = helper.build();
+        return new CompiledDRLRule(kieBase, requiresComponentRegistry(kieBase));
     }
 
     /**
-     * Executes the compiled rule base against a new session and updates the
+     * Executes the compiled rule bundle against a new session and updates the
      * supplied context with the outcome.
      *
-     * @param kieBase the compiled rule base
+     * @param compiledRule the compiled rule bundle
      * @param context the execution context to insert and update
      */
-    private void executeCompiled(KieBase kieBase, RuleContext context) {
-        KieSession session = kieBase.newKieSession();
+    private void executeCompiled(CompiledDRLRule compiledRule, RuleContext context) {
+        KieSession session = compiledRule.kieBase().newKieSession();
         try {
-            session.setGlobal("componentRegistry", componentRegistry);
+            if (compiledRule.requiresComponentRegistry()) {
+                session.setGlobal("componentRegistry", componentRegistry);
+            }
             session.insert(context);
             List<Object> facts = context.getFacts();
             if (facts != null) {
@@ -202,6 +207,20 @@ public class DefaultDRLService implements DRLService {
         } finally {
             session.dispose();
         }
+    }
+
+    /**
+     * Checks whether the compiled KieBase declares the component registry
+     * global.
+     *
+     * @param kieBase the compiled rule base
+     * @return {@code true} when the global is declared
+     */
+    private boolean requiresComponentRegistry(KieBase kieBase) {
+        return kieBase.getKiePackages().stream()
+                .flatMap(kiePackage -> kiePackage.getGlobalVariables().stream())
+                .map(global -> global.getName())
+                .anyMatch("componentRegistry"::equals);
     }
 
     /**

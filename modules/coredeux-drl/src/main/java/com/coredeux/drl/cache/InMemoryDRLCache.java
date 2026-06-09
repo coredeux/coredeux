@@ -5,8 +5,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-import org.kie.api.KieBase;
-
 /**
  * Thread-safe in-memory implementation of {@link DRLCache}.
  *
@@ -15,16 +13,16 @@ import org.kie.api.KieBase;
  */
 public class InMemoryDRLCache implements DRLCache {
 
-    private final Map<String, KieBase> cache = new ConcurrentHashMap<>();
+    private final Map<String, CompiledDRLRule> cache = new ConcurrentHashMap<>();
 
     /**
      * Retrieves the compiled rule base for the supplied rule identifier.
      *
      * @param ruleId the cache key to look up
-     * @return the cached {@link KieBase}, if present
+     * @return the cached compiled rule, if present
      */
     @Override
-    public Optional<KieBase> get(String ruleId) {
+    public Optional<CompiledDRLRule> get(String ruleId) {
         if (ruleId == null || ruleId.isBlank()) {
             return Optional.empty();
         }
@@ -35,28 +33,28 @@ public class InMemoryDRLCache implements DRLCache {
      * Stores the compiled rule base for the supplied rule identifier.
      *
      * @param ruleId the cache key to store
-     * @param kieBase the compiled rule base to cache
+     * @param compiledRule the compiled rule bundle to cache
      */
     @Override
-    public void put(String ruleId, KieBase kieBase) {
+    public void put(String ruleId, CompiledDRLRule compiledRule) {
         if (ruleId == null || ruleId.isBlank()) {
             throw new IllegalArgumentException("ruleId is required");
         }
-        if (kieBase == null) {
-            throw new IllegalArgumentException("kieBase is required for ruleId: " + ruleId);
+        if (compiledRule == null) {
+            throw new IllegalArgumentException("compiledRule is required for ruleId: " + ruleId);
         }
-        cache.put(ruleId, kieBase);
+        cache.put(ruleId, compiledRule);
     }
 
     /**
      * Loads and stores the compiled rule base only when no cache entry exists.
      *
      * @param ruleId the cache key to load
-     * @param loader supplier used to build the rule base on demand
-     * @return the cached or newly loaded {@link KieBase}
+     * @param loader supplier used to build the compiled rule bundle on demand
+     * @return the cached or newly loaded compiled rule bundle
      */
     @Override
-    public KieBase computeIfAbsent(String ruleId, Supplier<KieBase> loader) {
+    public CompiledDRLRule computeIfAbsent(String ruleId, Supplier<CompiledDRLRule> loader) {
         if (ruleId == null || ruleId.isBlank()) {
             throw new IllegalArgumentException("ruleId is required");
         }
@@ -64,11 +62,11 @@ public class InMemoryDRLCache implements DRLCache {
             throw new IllegalArgumentException("loader is required for ruleId: " + ruleId);
         }
         return cache.computeIfAbsent(ruleId, key -> {
-            KieBase kieBase = loader.get();
-            if (kieBase == null) {
-                throw new IllegalStateException("Loader returned null KieBase for ruleId: " + key);
+            CompiledDRLRule compiledRule = loader.get();
+            if (compiledRule == null) {
+                throw new IllegalStateException("Loader returned null compiled rule for ruleId: " + key);
             }
-            return kieBase;
+            return compiledRule;
         });
     }
 

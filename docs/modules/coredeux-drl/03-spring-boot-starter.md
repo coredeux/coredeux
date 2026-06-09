@@ -36,6 +36,17 @@ coredeux.drl.java-language-level=19
 That means Spring Boot users can keep the runtime defaults while still
 overriding them in `application.properties` or `application.yml`.
 
+If you do not provide a language-level override, Coredeux resolves the DRL
+level from the running Java version. The current automatic map is:
+
+- Java 17 -> DRL 17
+- Java 18 -> DRL 17
+- Java 19 -> DRL 19
+- Java 20 through Java 25 -> DRL 19
+
+That keeps the framework usable on Java 17 and above while staying inside the
+verified Drools surface area.
+
 Example `application.yml`:
 
 ```yaml
@@ -56,7 +67,7 @@ Practical precedence is:
 
 1. values provided in Spring `application.properties` or `application.yml`
 2. any pre-existing system property
-3. the runtime default (`NATIVE` / `19`)
+3. the runtime-selected default for the current Java version (`17` or `19`)
 
 That lets you override behavior without changing code, while still keeping the
 same defaults in native hosts and tests.

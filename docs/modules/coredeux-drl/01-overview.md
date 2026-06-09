@@ -7,6 +7,19 @@
 `coredeux-drl` is the Coredeux runtime that executes DRL by rule id instead of
 by raw source string.
 
+## Java Support
+
+Coredeux supports Java 17 and above.
+
+- minimum supported runtime/build floor: Java 17
+- current project/runtime baseline: Java 21
+- DRL language level is chosen from the running Java version unless a config
+  override is provided
+- the currently verified DRL levels are `17` and `19`
+- compiled rules are cached as a bundle that carries both the `KieBase` and the
+  registry-global requirement
+- deleting a stored rule should also purge its runtime cache entry
+
 At a high level the runtime does four things:
 
 - resolves DRL source from a pluggable resolver

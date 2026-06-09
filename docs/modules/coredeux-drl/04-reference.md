@@ -51,15 +51,20 @@ in memory.
 
 Use `purgeCache(ruleId)` after updating one rule source.
 
+When a stored rule source is deleted, purge the matching runtime cache entry so
+the next request cannot execute stale compiled rules.
+
 Use `purgeCache()` when you want a full refresh.
 
 ## Default Behavior
 
 - rule execution happens by `ruleId`
-- compiled DRL is cached as a `KieBase`
+- compiled DRL is cached as a bundle that stores the `KieBase` plus whether
+  `componentRegistry` is required
 - each call creates a new `KieSession`
 - the runtime exposes `componentRegistry` as a global
 - the native default compiler settings are `NATIVE` and `19`
+- if no override is provided, Coredeux chooses the DRL language level from the running Java version
 
 ## Common Properties
 
@@ -80,6 +85,24 @@ coredeux.drl.java-language-level=19
 In Spring Boot applications, the starter can read the same keys from
 `application.properties` or `application.yml` and apply them before runtime
 bootstrap.
+
+## Java Version To DRL Level Map
+
+When Coredeux resolves the DRL language level automatically, it uses the
+current Java feature version and picks the best supported Drools level below
+it. The current map is intentionally small because the verified DRL language
+levels are still `17` and `19`.
+
+| Java version | Selected DRL level | Notes |
+| --- | --- | --- |
+| 17 | 17 | Minimum supported runtime floor |
+| 18 | 17 | Falls back to the nearest supported level |
+| 19 | 19 | Matches the current default DRL level |
+| 20-25 | 19 | Stays on the highest verified DRL level |
+
+If you provide `coredeux.drl.java-language-level`, that explicit override wins.
+Use this only when you know the target runtime and the rule source you are
+loading can compile with that exact Drools setting.
 
 ## Rule Shape
 

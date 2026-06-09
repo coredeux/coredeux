@@ -1,12 +1,13 @@
-FROM maven:3.9.9-eclipse-temurin-17 AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /workspace
 
 COPY . .
 
-RUN mvn -pl examples/coredeux-spring-boot-demo -am -DskipTests package
+RUN mvn -f pom.xml -DskipTests install
+RUN mvn -f examples/coredeux-spring-boot-demo/pom.xml -DskipTests package
 
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 

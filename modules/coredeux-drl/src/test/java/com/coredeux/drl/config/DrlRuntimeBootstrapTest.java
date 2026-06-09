@@ -19,7 +19,7 @@ class DrlRuntimeBootstrapTest {
             clearProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY);
 
             assertEquals(DrlRuntimeBootstrap.DEFAULT_JAVA_COMPILER, DrlRuntimeBootstrap.resolveJavaCompiler());
-            assertEquals(DrlRuntimeBootstrap.DEFAULT_JAVA_LANGUAGE_LEVEL,
+            assertEquals(DrlRuntimeBootstrap.resolveJavaLanguageLevel(Runtime.version().feature()),
                     DrlRuntimeBootstrap.resolveJavaLanguageLevel());
         } finally {
             restoreProperty(DrlRuntimeBootstrap.CONFIG_JAVA_COMPILER_PROPERTY, previousConfigCompiler);
@@ -43,6 +43,15 @@ class DrlRuntimeBootstrapTest {
             restoreProperty(DrlRuntimeBootstrap.CONFIG_JAVA_COMPILER_PROPERTY, previousConfigCompiler);
             restoreProperty(DrlRuntimeBootstrap.CONFIG_JAVA_LANGUAGE_LEVEL_PROPERTY, previousConfigLanguageLevel);
         }
+    }
+
+    @Test
+    void mapsSupportedJavaVersionsToTheExpectedDrlLevel() {
+        assertEquals("17", DrlRuntimeBootstrap.resolveJavaLanguageLevel(17));
+        assertEquals("17", DrlRuntimeBootstrap.resolveJavaLanguageLevel(18));
+        assertEquals("19", DrlRuntimeBootstrap.resolveJavaLanguageLevel(19));
+        assertEquals("19", DrlRuntimeBootstrap.resolveJavaLanguageLevel(21));
+        assertEquals("19", DrlRuntimeBootstrap.resolveJavaLanguageLevel(25));
     }
 
     private void clearProperty(String name) {

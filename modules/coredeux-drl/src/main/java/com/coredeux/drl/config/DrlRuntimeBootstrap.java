@@ -1,13 +1,15 @@
 package com.coredeux.drl.config;
 
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Resolves and applies the Drools Java dialect settings used by the runtime.
  *
- * <p>The bootstrap reads Coredeux-specific overrides first and then falls back
- * to existing JVM system properties before applying the resolved values once
- * at startup.
+ * <p>The bootstrap reads Coredeux-specific overrides first, then existing JVM
+ * system properties, and finally the runtime Java feature version before
+ * applying the resolved values once at startup.
  */
 public final class DrlRuntimeBootstrap {
 
@@ -32,9 +34,19 @@ public final class DrlRuntimeBootstrap {
      */
     public static final String DEFAULT_JAVA_COMPILER = "NATIVE";
     /**
-     * Default Java language level used when no override is supplied.
+     * Highest verified Java language level used as the default ceiling when no
+     * explicit override is supplied.
      */
     public static final String DEFAULT_JAVA_LANGUAGE_LEVEL = "19";
+
+    private static final int MIN_SUPPORTED_JAVA_VERSION = 17;
+
+    private static final NavigableMap<Integer, String> JAVA_TO_DRL_LANGUAGE_LEVEL = new TreeMap<>();
+
+    static {
+        JAVA_TO_DRL_LANGUAGE_LEVEL.put(17, "17");
+        JAVA_TO_DRL_LANGUAGE_LEVEL.put(19, "19");
+    }
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean();
 
@@ -70,13 +82,36 @@ public final class DrlRuntimeBootstrap {
 
     /**
      * Resolves the Java language level from Coredeux overrides, existing
-     * Drools system properties, or the built-in default.
+     * Drools system properties, or the current runtime Java version.
      *
      * @return the effective Java language level
      */
     public static String resolveJavaLanguageLevel() {
-        return firstNonBlank(System.getProperty(CONFIG_JAVA_LANGUAGE_LEVEL_PROPERTY),
-                System.getProperty(JAVA_LANGUAGE_LEVEL_PROPERTY), DEFAULT_JAVA_LANGUAGE_LEVEL);
+        String configuredLanguageLevel = firstNonBlank(System.getProperty(CONFIG_JAVA_LANGUAGE_LEVEL_PROPERTY),
+                System.getProperty(JAVA_LANGUAGE_LEVEL_PROPERTY));
+        if (configuredLanguageLevel != null) {
+            return configuredLanguageLevel;
+        }
+        return resolveJavaLanguageLevel(Runtime.version().feature());
+    }
+
+    /**
+     * Resolves the preferred Java language level for a specific Java feature
+     * version.
+     *
+     * <p>The current map is intentionally small: Java 17 and 18 fall back to
+     * DRL 17, while Java 19 and above use DRL 19. This keeps the runtime safe
+     * on Java 17+ while still using the highest verified Drools level.
+     *
+     * @param javaFeatureVersion the detected Java feature version
+     * @return the effective DRL language level for that Java version
+     */
+    static String resolveJavaLanguageLevel(int javaFeatureVersion) {
+        if (javaFeatureVersion < MIN_SUPPORTED_JAVA_VERSION) {
+            throw new IllegalStateException("Coredeux DRL requires Java 17 or later.");
+        }
+
+        return JAVA_TO_DRL_LANGUAGE_LEVEL.floorEntry(javaFeatureVersion).getValue();
     }
 
     /**

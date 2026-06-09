@@ -12,14 +12,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.coredeux.drl.service.DRLService;
+
 @RestController
 @RequestMapping("/api/drl/rules")
 public class DrlRuleController {
 
     private final DemoDrlRuleSourceService ruleSourceService;
+    private final DRLService drlService;
 
-    public DrlRuleController(DemoDrlRuleSourceService ruleSourceService) {
+    public DrlRuleController(DemoDrlRuleSourceService ruleSourceService, DRLService drlService) {
         this.ruleSourceService = ruleSourceService;
+        this.drlService = drlService;
     }
 
     @GetMapping
@@ -48,6 +52,7 @@ public class DrlRuleController {
     @DeleteMapping("/{ruleId}")
     public ResponseEntity<Void> delete(@PathVariable("ruleId") String ruleId) {
         ruleSourceService.delete(ruleId);
+        drlService.purgeCache(ruleId);
         return ResponseEntity.noContent().build();
     }
 }

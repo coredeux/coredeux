@@ -854,6 +854,7 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
             return;
         }
         runtime.drlRuleSourceService().delete(ruleId);
+        runtime.drlService().purgeCache(ruleId);
         exchange.sendResponseHeaders(204, -1);
         exchange.close();
     }

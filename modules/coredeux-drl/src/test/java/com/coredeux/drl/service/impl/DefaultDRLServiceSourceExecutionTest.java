@@ -26,6 +26,16 @@ class DefaultDRLServiceSourceExecutionTest {
             end
             """;
 
+    private static final String INLINE_SOURCE_WITHOUT_GLOBAL = """
+            rule "inline-no-global"
+            when
+                $context : com.coredeux.drl.model.RuleContext(method == "inline-no-global")
+            then
+                $context.setOutput("no-global-ok");
+                $context.setMessage("Inline source executed without registry.");
+            end
+            """;
+
     @Test
     void executesInlineSourceWithoutLoadingFromResolverOrUsingTheCache() {
         String previousCompiler = System.getProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY);
@@ -46,6 +56,30 @@ class DefaultDRLServiceSourceExecutionTest {
             assertEquals(1, context.getFiredRules());
             assertEquals(0, resolver.resolveCount.get());
             assertEquals(false, service.isCached("sample-fact-rule"));
+        } finally {
+            restoreProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY, previousCompiler);
+            restoreProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY, previousLanguageLevel);
+        }
+    }
+
+    @Test
+    void executesInlineSourceWithoutOptionalComponentRegistryGlobal() {
+        String previousCompiler = System.getProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY);
+        String previousLanguageLevel = System.getProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY);
+        try {
+            DrlRuntimeBootstrap.initialize();
+
+            CountingResolver resolver = new CountingResolver();
+            DefaultDRLService service = new DefaultDRLService(resolver);
+
+            RuleContext context = RuleContext.method("inline-no-global");
+
+            service.executeSource(INLINE_SOURCE_WITHOUT_GLOBAL, context);
+
+            assertEquals("no-global-ok", context.getOutput());
+            assertEquals("Inline source executed without registry.", context.getMessage());
+            assertEquals(1, context.getFiredRules());
+            assertEquals(0, resolver.resolveCount.get());
         } finally {
             restoreProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY, previousCompiler);
             restoreProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY, previousLanguageLevel);

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
+import com.coredeux.drl.config.DrlRuntimeBootstrap;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.drl.service.impl.DefaultDRLService;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
@@ -56,9 +57,11 @@ public class CoredeuxDrlAutoConfiguration {
         }
 
         private void apply(Environment environment) {
-            setIfPresent("drools.dialect.java.compiler", environment.getProperty("coredeux.drl.java-compiler"));
-            setIfPresent("drools.dialect.java.compiler.lnglevel",
-                    environment.getProperty("coredeux.drl.java-language-level"));
+            setIfPresent(DrlRuntimeBootstrap.CONFIG_JAVA_COMPILER_PROPERTY,
+                    environment.getProperty(DrlRuntimeBootstrap.CONFIG_JAVA_COMPILER_PROPERTY));
+            setIfPresent(DrlRuntimeBootstrap.CONFIG_JAVA_LANGUAGE_LEVEL_PROPERTY,
+                    environment.getProperty(DrlRuntimeBootstrap.CONFIG_JAVA_LANGUAGE_LEVEL_PROPERTY));
+            DrlRuntimeBootstrap.initialize();
         }
 
         private void setIfPresent(String propertyName, String propertyValue) {

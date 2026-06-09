@@ -55,7 +55,7 @@ That is enough because the demo stack brings up:
 - Elasticsearch
 - `coredeux-spring-boot-demo`
 
-If you want to work on the demo from your machine later, Java 17 and Maven are
+If you want to work on the demo from your machine later, Java 21 and Maven are
 still useful, but they are not required for the first ten minutes.
 
 ## 1. Start The Demo Stack

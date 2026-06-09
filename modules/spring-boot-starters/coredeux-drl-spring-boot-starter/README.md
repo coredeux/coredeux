@@ -28,5 +28,17 @@ coredeux.drl.java-compiler=NATIVE
 coredeux.drl.java-language-level=19
 ```
 
+If you do not provide a language-level override, the runtime maps the current
+Java version to the best supported DRL level:
+
+- Java 17 -> DRL 17
+- Java 18 -> DRL 17
+- Java 19 -> DRL 19
+- Java 20 through Java 25 -> DRL 19
+
+The value `19` remains the highest verified DRL level and the default ceiling
+for environments that support it, but Java 17 and 18 still fall back to `17`
+so the framework stays usable on the minimum supported runtime.
+
 Spring Boot applications should include the Coredeux core starter as well so
 the same application has both the Coredeux runtime and the DRL bridge.

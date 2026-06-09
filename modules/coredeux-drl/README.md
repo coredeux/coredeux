@@ -12,6 +12,28 @@ The module stays Spring-free. Native applications can wire the resolver and the
 component registry directly, while Spring Boot applications should use the
 `coredeux-drl-spring-boot-starter`.
 
+## Java Support
+
+Coredeux supports Java 17 and above.
+
+- minimum supported runtime/build floor: Java 17
+- current project/runtime baseline: Java 21
+- DRL language level is selected from the running Java version unless you
+  override it in configuration
+- the current verified DRL levels are `17` and `19`
+- the compiled rule cache stores both the `KieBase` and the registry-global
+  requirement together as one cached bundle
+- deleting a stored rule should also purge the matching runtime cache entry
+
+Coredeux targets Java 17+ at build time, runs the demos on Java 21, and
+automatically chooses a Drools language level from the runtime Java version
+unless you override it in configuration. The current map is:
+
+- Java 17 -> DRL 17
+- Java 18 -> DRL 17
+- Java 19 -> DRL 19
+- Java 20 through Java 25 -> DRL 19
+
 Detailed reference:
 
 - [docs/modules/coredeux-drl/04-reference.md](/C:/Data/Development/Coredeux/oss/coredeux/docs/modules/coredeux-drl/04-reference.md)
