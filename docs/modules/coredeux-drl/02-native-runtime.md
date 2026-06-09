@@ -42,7 +42,7 @@ A native host usually does three things:
 
 1. create a resolver that knows where the DRL lives
 2. register the application components the rules are allowed to use
-3. execute the rule by id with a `RuleContext`
+3. execute the rule by id with a `RuleContext<T>`
 
 Example:
 
@@ -58,12 +58,12 @@ CoredeuxComponentRegistry componentRegistry = InMemoryCoredeuxComponentRegistry.
 
 DRLService drlService = new DefaultDRLService(sourceResolver, componentRegistry);
 
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .param("entity", sampleEntity)
         .fact(sampleEntity);
 drlService.execute("sample-rule", context);
 
-Object output = context.getOutput();
+String output = context.getOutput();
 int firedRules = context.getFiredRules();
 ```
 
@@ -72,7 +72,7 @@ raises an `IllegalStateException` so the caller can handle it in one place.
 
 ## Rule Context Contract
 
-`RuleContext` is the object you pass into the runtime and read from after the
+`RuleContext<T>` is the object you pass into the runtime and read from after the
 rule runs.
 
 It carries:
@@ -89,14 +89,14 @@ where the caller wants a mutable result object instead of a new return type.
 
 ## Working With Facts
 
-Put additional session facts on the `RuleContext` with `.fact(...)` before you
+Put additional session facts on the `RuleContext<T>` with `.fact(...)` before you
 call `execute(...)`.
 
 If you want to compile and run a source string immediately without resolver
 lookup or cache storage, use `executeSource(...)`:
 
 ```java
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .fact(sampleEntity);
 drlService.executeSource("""
         rule "check"

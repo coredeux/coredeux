@@ -100,6 +100,14 @@ then
 end
 ```
 
+When you write the Java-side execution context in Spring code, use the typed
+form too:
+
+```java
+RuleContext<String> context = RuleContext.method("check")
+        .fact(sampleEntity);
+```
+
 ## When You Should Override The Starter
 
 You can override the starter's defaults by providing your own beans if you need

@@ -18,7 +18,7 @@ public interface DRLService {
      * @param ruleId the rule identifier used by the configured source resolver
      * @param context the execution context and fact carrier
      */
-    void execute(String ruleId, RuleContext context);
+    <T> void execute(String ruleId, RuleContext<T> context);
 
     /**
      * Compiles the supplied DRL source, stores the compiled rule base under the
@@ -28,7 +28,7 @@ public interface DRLService {
      * @param source the DRL source text to compile
      * @param context the execution context and fact carrier
      */
-    void execute(String ruleId, String source, RuleContext context);
+    <T> void execute(String ruleId, String source, RuleContext<T> context);
 
     /**
      * Compiles and executes the supplied DRL source without consulting a source
@@ -37,7 +37,7 @@ public interface DRLService {
      * @param source the DRL source text to compile
      * @param context the execution context and fact carrier
      */
-    void executeSource(String source, RuleContext context);
+    <T> void executeSource(String source, RuleContext<T> context);
 
     /**
      * Clears all cached compiled rule bases.

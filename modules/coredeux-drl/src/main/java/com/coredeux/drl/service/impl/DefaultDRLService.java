@@ -86,7 +86,7 @@ public class DefaultDRLService implements DRLService {
      * @param context the execution context and fact carrier
      */
     @Override
-    public void execute(String ruleId, RuleContext context) {
+    public <T> void execute(String ruleId, RuleContext<T> context) {
         CompiledDRLRule compiledRule = cache.computeIfAbsent(ruleId, () -> compile(ruleId));
         executeCompiled(compiledRule, context);
     }
@@ -100,7 +100,7 @@ public class DefaultDRLService implements DRLService {
      * @param context the execution context and fact carrier
      */
     @Override
-    public void execute(String ruleId, String source, RuleContext context) {
+    public <T> void execute(String ruleId, String source, RuleContext<T> context) {
         CompiledDRLRule compiledRule = compile(ruleId, source);
         cache.put(ruleId, compiledRule);
         executeCompiled(compiledRule, context);
@@ -113,7 +113,7 @@ public class DefaultDRLService implements DRLService {
      * @param context the execution context and fact carrier
      */
     @Override
-    public void executeSource(String source, RuleContext context) {
+    public <T> void executeSource(String source, RuleContext<T> context) {
         executeCompiled(compile("inline source", source), context);
     }
 
@@ -187,7 +187,7 @@ public class DefaultDRLService implements DRLService {
      * @param compiledRule the compiled rule bundle
      * @param context the execution context to insert and update
      */
-    private void executeCompiled(CompiledDRLRule compiledRule, RuleContext context) {
+    private void executeCompiled(CompiledDRLRule compiledRule, RuleContext<?> context) {
         try (KieSession session = compiledRule.kieBase().newKieSession()) {
             if (compiledRule.requiresComponentRegistry()) {
                 session.setGlobal(COMPONENT_REGISTRY, componentRegistry);

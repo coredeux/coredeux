@@ -13,7 +13,7 @@ public class DemoRuleSource {
     public CoredeuxComponentRegistry componentRegistry;
 
     @DrlRule(name = "greet", when = "$context : RuleContext(method == 'greet')")
-    public void greet(RuleContext $context) {
+    public void greet(RuleContext<String> $context) {
         DemoGreetingService greetingService = componentRegistry.getComponent("demoGreetingService",
                 DemoGreetingService.class);
         $context.setOutput(greetingService.message());
@@ -21,7 +21,7 @@ public class DemoRuleSource {
     }
 
     @DrlRule(name = "countFacts", when = "$context : RuleContext(method == 'countFacts')")
-    public void countFacts(RuleContext $context) {
+    public void countFacts(RuleContext<Integer> $context) {
         int count = $context.getFacts() == null ? 0 : $context.getFacts().size();
         $context.setOutput(count);
         $context.setMessage("Counted " + count + " fact(s) for the sample rule.");

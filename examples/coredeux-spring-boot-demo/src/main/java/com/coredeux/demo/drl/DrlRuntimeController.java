@@ -25,22 +25,23 @@ public class DrlRuntimeController {
     }
 
     @PostMapping("/rules/{ruleId}/execute")
-    public RuleContext execute(@PathVariable("ruleId") String ruleId, @RequestBody RuleContext context) {
+    public RuleContext<?> execute(@PathVariable("ruleId") String ruleId,
+            @RequestBody RuleContext<?> context) {
         drlService.execute(ruleId, context);
         return context;
     }
 
     @PostMapping("/rules/{ruleId}/execute-source")
-    public RuleContext executeWithSource(@PathVariable("ruleId") String ruleId,
+    public RuleContext<?> executeWithSource(@PathVariable("ruleId") String ruleId,
             @RequestBody DrlSourceExecutionRequest request) {
-        RuleContext context = request == null ? null : request.getContext();
+        RuleContext<?> context = request == null ? null : request.getContext();
         drlService.execute(ruleId, request == null ? null : request.getSource(), context);
         return context;
     }
 
     @PostMapping("/execute-source")
-    public RuleContext executeSource(@RequestBody DrlSourceExecutionRequest request) {
-        RuleContext context = request == null ? null : request.getContext();
+    public RuleContext<?> executeSource(@RequestBody DrlSourceExecutionRequest request) {
+        RuleContext<?> context = request == null ? null : request.getContext();
         drlService.executeSource(request == null ? null : request.getSource(), context);
         return context;
     }

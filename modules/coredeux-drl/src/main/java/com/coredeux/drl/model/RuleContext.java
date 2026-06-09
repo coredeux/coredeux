@@ -12,13 +12,15 @@ import java.util.Map;
  * facts, and rule execution results such as output, message, exceptions, and
  * fired rule count. Instances are passed by reference into the Drools session
  * so rule consequences can update the same object directly.
+ *
+ * @param <T> the type of the rule output value
  */
-public class RuleContext {
+public class RuleContext<T> {
 
     private String method;
     private Map<String, Object> params = new HashMap<>();
     private List<Object> facts = new ArrayList<>();
-    private Object output;
+    private T output;
     private String message;
     private Exception exception;
     private int firedRules;
@@ -29,8 +31,8 @@ public class RuleContext {
      * @param method the logical rule method name to match in DRL conditions
      * @return a new {@link RuleContext} instance
      */
-    public static RuleContext method(String method) {
-        RuleContext context = new RuleContext();
+    public static <T> RuleContext<T> method(String method) {
+        RuleContext<T> context = new RuleContext<>();
         context.setMethod(method);
         return context;
     }
@@ -46,7 +48,7 @@ public class RuleContext {
      * @param value the parameter value
      * @return this context instance for fluent chaining
      */
-    public RuleContext param(String key, Object value) {
+    public RuleContext<T> param(String key, Object value) {
         this.params.put(key, value);
         return this;
     }
@@ -61,7 +63,7 @@ public class RuleContext {
      * @param value the fact to add
      * @return this context instance for fluent chaining
      */
-    public RuleContext fact(Object value) {
+    public RuleContext<T> fact(Object value) {
         if (value != null) {
             this.facts.add(value);
         }
@@ -130,7 +132,7 @@ public class RuleContext {
      *
      * @return the current output, or {@code null} if none has been set
      */
-    public Object getOutput() {
+    public T getOutput() {
         return output;
     }
 
@@ -139,7 +141,7 @@ public class RuleContext {
      *
      * @param output the value to expose after rule execution
      */
-    public void setOutput(Object output) {
+    public void setOutput(T output) {
         this.output = output;
     }
 

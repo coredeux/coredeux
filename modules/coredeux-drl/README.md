@@ -4,7 +4,7 @@
 Coredeux.
 
 It resolves DRL by rule id, compiles the rule set once, caches the compiled
-`KieBase`, and executes it against a mutable `RuleContext` plus any extra
+`KieBase`, and executes it against a mutable `RuleContext<T>` plus any extra
 facts you attach with `.fact(...)`. The context can also carry a human-readable
 `message` for agent and tool integrations alongside the typed `output`.
 
@@ -45,7 +45,7 @@ Detailed reference:
 - `DRLService`
 - `DRLSourceResolver`
 - `DRLCache`
-- `RuleContext`
+- `RuleContext<T>`
 - `DefaultDRLService`
 - `ClasspathDRLSourceResolver`
 - `InMemoryDRLCache`
@@ -159,7 +159,7 @@ For fact typing:
 - A typed fact pattern such as `$psu : Psu()` exposes `$psu` as `Psu` in
   `then`.
 - An `Object()` pattern must be cast before subtype methods are called.
-- Values read from `RuleContext.params` must be cast because `Map` returns
+- Values read from `RuleContext<T>.params` must be cast because `Map` returns
   `Object`.
 
 ## Who Should Depend On This Module

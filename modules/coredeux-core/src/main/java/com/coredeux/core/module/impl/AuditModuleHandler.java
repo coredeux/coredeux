@@ -21,12 +21,12 @@ import com.coredeux.core.util.CoredeuxGenericTypeResolver;
  */
 public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
 
-    private static final String MODULE_NAME = "audit";
-    private static final String ALL = "ALL";
-    private static final String SAVE = "SAVE";
-    private static final String UPDATE = "UPDATE";
-    private static final String DELETE = "DELETE";
-    private static final List<String> SUPPORTED_OPERATIONS = List.of(ALL, SAVE, UPDATE, DELETE);
+    protected static final String MODULE_NAME = "audit";
+    protected static final String ALL = "ALL";
+    protected static final String SAVE = "SAVE";
+    protected static final String UPDATE = "UPDATE";
+    protected static final String DELETE = "DELETE";
+    protected static final List<String> SUPPORTED_OPERATIONS = List.of(ALL, SAVE, UPDATE, DELETE);
 
     private final CoredeuxComponentRegistry componentRegistry;
 
@@ -74,7 +74,7 @@ public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> CoredeuxEntityAuditHandler<T> resolveAuditHandler(String auditHandlerName, T entity,
+    protected <T> CoredeuxEntityAuditHandler<T> resolveAuditHandler(String auditHandlerName, T entity,
             CoredeuxEntityDefinition definition) {
         CoredeuxEntityAuditHandler<?> auditHandler = componentRegistry.getComponent(auditHandlerName,
                 CoredeuxEntityAuditHandler.class);
@@ -82,7 +82,7 @@ public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
         return (CoredeuxEntityAuditHandler<T>) auditHandler;
     }
 
-    private <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
+    protected <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
             CoredeuxEntityDefinition definition) {
         Class<?> supportedType = CoredeuxGenericTypeResolver.resolveFirstGeneric(beanType,
                 CoredeuxEntityAuditHandler.class);
@@ -94,7 +94,7 @@ public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
                 + " for class: " + definition.getFullClassName());
     }
 
-    private List<String> resolveOperations(CoredeuxModuleDefinition moduleDefinition, CoredeuxEntityDefinition definition) {
+    protected List<String> resolveOperations(CoredeuxModuleDefinition moduleDefinition, CoredeuxEntityDefinition definition) {
         Map<String, Object> configMap = moduleDefinition.getConfigMap();
         Object configured = configMap.get("operations");
         if (!(configured instanceof List<?> rawOperations) || rawOperations.isEmpty()) {
@@ -125,7 +125,7 @@ public class AuditModuleHandler implements CoredeuxEntityModuleHandler {
         return operations;
     }
 
-    private String mapPhaseToAuditOperation(String phase) {
+    protected String mapPhaseToAuditOperation(String phase) {
         return switch (phase) {
             case CoredeuxHookPhases.AFTER_SAVE -> SAVE;
             case CoredeuxHookPhases.AFTER_UPDATE -> UPDATE;

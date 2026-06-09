@@ -83,7 +83,7 @@ public class SampleRuleSource {
     public CoredeuxComponentRegistry componentRegistry;
 
     @DrlRule(name = "check", when = "$context : RuleContext(method == 'check')")
-    public void check(RuleContext $context) {
+    public void check(RuleContext<String> $context) {
         SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
         $context.setOutput(sampleService.message());
         $context.setMessage("Check rule completed successfully.");
