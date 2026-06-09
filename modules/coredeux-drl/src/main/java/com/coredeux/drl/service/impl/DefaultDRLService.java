@@ -186,8 +186,7 @@ public class DefaultDRLService implements DRLService {
      * @param context the execution context to insert and update
      */
     private void executeCompiled(CompiledDRLRule compiledRule, RuleContext context) {
-        KieSession session = compiledRule.kieBase().newKieSession();
-        try {
+        try (KieSession session = compiledRule.kieBase().newKieSession()) {
             if (compiledRule.requiresComponentRegistry()) {
                 session.setGlobal("componentRegistry", componentRegistry);
             }
@@ -204,8 +203,6 @@ public class DefaultDRLService implements DRLService {
             if (context.getException() != null) {
                 throw new IllegalStateException("Rule captured an exception", context.getException());
             }
-        } finally {
-            session.dispose();
         }
     }
 
