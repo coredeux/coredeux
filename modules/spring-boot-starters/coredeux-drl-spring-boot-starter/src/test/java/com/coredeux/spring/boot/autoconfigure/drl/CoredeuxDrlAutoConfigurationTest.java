@@ -3,8 +3,12 @@ package com.coredeux.spring.boot.autoconfigure.drl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+import java.lang.reflect.Field;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
+import com.coredeux.drl.config.DrlRuntimeBootstrap;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.spring.boot.autoconfigure.CoredeuxAutoConfiguration;
@@ -64,6 +68,54 @@ class CoredeuxDrlAutoConfigurationTest {
                     assertEquals("ok", ruleContext.getOutput());
                     assertEquals(1, ruleContext.getFiredRules());
                 });
+    }
+
+    @Test
+    void appliesCompilerPropertiesFromSpringEnvironmentBeforeBootstrap() {
+        String previousCompiler = System.getProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY);
+        String previousLanguageLevel = System.getProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY);
+        try {
+            resetInitializedFlag();
+            new ApplicationContextRunner()
+                    .withConfiguration(AutoConfigurations.of(CoredeuxAutoConfiguration.class,
+                            CoredeuxDrlAutoConfiguration.class))
+                    .withBean(CoredeuxRequestContextResolver.class, () -> () -> null)
+                    .withUserConfiguration(SampleServiceConfiguration.class)
+                    .withPropertyValues(
+                            "coredeux.drl.classpath-prefix=custom/",
+                            "coredeux.drl.classpath-suffix=.rule",
+                            "coredeux.drl.java-compiler=ECJ",
+                            "coredeux.drl.java-language-level=17")
+                    .run(context -> {
+                        assertEquals("ECJ", System.getProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY));
+                        assertEquals("17", System.getProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY));
+                        assertInstanceOf(SpringCoredeuxComponentRegistry.class,
+                                context.getBean(CoredeuxComponentRegistry.class));
+                    });
+        } finally {
+            restoreProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY, previousCompiler);
+            restoreProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY, previousLanguageLevel);
+            resetInitializedFlag();
+        }
+    }
+
+    private void restoreProperty(String name, String previousValue) {
+        if (previousValue == null) {
+            System.clearProperty(name);
+        } else {
+            System.setProperty(name, previousValue);
+        }
+    }
+
+    private void resetInitializedFlag() {
+        try {
+            Field field = DrlRuntimeBootstrap.class.getDeclaredField("INITIALIZED");
+            field.setAccessible(true);
+            AtomicBoolean initialized = (AtomicBoolean) field.get(null);
+            initialized.set(false);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Unable to reset DRL bootstrap state for the test", exception);
+        }
     }
 
     @Configuration(proxyBeanMethods = false)

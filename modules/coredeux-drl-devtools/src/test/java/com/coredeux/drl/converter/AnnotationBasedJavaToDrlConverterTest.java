@@ -1,8 +1,11 @@
 package com.coredeux.drl.converter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.lang.reflect.Field;
 
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
@@ -114,15 +117,140 @@ class AnnotationBasedJavaToDrlConverterTest {
         assertTrue(exception.getMessage().contains("@DrlRule requires when"));
     }
 
+    @Test
+    void failsWhenDefinitionIsMissing() {
+        DrlConversionException exception = assertThrows(DrlConversionException.class, () -> converter.convert("""
+                package rules;
+
+                public class MissingDefinition {
+
+                    public void helper() {
+                    }
+                }
+                """));
+
+        assertTrue(exception.getMessage().contains("Missing @DrlDefinition on source class"));
+    }
+
+    @Test
+    void failsWhenThereIsMoreThanOneDefinitionClass() {
+        DrlConversionException exception = assertThrows(DrlConversionException.class, () -> converter.convert("""
+                package rules;
+
+                import com.coredeux.drl.converter.annotations.DrlDefinition;
+                import com.coredeux.drl.converter.annotations.DrlRule;
+                import com.coredeux.drl.model.RuleContext;
+
+                @DrlDefinition("first")
+                class FirstDefinition {
+
+                    @DrlRule("firstRule")
+                    public void firstRule(RuleContext $context) {
+                        $context.setOutput("first");
+                    }
+                }
+
+                @DrlDefinition("second")
+                class SecondDefinition {
+
+                    @DrlRule("secondRule")
+                    public void secondRule(RuleContext $context) {
+                        $context.setOutput("second");
+                    }
+                }
+                """));
+
+        assertTrue(exception.getMessage().contains("Only one @DrlDefinition class is supported per source file"));
+    }
+
+    @Test
+    void failsWhenDefinitionValueIsBlank() {
+        DrlConversionException exception = assertThrows(DrlConversionException.class, () -> converter.convert("""
+                package rules;
+
+                import com.coredeux.drl.converter.annotations.DrlDefinition;
+                import com.coredeux.drl.converter.annotations.DrlRule;
+                import com.coredeux.drl.model.RuleContext;
+
+                @DrlDefinition("   ")
+                public class BlankDefinition {
+
+                    @DrlRule("blankRule")
+                    public void blankRule(RuleContext $context) {
+                        $context.setOutput("blank");
+                    }
+                }
+                """));
+
+        assertTrue(exception.getMessage().contains("@DrlDefinition value must not be blank"));
+    }
+
+    @Test
+    void failsWhenNoRulesAreDeclared() {
+        DrlConversionException exception = assertThrows(DrlConversionException.class, () -> converter.convert("""
+                package rules;
+
+                import com.coredeux.core.registry.CoredeuxComponentRegistry;
+                import com.coredeux.drl.converter.annotations.DrlDefinition;
+                import com.coredeux.drl.converter.annotations.DrlGlobal;
+
+                @DrlDefinition("empty")
+                public class EmptyRuleSource {
+
+                    @DrlGlobal
+                    public CoredeuxComponentRegistry componentRegistry;
+                }
+                """));
+
+        assertTrue(exception.getMessage().contains("At least one @DrlRule method is required"));
+    }
+
+    @Test
+    void failsWhenSourceCannotBeParsed() {
+        DrlConversionException exception = assertThrows(DrlConversionException.class,
+                () -> converter.convert("package rules; class Broken {"));
+
+        assertTrue(exception.getMessage().contains("Unable to parse Java DRL source"));
+        assertNotNull(exception.getCause());
+    }
+
+    @Test
+    void supportsNormalAnnotationValuesAndEmptyRuleBodies() {
+        ConvertedDrl converted = converter.convert("""
+                package rules;
+
+                import com.coredeux.drl.converter.annotations.DrlDefinition;
+                import com.coredeux.drl.converter.annotations.DrlRule;
+                import com.coredeux.drl.model.RuleContext;
+
+                @DrlDefinition("valueRuleSource")
+                public class ValueRuleSource {
+
+                    @DrlRule(value = "valueRule", when = "$context : RuleContext(method == 'valueRule')")
+                    public void valueRule(RuleContext $context) {
+                    }
+                }
+                """);
+
+        assertEquals("valueRuleSource", converted.getRuleId());
+        assertTrue(converted.getDrl().contains("rule \"valueRule\""));
+        assertTrue(converted.getDrl().contains("when"));
+        assertTrue(converted.getDrl().contains("then"));
+        assertTrue(converted.getDrl().contains("end"));
+        assertTrue(!converted.getDrl().contains("valueRule("));
+    }
+
     private void withDroolsDefaults(Runnable runnable) {
         String previousCompiler = System.getProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY);
         String previousLanguageLevel = System.getProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY);
         try {
+            resetBootstrap();
             DrlRuntimeBootstrap.initialize();
             runnable.run();
         } finally {
             restoreProperty(DrlRuntimeBootstrap.JAVA_COMPILER_PROPERTY, previousCompiler);
             restoreProperty(DrlRuntimeBootstrap.JAVA_LANGUAGE_LEVEL_PROPERTY, previousLanguageLevel);
+            resetBootstrap();
         }
     }
 
@@ -131,6 +259,16 @@ class AnnotationBasedJavaToDrlConverterTest {
             System.clearProperty(name);
         } else {
             System.setProperty(name, previousValue);
+        }
+    }
+
+    private void resetBootstrap() {
+        try {
+            Field field = DrlRuntimeBootstrap.class.getDeclaredField("INITIALIZED");
+            field.setAccessible(true);
+            ((java.util.concurrent.atomic.AtomicBoolean) field.get(null)).set(false);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Unable to reset bootstrap state", exception);
         }
     }
 }
