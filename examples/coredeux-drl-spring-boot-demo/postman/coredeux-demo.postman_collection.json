@@ -2,7 +2,7 @@
   "info": {
     "name": "Coredeux DRL Spring Boot Demo API",
     "_postman_id": "d6fbe24d-8c44-4b1b-85dd-7e6b4d6c6a81",
-    "description": "Postman collection for the Coredeux DRL Spring Boot demo. The demo is database-backed: Java-like rule source is converted through DevTools and the generated DRL is stored in PostgreSQL for runtime execution.",
+    "description": "Postman collection for the Coredeux DRL Spring Boot demo. The demo is database-backed: Java-like rule source is converted through DevTools and the generated DRL is stored in PostgreSQL. The convert endpoint accepts raw Java source text and stores the generated DRL as a rule record.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -11,7 +11,6 @@
     { "key": "customerId", "value": "1" },
     { "key": "customerRuleId", "value": "customerValidator.drl" },
     { "key": "customerInlineRuleId", "value": "customerInlineGreeting.drl" },
-    { "key": "customerExecuteSourceRuleId", "value": "customerExecuteSource.drl" },
     { "key": "entityDefinitionRegistryCode", "value": "coredeux-demo" }
   ],
   "item": [
@@ -114,11 +113,11 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              { "key": "Content-Type", "value": "text/plain" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl.validation;\\n\\nimport java.util.ArrayList;\\nimport java.util.List;\\n\\nimport com.coredeux.core.validation.ValidationError;\\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\\nimport com.coredeux.drl.converter.annotations.DrlRule;\\nimport com.coredeux.drl.model.RuleContext;\\nimport com.coredeux.demo.domain.Customer;\\n\\n@DrlDefinition(\\\"customerValidator.drl\\\")\\npublic class CustomerInlineValidatorSource {\\n\\n    @DrlRule(name = \\\"validate\\\", when = \\\"$context : RuleContext(method == 'validate')\\\")\\n    public void validate(RuleContext<List<ValidationError>> $context) {\\n        Customer customer = (Customer) $context.getParams().get(\\\"entity\\\");\\n        List<ValidationError> errors = new ArrayList<>();\\n        if (customer == null || customer.getEmail() == null || customer.getEmail().isBlank()) {\\n            errors.add(ValidationError.builder().field(\\\"email\\\").message(\\\"Email is required.\\\").build());\\n        }\\n        $context.setOutput(errors);\\n        $context.setMessage(errors.isEmpty() ? \\\"Validation passed.\\\" : \\\"Validation failed.\\\");\\n    }\\n}\\n\"\n}"
+              "raw": "package com.coredeux.demo.drl.validation;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\nimport com.coredeux.core.validation.ValidationError;\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\nimport com.coredeux.drl.converter.annotations.DrlRule;\nimport com.coredeux.drl.model.RuleContext;\nimport com.coredeux.demo.domain.Customer;\n\n@DrlDefinition(\"customerValidator.drl\")\npublic class CustomerInlineValidatorSource {\n\n    @DrlRule(name = \"validate\", when = \"$context : RuleContext(method == 'validate')\")\n    public void validate(RuleContext<List<ValidationError>> $context) {\n        Customer customer = (Customer) $context.getParams().get(\"entity\");\n        List<ValidationError> errors = new ArrayList<>();\n        if (customer == null || customer.getEmail() == null || customer.getEmail().isBlank()) {\n            errors.add(ValidationError.builder().field(\"email\").message(\"Email is required.\").build());\n        }\n        $context.setOutput(errors);\n        $context.setMessage(errors.isEmpty() ? \"Validation passed.\" : \"Validation failed.\");\n    }\n}\n"
             },
             "url": "{{baseUrl}}/api/drl/rules/convert"
           },
@@ -156,78 +155,10 @@
           }
         },
         {
-          "name": "Execute Stored Validator Rule",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"method\": \"validate\",\n  \"params\": {\n    \"entity\": {\n      \"name\": \"Alice Example\",\n      \"email\": \"alice+{{$timestamp}}@example.com\",\n      \"active\": true,\n      \"status\": \"ACTIVE\"\n    }\n  },\n  \"facts\": [\n    {\n      \"name\": \"Alice Example\",\n      \"email\": \"alice+{{$timestamp}}@example.com\",\n      \"active\": true,\n      \"status\": \"ACTIVE\"\n    }\n  ]\n}"
-            },
-            "url": "{{baseUrl}}/api/drl/rules/{{customerRuleId}}/execute"
-          }
-        },
-        {
-          "name": "Execute Source Under Rule Id",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl.inline;\\n\\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\\nimport com.coredeux.drl.converter.annotations.DrlRule;\\nimport com.coredeux.drl.model.RuleContext;\\n\\n@DrlDefinition(\\\"customerExecuteSource.drl\\\")\\npublic class CustomerExecuteSourceRuleSource {\\n\\n    @DrlGlobal\\n    public CoredeuxComponentRegistry componentRegistry;\\n\\n    @DrlRule(name = \\\"greet\\\", when = \\\"$context : RuleContext(method == 'greet')\\\")\\n    public void greet(RuleContext<String> $context) {\\n        $context.setOutput(\\\"Hello from inline DRL source\\\");\\n        $context.setMessage(\\\"Inline DRL executed successfully.\\\");\\n    }\\n}\\n\",\n  \"context\": {\n    \"method\": \"greet\",\n    \"params\": {},\n    \"facts\": []\n  }\n}"
-            },
-            "url": "{{baseUrl}}/api/drl/rules/{{customerExecuteSourceRuleId}}/execute-source"
-          }
-        },
-        {
           "name": "Delete Stored Rule",
           "request": {
             "method": "DELETE",
             "url": "{{baseUrl}}/api/drl/rules/{{customerRuleId}}"
-          }
-        }
-      ]
-    },
-    {
-      "name": "DRL Runtime",
-      "item": [
-        {
-          "name": "Execute Source Immediately",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl.inline;\\n\\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\\nimport com.coredeux.drl.converter.annotations.DrlRule;\\nimport com.coredeux.drl.model.RuleContext;\\n\\n@DrlDefinition(\\\"customerExecuteSource.drl\\\")\\npublic class CustomerExecuteSourceRuleSource {\\n\\n    @DrlRule(name = \\\"greet\\\", when = \\\"$context : RuleContext(method == 'greet')\\\")\\n    public void greet(RuleContext<String> $context) {\\n        $context.setOutput(\\\"Hello from inline DRL source\\\");\\n        $context.setMessage(\\\"Inline DRL executed successfully.\\\");\\n    }\\n}\\n\",\n  \"context\": {\n    \"method\": \"greet\",\n    \"params\": {},\n    \"facts\": []\n  }\n}"
-            },
-            "url": "{{baseUrl}}/api/drl/execute-source"
-          }
-        },
-        {
-          "name": "Cache Status",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/drl/cache/{{customerRuleId}}"
-          }
-        },
-        {
-          "name": "Purge Rule Cache",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/api/drl/cache/{{customerRuleId}}"
-          }
-        },
-        {
-          "name": "Purge All Cache",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/api/drl/cache"
           }
         }
       ]

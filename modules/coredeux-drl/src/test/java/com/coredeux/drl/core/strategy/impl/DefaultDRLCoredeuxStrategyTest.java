@@ -25,6 +25,7 @@ import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
 import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
+import com.coredeux.drl.cache.CompiledDRLRule;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
 
@@ -227,6 +228,24 @@ class DefaultDRLCoredeuxStrategyTest {
         @Override
         public boolean isCached(String ruleId) {
             return false;
+        }
+
+        @Override
+        public void compileAndCache(String ruleId) {
+        }
+
+        @Override
+        public void compileAndCache(String ruleId, String source) {
+        }
+
+        @Override
+        public CompiledDRLRule compile(String ruleId) {
+            return new CompiledDRLRule(null, false);
+        }
+
+        @Override
+        public CompiledDRLRule compile(String ruleId, String drl) {
+            return new CompiledDRLRule(null, false);
         }
 
         @SuppressWarnings("unchecked")
