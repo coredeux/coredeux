@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -103,6 +105,41 @@ class DRLModuleHandlerRoutingTest {
 
         verify(auditHandler, times(1)).audit(eq("customer"), eq(definition), eq(context));
         verify(drlService, times(1)).execute(eq("drlAudit.drl"), any(RuleContext.class));
+    }
+
+    @Test
+    void auditKeepsConfiguredJavaAndDrlHandlerOrder() {
+        CoredeuxComponentRegistry componentRegistry = mock(CoredeuxComponentRegistry.class);
+        DRLService drlService = mock(DRLService.class);
+        @SuppressWarnings("unchecked")
+        CoredeuxEntityAuditHandler<Object> auditHandler = mock(CoredeuxEntityAuditHandler.class);
+        List<String> executionOrder = new ArrayList<>();
+
+        doAnswer(invocation -> {
+            executionOrder.add("java");
+            return null;
+        }).when(auditHandler).audit(any(), any(), any());
+        doAnswer(invocation -> {
+            executionOrder.add("drl");
+            return null;
+        }).when(drlService).execute(eq("drlAudit.drl"), any(RuleContext.class));
+
+        when(componentRegistry.getComponent(eq("coredeuxDrlService"), eq(DRLService.class))).thenReturn(drlService);
+        when(componentRegistry.getComponent(eq("javaAudit"), eq(CoredeuxEntityAuditHandler.class))).thenReturn(auditHandler);
+
+        DRLAuditModuleHandler handler = new DRLAuditModuleHandler(componentRegistry);
+        CoredeuxEntityDefinition definition = entityDefinition();
+        CoredeuxModuleDefinition moduleDefinition = CoredeuxModuleDefinition.builder()
+                .name("audit")
+                .enabled(true)
+                .handlers(List.of("javaAudit", "drlAudit.drl"))
+                .config(Map.of("operations", List.of("SAVE")))
+                .build();
+        OperationContext context = OperationContext.builder().build();
+
+        handler.execute("customer", definition, moduleDefinition, CoredeuxHookPhases.AFTER_SAVE, context);
+
+        assertEquals(List.of("java", "drl"), executionOrder);
     }
 
     private CoredeuxEntityDefinition entityDefinition() {

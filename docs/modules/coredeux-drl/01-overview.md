@@ -56,6 +56,12 @@ That shape matters because it keeps the runtime predictable: source lookup is
 separate from compilation, compilation is separate from execution, and
 execution is separate from storage.
 
+One important authoring rule from the POC: the Java source is only an
+authoring surface. After conversion, helper methods in the authoring class are
+not available as reusable DRL methods. Keep each converted rule method
+self-contained, and move reusable behavior into separate DRL sources or
+external services that the rule resolves through the component registry.
+
 The module is intentionally split so the core runtime stays plain Java while
 the Spring Boot starter can layer on environment and application-context
 integration.
@@ -63,6 +69,18 @@ integration.
 The same `componentRegistry` global works in both worlds: native applications
 can back it with `InMemoryCoredeuxComponentRegistry`, while Spring Boot
 applications get `SpringCoredeuxComponentRegistry` through the starter.
+
+## Hands-On Pages
+
+If you want copyable examples, continue to the dedicated guides.
+They show the Java source first, then the generated DRL, so the authoring flow
+is easy to follow end to end:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
 
 ## What The Rules Look Like
 

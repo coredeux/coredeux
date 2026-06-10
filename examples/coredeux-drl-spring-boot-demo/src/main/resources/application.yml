@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: coredeux-drl-spring-boot-demo
+  datasource:
+    url: jdbc:postgresql://${COREDEUX_DEMO_DB_HOST:localhost}:${COREDEUX_DEMO_DB_PORT:5432}/${COREDEUX_DEMO_DB_NAME:coredeux_oss}
+    driver-class-name: org.postgresql.Driver
+    username: ${COREDEUX_DEMO_DB_USER:postgres}
+    password: ${COREDEUX_DEMO_DB_PASSWORD:root}
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  data:
+    redis:
+      host: ${COREDEUX_DEMO_REDIS_HOST:localhost}
+      port: ${COREDEUX_DEMO_REDIS_PORT:6379}
+
+coredeux:
+  demo:
+    entity-definitions:
+      bootstrap-location: classpath:coredeux-entities.yml
+      registry-code: coredeux-demo
+      redis-key: coredeux:demo:entity-definitions
+      bootstrap-enabled: true
+
+logging:
+  level:
+    com.coredeux: INFO
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

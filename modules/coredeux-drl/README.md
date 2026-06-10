@@ -36,7 +36,7 @@ unless you override it in configuration. The current map is:
 
 Detailed reference:
 
-- [docs/modules/coredeux-drl/04-reference.md](/C:/Data/Development/Coredeux/oss/coredeux/docs/modules/coredeux-drl/04-reference.md)
+- [Coredeux DRL Reference](/coredeux-drl-reference)
 
 ## What This Module Provides
 
@@ -98,6 +98,25 @@ fast instead of silently returning the wrong object.
 
 For Java-to-DRL authoring and conversion tools, see
 `coredeux-drl-devtools`.
+
+That authoring flow is intentionally strict:
+
+- each converted rule source should be self-contained
+- helper methods in the Java source are for authoring convenience only
+- shared logic should live in another DRL source or an external service
+- the demo follows this pattern with concern-based folders like
+  `dataaccess`, `validation`, `hooks`, and `audit`
+
+## Practical Guides
+
+If you want copyable examples instead of the summary above, read the
+dedicated docs:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
 
 ## Native Usage
 

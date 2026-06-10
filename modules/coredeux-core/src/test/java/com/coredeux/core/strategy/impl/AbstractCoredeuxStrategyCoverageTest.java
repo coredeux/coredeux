@@ -26,7 +26,10 @@ import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
+import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.coredeux.core.strategy.CoredeuxHookPhases;
+import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
 
 class AbstractCoredeuxStrategyCoverageTest {
 
@@ -121,6 +124,39 @@ class AbstractCoredeuxStrategyCoverageTest {
     }
 
     @Test
+    void shouldInvokeLoadModulesForSingleEntityAndSearchResultEntries() {
+        RecordingModuleHandler handler = new RecordingModuleHandler("hooks");
+        CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder()
+                .fullClassName(SampleEntity.class.getName())
+                .name("sample")
+                .identifier("id")
+                .storage(CoredeuxStorageDefinition.builder().dataAccessService("customerDataAccess").build())
+                .modules(List.of(CoredeuxModuleDefinition.builder()
+                        .name("hooks")
+                        .enabled(true)
+                        .handlers(List.of("hookBean"))
+                        .build()))
+                .build();
+        ExposedStrategy strategy = new ExposedStrategy(new SimpleRegistry(List.of(definition)), new FixedResolver(),
+                new TestComponentRegistry(), new DefaultCoredeuxReflectionHelperService(), () -> null, List.of(handler));
+
+        strategy.exposedInvokeLoadModules(new SampleEntity("1", "single"), definition, "explicit-id");
+        strategy.exposedInvokeLoadModules(SearchResult.<SampleEntity>builder()
+                .results(List.of(new SampleEntity("2", "first"), new SampleEntity("3", "second")))
+                .build(), definition);
+
+        assertEquals(3, handler.invocationCount);
+        assertEquals("explicit-id", handler.contexts.get(0).getLifecycleContext().getIdentifier());
+        assertEquals(CoredeuxHookPhases.LOAD, handler.phases.get(0));
+        assertEquals(CoredeuxLifecycleOperations.FETCH, handler.contexts.get(0).getLifecycleContext().getOperation());
+        assertEquals("single", ((SampleEntity) handler.contexts.get(0).getLifecycleContext().getNewValue()).getValue());
+        assertEquals("2", handler.contexts.get(1).getLifecycleContext().getIdentifier());
+        assertEquals("3", handler.contexts.get(2).getLifecycleContext().getIdentifier());
+        assertEquals(CoredeuxLifecycleOperations.FETCH, handler.contexts.get(1).getLifecycleContext().getOperation());
+        assertEquals(CoredeuxLifecycleOperations.FETCH, handler.contexts.get(2).getLifecycleContext().getOperation());
+    }
+
+    @Test
     void shouldExtractAndRequireIdentifiersAndExistingState() {
         TestComponentRegistry applicationContext = new TestComponentRegistry();
         applicationContext.registerSingleton("customerDataAccess", new RecordingDataAccessService());
@@ -195,6 +231,14 @@ class AbstractCoredeuxStrategyCoverageTest {
             executeModule(entity, definition, moduleDefinition, phase, context);
         }
 
+        private <T> void exposedInvokeLoadModules(T entity, CoredeuxEntityDefinition definition, Object identifier) {
+            invokeLoadModules(entity, definition, identifier);
+        }
+
+        private <T> void exposedInvokeLoadModules(SearchResult<T> result, CoredeuxEntityDefinition definition) {
+            invokeLoadModules(result, definition);
+        }
+
         private <T> Object exposedExtractIdentifier(T entity, CoredeuxEntityDefinition definition) {
             return extractIdentifier(entity, definition);
         }
@@ -248,9 +292,15 @@ class AbstractCoredeuxStrategyCoverageTest {
     private static final class RecordingModuleHandler implements CoredeuxEntityModuleHandler {
         private final String moduleName;
         private int invocationCount;
+        private final List<String> phases = new ArrayList<>();
+        private final List<OperationContext> contexts = new ArrayList<>();
         private RecordingModuleHandler(String moduleName) { this.moduleName = moduleName; }
         @Override public String getModuleName() { return moduleName; }
-        @Override public <T> void execute(T entity, CoredeuxEntityDefinition definition, CoredeuxModuleDefinition moduleDefinition, String phase, OperationContext context) { invocationCount++; }
+        @Override public <T> void execute(T entity, CoredeuxEntityDefinition definition, CoredeuxModuleDefinition moduleDefinition, String phase, OperationContext context) {
+            invocationCount++;
+            phases.add(phase);
+            contexts.add(context);
+        }
     }
 
     private static final class RecordingDataAccessService implements CoredeuxDataAccessService {

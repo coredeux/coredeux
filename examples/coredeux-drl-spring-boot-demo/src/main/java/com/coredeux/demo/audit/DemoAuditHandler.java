@@ -1,0 +1,33 @@
+package com.coredeux.demo.audit;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.coredeux.core.audit.CoredeuxEntityAuditHandler;
+import com.coredeux.core.context.OperationContext;
+import com.coredeux.core.definition.CoredeuxEntityDefinition;
+import com.coredeux.demo.domain.Customer;
+
+@Component("demoAuditHandler")
+public class DemoAuditHandler implements CoredeuxEntityAuditHandler<Customer> {
+
+    private final List<String> auditEntries = new ArrayList<>();
+
+    @Override
+    public synchronized void audit(Customer entity, CoredeuxEntityDefinition definition, OperationContext context) {
+        auditEntries.add(definition.getName() + ":" + (context != null && context.getLifecycleContext() != null
+                ? context.getLifecycleContext().getOperation()
+                : "unknown"));
+    }
+
+    public synchronized List<String> getAuditEntries() {
+        return Collections.unmodifiableList(new ArrayList<>(auditEntries));
+    }
+
+    public synchronized void clear() {
+        auditEntries.clear();
+    }
+}

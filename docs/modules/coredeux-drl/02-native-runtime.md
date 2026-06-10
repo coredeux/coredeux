@@ -67,6 +67,10 @@ String output = context.getOutput();
 int firedRules = context.getFiredRules();
 ```
 
+Keep the authored rule source self-contained. Any helper methods that exist in
+the Java authoring class are for authoring convenience only; the converted DRL
+should not depend on them as reusable rule methods.
+
 When the rule throws, the runtime stores the exception on the context and then
 raises an `IllegalStateException` so the caller can handle it in one place.
 
@@ -158,6 +162,16 @@ compiled cache entry.
 This is the right model when the source is external and may change while the
 application is running. The runtime does not try to guess whether the source
 changed. You decide when the compiled version should be discarded.
+
+## Hands-On Pages
+
+For full examples of each module style, continue to:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
 
 <!-- docs-nav-start -->
 [Previous: Overview](/coredeux-drl-overview) | [Documentation Home](/) | [Next: Spring Boot Starter](/coredeux-drl-spring-boot-starter)

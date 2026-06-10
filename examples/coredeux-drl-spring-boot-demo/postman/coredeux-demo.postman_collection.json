@@ -1,0 +1,283 @@
+{
+  "info": {
+    "name": "Coredeux DRL Spring Boot Demo API",
+    "_postman_id": "d6fbe24d-8c44-4b1b-85dd-7e6b4d6c6a81",
+    "description": "Postman collection for the Coredeux DRL Spring Boot demo. The demo is database-backed: Java-like rule source is converted through DevTools and the generated DRL is stored in PostgreSQL for runtime execution.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "entityName", "value": "customer" },
+    { "key": "customerId", "value": "1" },
+    { "key": "customerRuleId", "value": "customerValidator.drl" },
+    { "key": "customerInlineRuleId", "value": "customerInlineGreeting.drl" },
+    { "key": "customerExecuteSourceRuleId", "value": "customerExecuteSource.drl" },
+    { "key": "entityDefinitionRegistryCode", "value": "coredeux-demo" }
+  ],
+  "item": [
+    {
+      "name": "Swagger",
+      "item": [
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v3/api-docs"
+          }
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/swagger-ui.html"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer CRUD",
+      "item": [
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example\",\n  \"email\": \"alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{entityName}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Customer",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{entityName}}/{{customerId}}"
+          }
+        },
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/entities/{{entityName}}?pageSize=20&currentPage=1"
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example Updated\",\n  \"email\": \"alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{baseUrl}}/api/entities/{{entityName}}/{{customerId}}"
+          }
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/entities/{{entityName}}/{{customerId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "DRL Rules",
+      "item": [
+        {
+          "name": "List Stored Rules",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/drl/rules"
+          }
+        },
+        {
+          "name": "Convert Java Source And Store",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl.validation;\\n\\nimport java.util.ArrayList;\\nimport java.util.List;\\n\\nimport com.coredeux.core.validation.ValidationError;\\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\\nimport com.coredeux.drl.converter.annotations.DrlRule;\\nimport com.coredeux.drl.model.RuleContext;\\nimport com.coredeux.demo.domain.Customer;\\n\\n@DrlDefinition(\\\"customerValidator.drl\\\")\\npublic class CustomerInlineValidatorSource {\\n\\n    @DrlRule(name = \\\"validate\\\", when = \\\"$context : RuleContext(method == 'validate')\\\")\\n    public void validate(RuleContext<List<ValidationError>> $context) {\\n        Customer customer = (Customer) $context.getParams().get(\\\"entity\\\");\\n        List<ValidationError> errors = new ArrayList<>();\\n        if (customer == null || customer.getEmail() == null || customer.getEmail().isBlank()) {\\n            errors.add(ValidationError.builder().field(\\\"email\\\").message(\\\"Email is required.\\\").build());\\n        }\\n        $context.setOutput(errors);\\n        $context.setMessage(errors.isEmpty() ? \\\"Validation passed.\\\" : \\\"Validation failed.\\\");\\n    }\\n}\\n\"\n}"
+            },
+            "url": "{{baseUrl}}/api/drl/rules/convert"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set('customerRuleId', String(body.code)); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Stored Rule",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/drl/rules/{{customerRuleId}}"
+          }
+        },
+        {
+          "name": "Upsert Inline Rule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Inline DRL stored in PostgreSQL\",\n  \"drl\": \"package com.coredeux.demo.drl.inline;\\n\\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\\nimport com.coredeux.drl.converter.annotations.DrlRule;\\nimport com.coredeux.drl.model.RuleContext;\\n\\n@DrlDefinition(\\\"customerInlineGreeting.drl\\\")\\npublic class CustomerInlineGreetingRuleSource {\\n\\n    @DrlGlobal\\n    public CoredeuxComponentRegistry componentRegistry;\\n\\n    @DrlRule(name = \\\"greet\\\", when = \\\"$context : RuleContext(method == 'greet')\\\")\\n    public void greet(RuleContext<String> $context) {\\n        $context.setOutput(\\\"Hello from inline DRL source\\\");\\n        $context.setMessage(\\\"Inline DRL executed successfully.\\\");\\n    }\\n}\\n\"\n}"
+            },
+            "url": "{{baseUrl}}/api/drl/rules/{{customerInlineRuleId}}"
+          }
+        },
+        {
+          "name": "Execute Stored Validator Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"validate\",\n  \"params\": {\n    \"entity\": {\n      \"name\": \"Alice Example\",\n      \"email\": \"alice+{{$timestamp}}@example.com\",\n      \"active\": true,\n      \"status\": \"ACTIVE\"\n    }\n  },\n  \"facts\": [\n    {\n      \"name\": \"Alice Example\",\n      \"email\": \"alice+{{$timestamp}}@example.com\",\n      \"active\": true,\n      \"status\": \"ACTIVE\"\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/drl/rules/{{customerRuleId}}/execute"
+          }
+        },
+        {
+          "name": "Execute Source Under Rule Id",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl.inline;\\n\\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\\nimport com.coredeux.drl.converter.annotations.DrlRule;\\nimport com.coredeux.drl.model.RuleContext;\\n\\n@DrlDefinition(\\\"customerExecuteSource.drl\\\")\\npublic class CustomerExecuteSourceRuleSource {\\n\\n    @DrlGlobal\\n    public CoredeuxComponentRegistry componentRegistry;\\n\\n    @DrlRule(name = \\\"greet\\\", when = \\\"$context : RuleContext(method == 'greet')\\\")\\n    public void greet(RuleContext<String> $context) {\\n        $context.setOutput(\\\"Hello from inline DRL source\\\");\\n        $context.setMessage(\\\"Inline DRL executed successfully.\\\");\\n    }\\n}\\n\",\n  \"context\": {\n    \"method\": \"greet\",\n    \"params\": {},\n    \"facts\": []\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/drl/rules/{{customerExecuteSourceRuleId}}/execute-source"
+          }
+        },
+        {
+          "name": "Delete Stored Rule",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/drl/rules/{{customerRuleId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "DRL Runtime",
+      "item": [
+        {
+          "name": "Execute Source Immediately",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source\": \"package com.coredeux.demo.drl.inline;\\n\\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\\nimport com.coredeux.drl.converter.annotations.DrlRule;\\nimport com.coredeux.drl.model.RuleContext;\\n\\n@DrlDefinition(\\\"customerExecuteSource.drl\\\")\\npublic class CustomerExecuteSourceRuleSource {\\n\\n    @DrlRule(name = \\\"greet\\\", when = \\\"$context : RuleContext(method == 'greet')\\\")\\n    public void greet(RuleContext<String> $context) {\\n        $context.setOutput(\\\"Hello from inline DRL source\\\");\\n        $context.setMessage(\\\"Inline DRL executed successfully.\\\");\\n    }\\n}\\n\",\n  \"context\": {\n    \"method\": \"greet\",\n    \"params\": {},\n    \"facts\": []\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/drl/execute-source"
+          }
+        },
+        {
+          "name": "Cache Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/drl/cache/{{customerRuleId}}"
+          }
+        },
+        {
+          "name": "Purge Rule Cache",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/drl/cache/{{customerRuleId}}"
+          }
+        },
+        {
+          "name": "Purge All Cache",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/drl/cache"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entity Definition Registry Cache",
+      "item": [
+        {
+          "name": "Registry Cache Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/drl/entity-definitions/cache"
+          }
+        },
+        {
+          "name": "Refresh Registry Cache",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/drl/entity-definitions/cache/refresh"
+          }
+        },
+        {
+          "name": "Bootstrap Registry From File",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/drl/entity-definitions/cache/bootstrap"
+          }
+        },
+        {
+          "name": "Update Registry Definition",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "text/plain" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "coredeux:\n  entities:\n    - full-class-name: com.coredeux.demo.domain.Customer\n      name: customer\n      identifier: pk\n      storage:\n        data-access-service: customerDataAccess.drl\n      modules:\n        - name: validators\n          enabled: true\n          handlers:\n            - customerEmailValidator\n            - customerValidator.drl\n        - name: hooks\n          enabled: true\n          handlers:\n            - demoLifecycleHook\n            - customerHook.drl\n        - name: audit\n          enabled: true\n          handlers:\n            - demoAuditHandler\n            - customerAudit.drl\n          config:\n            operations:\n              - SAVE\n              - UPDATE\n              - DELETE\n"
+            },
+            "url": "{{baseUrl}}/api/drl/entity-definitions/cache?sourceLocation=postman"
+          }
+        },
+        {
+          "name": "Purge Registry Cache",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/drl/entity-definitions/cache"
+          }
+        }
+      ]
+    }
+  ]
+}

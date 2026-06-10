@@ -151,6 +151,11 @@ validation hooks and command-style operations.
 The rule session facts come from `RuleContext.getFacts()`, so the calling code
 can decide what gets inserted without changing the service signature.
 
+Keep the converted rule body self-contained. Helper methods in the Java
+authoring class are not preserved as reusable DRL methods after conversion, so
+shared behavior should live in another DRL source or an external component
+resolved through the registry.
+
 You can use that same shape anywhere you execute a rule:
 
 ```java
@@ -275,6 +280,20 @@ The Java-to-DRL converter and its annotations live in
 
 If you are authoring annotated Java-like rule source, see
 `coredeux-drl-devtools`.
+
+## Practical Guides
+
+If you want the full examples instead of the reference summary, use the
+dedicated pages:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
+
+Each of those guides shows the Java source first and the generated DRL right
+after it, so the authoring path stays obvious for both developers and agents.
 
 ## Update Strategy
 
