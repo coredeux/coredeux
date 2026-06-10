@@ -1,4 +1,4 @@
-package com.coredeux.demo.web;
+package com.coredeux.demo.definition;
 
 import java.lang.reflect.Field;
 

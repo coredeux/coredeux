@@ -7,15 +7,12 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.coredeux.demo.domain.DrlRuleRecord;
 import com.coredeux.demo.drl.DemoDrlRuleSourceService;
-import com.coredeux.demo.drl.DrlConversionRequest;
-import com.coredeux.demo.drl.DrlRuleUpsertRequest;
 import com.coredeux.drl.service.DRLService;
 
 @RestController
@@ -36,27 +33,35 @@ public class DrlRuleController {
     }
 
     @GetMapping("/{ruleId}")
-    public ResponseEntity<DrlRuleRecord> get(@PathVariable("ruleId") String ruleId) {
+    public ResponseEntity<String> get(@PathVariable("ruleId") String ruleId) {
         return ruleSourceService.findByCode(ruleId)
-                .map(ResponseEntity::ok)
+                .map(n -> ResponseEntity.ok(n.getDrl()))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{ruleId}")
-    public DrlRuleRecord upsert(@PathVariable("ruleId") String ruleId, @RequestBody DrlRuleUpsertRequest request) {
-        return ruleSourceService.save(ruleId, request == null ? null : request.getDescription(),
-                request == null ? null : request.getDrl());
-    }
-
     @PostMapping("/convert")
-    public DrlRuleRecord convert(@RequestBody DrlConversionRequest request) {
-        return ruleSourceService.convertAndSave(request == null ? null : request.getSource());
+    public DrlRuleRecord convert(@RequestBody String source) {
+    	DrlRuleRecord record = ruleSourceService.convertAndSave(source);
+    	drlService.compileAndCache(record.getCode(), record.getDrl());
+        return record;
     }
 
     @DeleteMapping("/{ruleId}")
     public ResponseEntity<Void> delete(@PathVariable("ruleId") String ruleId) {
         ruleSourceService.delete(ruleId);
         drlService.purgeCache(ruleId);
+        return ResponseEntity.noContent().build();
+    }
+    
+    @DeleteMapping("/cache/{ruleId}")
+    public ResponseEntity<Void> purgeRuleCache(@PathVariable("ruleId") String ruleId) {
+        drlService.purgeCache(ruleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/cache")
+    public ResponseEntity<Void> purgeAllCache() {
+        drlService.purgeCache();
         return ResponseEntity.noContent().build();
     }
 }

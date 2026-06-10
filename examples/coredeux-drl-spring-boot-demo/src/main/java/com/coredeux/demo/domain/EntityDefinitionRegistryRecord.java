@@ -4,10 +4,6 @@ import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 /**
@@ -16,11 +12,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "entity_definition_registry")
-public class EntityDefinitionRegistryRecord {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class EntityDefinitionRegistryRecord extends Item {
 
     @Column(nullable = false, unique = true)
     private String code;
@@ -28,20 +20,11 @@ public class EntityDefinitionRegistryRecord {
     @Column(nullable = false)
     private String sourceLocation;
 
-    @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     private String yaml;
 
     @Column(nullable = false)
     private Instant updatedAt = Instant.now();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getCode() {
         return code;

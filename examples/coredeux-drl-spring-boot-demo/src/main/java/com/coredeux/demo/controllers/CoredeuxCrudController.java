@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
-import com.coredeux.demo.web.DemoEntityResolver;
+import com.coredeux.demo.definition.DemoEntityResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController

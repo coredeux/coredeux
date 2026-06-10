@@ -26,3 +26,8 @@ coredeux:
               - SAVE
               - UPDATE
               - DELETE
+    - full-class-name: com.coredeux.demo.domain.DrlRuleRecord
+      name: DrlRuleRecord
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService
