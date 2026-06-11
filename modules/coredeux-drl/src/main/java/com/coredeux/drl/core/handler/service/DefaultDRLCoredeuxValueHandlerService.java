@@ -1,7 +1,5 @@
 package com.coredeux.drl.core.handler.service;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Objects;
 
 import com.coredeux.core.exceptions.CoredeuxValueHandlerException;
@@ -51,27 +49,6 @@ public class DefaultDRLCoredeuxValueHandlerService extends DefaultCoredeuxValueH
         }
         RuleContext<T> ruleContext = RuleContext.method(DRL_METHOD);
         ruleContext.param("context", context);
-        ruleContext.fact(context);
-        copyContextFields(ruleContext, context);
         return ruleContext;
-    }
-
-    private <T, V extends ValueContext> void copyContextFields(RuleContext<T> ruleContext, V context) {
-        Class<?> type = context.getClass();
-        while (type != null && type != Object.class) {
-            for (Field field : type.getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers())) {
-                    continue;
-                }
-                try {
-                    field.setAccessible(true);
-                    ruleContext.param(field.getName(), field.get(context));
-                } catch (IllegalAccessException exception) {
-                    throw new CoredeuxValueHandlerException(
-                            "Unable to read value handler context field: " + field.getName(), exception);
-                }
-            }
-            type = type.getSuperclass();
-        }
     }
 }

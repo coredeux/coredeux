@@ -47,9 +47,8 @@ class DefaultDRLCoredeuxValueHandlerServiceTest {
             RuleContext<String> ruleContext = invocation.getArgument(1, RuleContext.class);
             assertEquals("handle", ruleContext.getMethod());
             assertSame(context, ruleContext.getParams().get("context"));
-            assertEquals("demo", ruleContext.getParams().get("text"));
-            assertEquals(7, ruleContext.getParams().get("count"));
-            assertSame(context, ruleContext.getFacts().get(0));
+            assertEquals(1, ruleContext.getParams().size());
+            assertEquals(0, ruleContext.getFacts().size());
             ruleContext.setOutput("drl-ok");
             return null;
         }).when(drlService).execute(eq("sample-handler.drl"), any(RuleContext.class));
