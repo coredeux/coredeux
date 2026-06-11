@@ -54,6 +54,11 @@
         </dependency>
         <dependency>
             <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-import-spring-boot-starter</artifactId>
+            <version>${coredeux.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coredeux</groupId>
             <artifactId>coredeux-core-jpa-spring-boot-starter</artifactId>
             <version>${coredeux.version}</version>
         </dependency>
