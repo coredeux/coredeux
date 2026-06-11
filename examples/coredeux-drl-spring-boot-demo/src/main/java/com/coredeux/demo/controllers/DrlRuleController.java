@@ -42,7 +42,7 @@ public class DrlRuleController {
     @PostMapping("/convert")
     public DrlRuleRecord convert(@RequestBody String source) {
     	DrlRuleRecord record = ruleSourceService.convertAndSave(source);
-    	drlService.compileAndCache(record.getCode(), record.getDrl());
+    	drlService.compileAndCache(record.getCode());
         return record;
     }
 

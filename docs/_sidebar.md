@@ -55,6 +55,8 @@
   * [Native Tour Of The Demo](/02-native-tour-of-the-demo)
 * Spring Boot Import Integration
   * [Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app)
+* DRL Spring Boot Demo Companion
+  * [Coredeux DRL Spring Boot Demo](/04-coredeux-drl-spring-boot-demo)
 * Platform And Project
   * [Platform Documentation](/platform)
   * [Project](/project)
