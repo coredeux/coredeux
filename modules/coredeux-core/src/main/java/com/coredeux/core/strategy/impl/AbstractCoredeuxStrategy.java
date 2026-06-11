@@ -18,7 +18,10 @@ import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
+import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.coredeux.core.strategy.CoredeuxHookPhases;
+import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
 
 /**
  * Base strategy implementation that resolves entity definitions, configured
@@ -68,6 +71,14 @@ public abstract class AbstractCoredeuxStrategy {
                             + entityType.getName(),
                     exception);
         }
+    }
+
+    protected String resolveDataAccessService(CoredeuxEntityDefinition definition) {
+        return entityDataAccessResolver.resolveDataAccessService(definition);
+    }
+
+    protected CoredeuxComponentRegistry getComponentRegistry() {
+        return componentRegistry;
     }
 
     protected <T> void executeModules(T entity, CoredeuxEntityDefinition definition, String phase,
@@ -147,6 +158,28 @@ public abstract class AbstractCoredeuxStrategy {
                             + "' on class: " + entityType.getName());
         }
         return existing;
+    }
+
+    protected <T> void invokeLoadModules(T entity, CoredeuxEntityDefinition definition, Object identifier) {
+        if (entity == null) {
+            return;
+        }
+        OperationContext fetchContext = createOperationContext(CoredeuxLifecycleOperations.FETCH,
+                identifier != null ? identifier : extractIdentifier(entity, definition), null, entity);
+        executeModules(entity, definition, CoredeuxHookPhases.LOAD, fetchContext);
+    }
+
+    protected <T> void invokeLoadModules(SearchResult<T> result, CoredeuxEntityDefinition definition) {
+        if (result == null || result.getResults() == null) {
+            return;
+        }
+        for (T entity : result.getResults()) {
+            if (entity != null) {
+                OperationContext fetchContext = createOperationContext(CoredeuxLifecycleOperations.FETCH,
+                        extractIdentifier(entity, definition), null, entity);
+                executeModules(entity, definition, CoredeuxHookPhases.LOAD, fetchContext);
+            }
+        }
     }
 
     private Map<String, CoredeuxEntityModuleHandler> toModuleHandlerMap(List<CoredeuxEntityModuleHandler> handlers) {

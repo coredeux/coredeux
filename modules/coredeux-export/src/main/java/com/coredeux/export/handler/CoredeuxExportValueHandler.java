@@ -1,6 +1,7 @@
 package com.coredeux.export.handler;
 
-public interface CoredeuxExportValueHandler {
+import com.coredeux.core.handler.CoredeuxValueHandler;
 
-    Object handle(ExportValueContext context);
+public interface CoredeuxExportValueHandler extends CoredeuxValueHandler<Object, ExportValueContext> {
+
 }

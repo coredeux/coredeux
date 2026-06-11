@@ -1,19 +1,37 @@
 package com.coredeux.spring.boot.autoconfigure.drl;
 
+import java.util.List;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
+import com.coredeux.core.helper.CoredeuxReflectionHelperService;
+import com.coredeux.core.module.CoredeuxEntityModuleHandler;
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
+import com.coredeux.core.module.impl.AuditModuleHandler;
+import com.coredeux.core.module.impl.HooksModuleHandler;
+import com.coredeux.core.module.impl.ValidatorsModuleHandler;
+import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.resolver.EntityDataAccessResolver;
+import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
+import com.coredeux.core.strategy.CoredeuxStrategy;
+import com.coredeux.drl.core.handler.service.DefaultDRLCoredeuxValueHandlerService;
+import com.coredeux.drl.core.module.impl.DRLAuditModuleHandler;
+import com.coredeux.drl.core.module.impl.DRLHooksModuleHandler;
+import com.coredeux.drl.core.module.impl.DRLValidatorsModuleHandler;
+import com.coredeux.drl.core.strategy.impl.DefaultDRLCoredeuxStrategy;
 import com.coredeux.drl.config.DrlRuntimeBootstrap;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.drl.service.impl.DefaultDRLService;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
 import com.coredeux.drl.source.resolver.impl.ClasspathDRLSourceResolver;
 
-@AutoConfiguration(afterName = "com.coredeux.spring.boot.autoconfigure.CoredeuxAutoConfiguration")
+@AutoConfiguration(before = com.coredeux.spring.boot.autoconfigure.CoredeuxAutoConfiguration.class)
 @ConditionalOnClass(DRLService.class)
 public class CoredeuxDrlAutoConfiguration {
 
@@ -36,6 +54,43 @@ public class CoredeuxDrlAutoConfiguration {
     DRLService coredeuxDrlService(DRLSourceResolver sourceResolver, CoredeuxComponentRegistry componentRegistry,
             DrlCompilerPropertiesConfigurer compilerPropertiesConfigurer) {
         return new DefaultDRLService(sourceResolver, componentRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @Primary
+    CoredeuxValueHandlerService coredeuxValueHandlerService(CoredeuxComponentRegistry componentRegistry,
+            DRLService drlService) {
+        return new DefaultDRLCoredeuxValueHandlerService(componentRegistry, drlService);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    ValidatorsModuleHandler coredeuxDrlValidatorsModuleHandler(CoredeuxComponentRegistry componentRegistry) {
+        return new DRLValidatorsModuleHandler(componentRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    HooksModuleHandler coredeuxDrlHooksModuleHandler(CoredeuxComponentRegistry componentRegistry) {
+        return new DRLHooksModuleHandler(componentRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    AuditModuleHandler coredeuxDrlAuditModuleHandler(CoredeuxComponentRegistry componentRegistry) {
+        return new DRLAuditModuleHandler(componentRegistry);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    CoredeuxStrategy coredeuxDrlStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
+            EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
+            CoredeuxReflectionHelperService reflectionHelperService,
+            CoredeuxRequestContextResolver requestContextResolver,
+            List<CoredeuxEntityModuleHandler> moduleHandlers) {
+        return new DefaultDRLCoredeuxStrategy(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry,
+                reflectionHelperService, requestContextResolver, moduleHandlers);
     }
 
     private String firstNonBlank(String... values) {

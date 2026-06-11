@@ -5,31 +5,32 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.export.exception.CoredeuxExportException;
 import com.coredeux.export.handler.ExportValueContext;
-import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.model.ExportRequest;
 
 public class ExportValueResolver {
 
+    private static final String DEFAULT_HANDLER = "defaultCoredeuxExportValueHandler";
     private final CoredeuxReflectionHelperService reflectionHelperService;
     private final ExportValueFormatter formatter;
-    private final ExportValueHandlerResolver handlerResolver;
+    private final CoredeuxValueHandlerService coredeuxValueHandlerService;
 
     public ExportValueResolver(CoredeuxReflectionHelperService reflectionHelperService, ExportValueFormatter formatter,
-            ExportValueHandlerResolver handlerResolver) {
+    		CoredeuxValueHandlerService coredeuxValueHandlerService) {
         this.reflectionHelperService = reflectionHelperService;
         this.formatter = formatter;
-        this.handlerResolver = handlerResolver;
+        this.coredeuxValueHandlerService = coredeuxValueHandlerService;
     }
 
     public String resolve(Object root, Class<?> entityType, ExportFieldPath path, String collectionSeparator,
             ExportRequest request) {
         Object value = resolveValue(root, root == null ? null : root.getClass(), path.segments(), 0, false,
                 collectionSeparator);
-        Object handled = handlerResolver.resolve(path.field().getHandler())
-                .handle(ExportValueContext.builder()
+        Object handled = coredeuxValueHandlerService
+                .invoke(resolveHandlerName(path.field().getHandler()), ExportValueContext.builder()
                         .rootEntity(root)
                         .resolvedValue(value)
                         .fieldPath(path.expression())
@@ -90,5 +91,16 @@ public class ExportValueResolver {
             }
         }
         return String.join(collectionSeparator == null ? ", " : collectionSeparator, values);
+    }
+
+    /**
+     * Resolves the configured field handler, falling back to the default export
+     * value handler when the field does not specify one.
+     */
+    private String resolveHandlerName(String handler) {
+        if (handler == null || handler.isBlank()) {
+            return DEFAULT_HANDLER;
+        }
+        return handler.trim();
     }
 }

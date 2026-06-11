@@ -28,6 +28,7 @@
   * [Core MongoDB Reference](/17-core-mongodb-reference)
   * [Core Redis Reference](/18-core-redis-reference)
   * [Property Resolution Order](/19-property-resolution-order)
+  * [Value Handlers](/20-value-handlers)
 * Import And Export
   * [Coredeux Import](/coredeux-import-overview)
   * [Raw JSON Import](/02-raw-json-import)
@@ -43,6 +44,13 @@
   * [Native Runtime](/coredeux-drl-native-runtime)
   * [Spring Boot Starter](/coredeux-drl-spring-boot-starter)
   * [DRL Reference](/coredeux-drl-reference)
+  * [Data Access With DRL](/coredeux-drl-data-access)
+  * [Validators With DRL](/coredeux-drl-validators)
+  * [Hooks With DRL](/coredeux-drl-hooks)
+  * [Audit With DRL](/coredeux-drl-audit)
+  * [Custom Handlers](/coredeux-drl-custom-handlers)
+  * [Import Value Handlers](/coredeux-drl-import-value-handlers)
+  * [Export Value Handlers](/coredeux-drl-export-value-handlers)
 * Tools
   * [Coredeux DRL DevTools](/coredeux-drl-devtools)
 * Native Demo Companion
@@ -50,6 +58,8 @@
   * [Native Tour Of The Demo](/02-native-tour-of-the-demo)
 * Spring Boot Import Integration
   * [Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app)
+* DRL Spring Boot Demo Companion
+  * [Coredeux DRL Spring Boot Demo](/04-coredeux-drl-spring-boot-demo)
 * Platform And Project
   * [Platform Documentation](/platform)
   * [Project](/project)

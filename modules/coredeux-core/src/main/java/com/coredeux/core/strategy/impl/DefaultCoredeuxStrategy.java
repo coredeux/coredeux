@@ -132,16 +132,4 @@ public class DefaultCoredeuxStrategy extends AbstractCoredeuxStrategy implements
         executeModules(entity, definition, CoredeuxHookPhases.AFTER_REFRESH, fetchContext);
     }
 
-    private <T> void invokeLoadModules(SearchResult<T> result, CoredeuxEntityDefinition definition) {
-        if (result == null || result.getResults() == null) {
-            return;
-        }
-        for (T entity : result.getResults()) {
-            if (entity != null) {
-                OperationContext fetchContext = createOperationContext(CoredeuxLifecycleOperations.FETCH,
-                        extractIdentifier(entity, definition), null, entity);
-                executeModules(entity, definition, CoredeuxHookPhases.LOAD, fetchContext);
-            }
-        }
-    }
 }

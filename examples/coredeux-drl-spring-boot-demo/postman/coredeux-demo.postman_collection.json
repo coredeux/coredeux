@@ -1,0 +1,1351 @@
+{
+  "info": {
+    "_postman_id": "d5f22adf-d808-4eb6-87c1-ca4c61802b6b",
+    "name": "Coredeux DRL Spring Boot Demo API",
+    "description": "Postman collection for the Coredeux DRL Spring Boot demo. The demo is database-backed: Java-like rule source is converted through DevTools and the generated DRL is stored in PostgreSQL. The convert endpoint accepts raw Java source text and stores the generated DRL as a rule record.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "26580886"
+  },
+  "item": [
+    {
+      "name": "Swagger",
+      "item": [
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v3/api-docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v3",
+                "api-docs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/swagger-ui.html",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "swagger-ui.html"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CRUD",
+      "item": [
+        {
+          "name": "Create Entity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example\",\n  \"email\": \"alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{entityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{entityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{entityName}}/{{entityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{entityName}}",
+                "{{entityId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Entities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{entityName}}?pageSize=20&currentPage=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{entityName}}"
+              ],
+              "query": [
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "currentPage",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Entity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example Updated\",\n  \"email\": \"alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{entityName}}/{{entityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{entityName}}",
+                "{{entityId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Entity",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{entityName}}/{{entityId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{entityName}}",
+                "{{entityId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CRUD Customer",
+      "item": [
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example 5\",\n  \"email\": \"alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{customerEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{customerEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{customerEntityName}}/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{customerEntityName}}",
+                "{{customerId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{customerEntityName}}?pageSize=20&currentPage=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{customerEntityName}}"
+              ],
+              "query": [
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "currentPage",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example Updated\",\n  \"email\": \"alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{customerEntityName}}/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{customerEntityName}}",
+                "{{customerId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{customerEntityName}}/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{customerEntityName}}",
+                "{{customerId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CRUD DRL",
+      "item": [
+        {
+          "name": "Create DRL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"customerDataAccess.drl\",\n  \"description\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get DRL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}/{{drlId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}",
+                "{{drlId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List DRLs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}?pageSize=20&currentPage=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}"
+              ],
+              "query": [
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "currentPage",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update DRL",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example Updated\",\n  \"email\": \"alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}/{{drlId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}",
+                "{{drlId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete DRL",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}/{{drlId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}",
+                "{{drlId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "DRL Rules",
+      "item": [
+        {
+          "name": "List Stored Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Stored Rule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/{{drlCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "{{drlCode}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Convert Java Source And Store",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set('customerRuleId', String(body.code)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "package com.coredeux.demo.drl.dataaccess;\n\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Set;\n\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\nimport com.coredeux.core.search.SearchParams;\nimport com.coredeux.core.search.SearchResult;\nimport com.coredeux.core.service.CoredeuxDataAccessService;\nimport com.coredeux.demo.domain.Customer;\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\nimport com.coredeux.drl.converter.annotations.DrlRule;\nimport com.coredeux.drl.model.RuleContext;\n\n@DrlDefinition(\"customerDataAccess.drl\")\npublic class CustomerDrlDataAccessRuleSource {\n\n    @DrlGlobal\n    public CoredeuxComponentRegistry componentRegistry;\n\n    @DrlRule(name = \"load\", when = \"$context : RuleContext(method == 'load')\")\n    public void load(RuleContext<Customer> $context) {\n        CoredeuxDataAccessService dataAccessService = componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class);\n        String identifier = String.valueOf($context.getParams().get(\"id\"));\n        $context.setOutput((Customer) dataAccessService.load(identifier, Customer.class));\n    }\n\n    @DrlRule(name = \"save\", when = \"$context : RuleContext(method == 'save')\")\n    public void save(RuleContext<String> $context) {\n        CoredeuxDataAccessService dataAccessService = componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class);\n        $context.setOutput(dataAccessService.save($context.getParams().get(\"entity\")));\n    }\n\n    @DrlRule(name = \"update\", when = \"$context : RuleContext(method == 'update')\")\n    public void update(RuleContext<Void> $context) {\n        componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class).update($context.getParams().get(\"entity\"));\n    }\n\n    @DrlRule(name = \"remove\", when = \"$context : RuleContext(method == 'remove')\")\n    public void remove(RuleContext<Void> $context) {\n        componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class).remove($context.getParams().get(\"entity\"));\n    }\n\n    @DrlRule(name = \"loadAll\", when = \"$context : RuleContext(method == 'loadAll')\")\n    public void loadAll(RuleContext<SearchResult<Customer>> $context) {\n        CoredeuxDataAccessService dataAccessService = componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class);\n        @SuppressWarnings(\"unchecked\")\n        List<SearchParams> params = (List<SearchParams>) $context.getParams().getOrDefault(\"params\", List.of());\n        int pageSize = ((Number) $context.getParams().getOrDefault(\"pageSize\", 20)).intValue();\n        int currentPage = ((Number) $context.getParams().getOrDefault(\"currentPage\", 1)).intValue();\n        $context.setOutput(dataAccessService.loadAll(params, Customer.class, pageSize, currentPage));\n    }\n\n    @DrlRule(name = \"supportedComparators\", when = \"$context : RuleContext(method == 'supportedComparators')\")\n    public void supportedComparators(RuleContext<Set<String>> $context) {\n        $context.setOutput(componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class).supportedComparators(Customer.class));\n    }\n\n    @DrlRule(name = \"query\", when = \"$context : RuleContext(method == 'query')\")\n    public void query(RuleContext<SearchResult<Customer>> $context) {\n        CoredeuxDataAccessService dataAccessService = componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class);\n        String query = String.valueOf($context.getParams().get(\"query\"));\n        @SuppressWarnings(\"unchecked\")\n        Map<String, Object> params = (Map<String, Object>) $context.getParams().getOrDefault(\"params\", Map.of());\n        int pageSize = ((Number) $context.getParams().getOrDefault(\"pageSize\", 20)).intValue();\n        int currentPage = ((Number) $context.getParams().getOrDefault(\"currentPage\", 1)).intValue();\n        $context.setOutput(dataAccessService.query(query, params, Customer.class, pageSize, currentPage));\n    }\n\n    @DrlRule(name = \"refresh\", when = \"$context : RuleContext(method == 'refresh')\")\n    public void refresh(RuleContext<Void> $context) {\n        componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class).refresh($context.getParams().get(\"entity\"));\n    }\n}\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/convert",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "convert"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Stored Rule",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/{{drlCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "{{drlCode}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Purge Cache For Rule Id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/cache/{{drlCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "cache",
+                "{{drlCode}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Purge All Cache",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/cache",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "cache"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Entity Definition Registry Cache",
+      "item": [
+        {
+          "name": "Registry Cache Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/entity-definitions/cache",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "entity-definitions",
+                "cache"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Cached YML",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/entity-definitions/cache/yml",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "entity-definitions",
+                "cache",
+                "yml"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Registry Cache",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/entity-definitions/cache/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "entity-definitions",
+                "cache",
+                "refresh"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bootstrap Registry From File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/entity-definitions/cache/bootstrap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "entity-definitions",
+                "cache",
+                "bootstrap"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Registry Definition",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "coredeux:\n  entities:\n    - full-class-name: com.coredeux.demo.domain.Customer\n      name: customer\n      identifier: pk\n      storage:\n        data-access-service: customerDataAccess.drl\n      modules:\n        - name: validators\n          enabled: true\n          handlers:\n            - customerEmailValidator\n            - customerValidator.drl\n        - name: hooks\n          enabled: true\n          handlers:\n            - demoLifecycleHook\n            - customerHook.drl\n        - name: audit\n          enabled: true\n          handlers:\n            - demoAuditHandler\n            - customerAudit.drl\n          config:\n            operations:\n              - SAVE\n              - UPDATE\n              - DELETE\n    - full-class-name: com.coredeux.demo.domain.DrlRuleRecord\n      name: DrlRuleRecord\n      identifier: pk\n      storage:\n        data-access-service: postgresCoredeuxJpaDataAccessService"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/entity-definitions/cache?sourceLocation=postman",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "entity-definitions",
+                "cache"
+              ],
+              "query": [
+                {
+                  "key": "sourceLocation",
+                  "value": "postman"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Purge Registry Cache",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/entity-definitions/cache",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "entity-definitions",
+                "cache"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Test Flow",
+      "item": [
+        {
+          "name": "1) Create customerDataAccess.drl",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"customerDataAccess.drl\",\n  \"description\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2) Create customerValidator.drl",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"customerValidator.drl\",\n  \"description\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3) Create customerHook.drl",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"customerHook.drl\",\n  \"description\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4) Create customerAudit.drl",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"customerAudit.drl\",\n  \"description\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{drlEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{drlEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5) Convert Java Source And Store CustomerDrlDataAccessRuleSource",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set('customerRuleId', String(body.code)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "package com.coredeux.demo.drl.dataaccess;\n\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Set;\n\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\nimport com.coredeux.core.search.SearchParams;\nimport com.coredeux.core.search.SearchResult;\nimport com.coredeux.core.service.CoredeuxDataAccessService;\nimport com.coredeux.demo.domain.Customer;\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\nimport com.coredeux.drl.converter.annotations.DrlRule;\nimport com.coredeux.drl.model.RuleContext;\n\n@DrlDefinition(\"customerDataAccess.drl\")\npublic class CustomerDrlDataAccessRuleSource {\n\n    @DrlGlobal\n    public CoredeuxComponentRegistry componentRegistry;\n\n    @DrlRule(name = \"load\", when = \"$context : RuleContext(method == 'load')\")\n    public void load(RuleContext<Customer> $context) {\n        CoredeuxDataAccessService dataAccessService = componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class);\n        String identifier = String.valueOf($context.getParams().get(\"id\"));\n        $context.setOutput((Customer) dataAccessService.load(identifier, Customer.class));\n    }\n\n    @DrlRule(name = \"save\", when = \"$context : RuleContext(method == 'save')\")\n    public void save(RuleContext<String> $context) {\n        CoredeuxDataAccessService dataAccessService = componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class);\n        $context.setOutput(dataAccessService.save($context.getParams().get(\"entity\")));\n    }\n\n    @DrlRule(name = \"update\", when = \"$context : RuleContext(method == 'update')\")\n    public void update(RuleContext<Void> $context) {\n        componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class).update($context.getParams().get(\"entity\"));\n    }\n\n    @DrlRule(name = \"remove\", when = \"$context : RuleContext(method == 'remove')\")\n    public void remove(RuleContext<Void> $context) {\n        componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class).remove($context.getParams().get(\"entity\"));\n    }\n\n    @DrlRule(name = \"loadAll\", when = \"$context : RuleContext(method == 'loadAll')\")\n    public void loadAll(RuleContext<SearchResult<Customer>> $context) {\n        CoredeuxDataAccessService dataAccessService = componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class);\n        @SuppressWarnings(\"unchecked\")\n        List<SearchParams> params = (List<SearchParams>) $context.getParams().getOrDefault(\"params\", List.of());\n        int pageSize = ((Number) $context.getParams().getOrDefault(\"pageSize\", 20)).intValue();\n        int currentPage = ((Number) $context.getParams().getOrDefault(\"currentPage\", 1)).intValue();\n        $context.setOutput(dataAccessService.loadAll(params, Customer.class, pageSize, currentPage));\n    }\n\n    @DrlRule(name = \"supportedComparators\", when = \"$context : RuleContext(method == 'supportedComparators')\")\n    public void supportedComparators(RuleContext<Set<String>> $context) {\n        $context.setOutput(componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class).supportedComparators(Customer.class));\n    }\n\n    @DrlRule(name = \"query\", when = \"$context : RuleContext(method == 'query')\")\n    public void query(RuleContext<SearchResult<Customer>> $context) {\n        CoredeuxDataAccessService dataAccessService = componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class);\n        String query = String.valueOf($context.getParams().get(\"query\"));\n        @SuppressWarnings(\"unchecked\")\n        Map<String, Object> params = (Map<String, Object>) $context.getParams().getOrDefault(\"params\", Map.of());\n        int pageSize = ((Number) $context.getParams().getOrDefault(\"pageSize\", 20)).intValue();\n        int currentPage = ((Number) $context.getParams().getOrDefault(\"currentPage\", 1)).intValue();\n        $context.setOutput(dataAccessService.query(query, params, Customer.class, pageSize, currentPage));\n    }\n\n    @DrlRule(name = \"refresh\", when = \"$context : RuleContext(method == 'refresh')\")\n    public void refresh(RuleContext<Void> $context) {\n        componentRegistry.getComponent(\"postgresCoredeuxJpaDataAccessService\",\n                CoredeuxDataAccessService.class).refresh($context.getParams().get(\"entity\"));\n    }\n}\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/convert",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "convert"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6) Convert Java Source And Store CustomerDrlHookRuleSource",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set('customerRuleId', String(body.code)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "package com.coredeux.demo.drl.hooks;\n\nimport java.time.Instant;\n\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\nimport com.coredeux.demo.domain.Customer;\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\nimport com.coredeux.drl.converter.annotations.DrlRule;\nimport com.coredeux.drl.model.RuleContext;\n\n@DrlDefinition(\"customerHook.drl\")\npublic class CustomerDrlHookRuleSource {\n\n    @DrlGlobal\n    public CoredeuxComponentRegistry componentRegistry;\n\n    @DrlRule(name = \"beforeSave\", when = \"$context : RuleContext(method == 'beforeSave')\")\n    public void beforeSave(RuleContext<Customer> $context) {\n        Object entity = $context.getParams().get(\"entity\");\n        if (entity instanceof Customer) {\n        \tCustomer customer = (Customer) entity;\n        \tSystem.out.println(\"Before Save hook invoked for customer: \" + customer.getName());\n        \tcustomer.setLastLifecycleTouch(Instant.now());\n        }\n    }\n\n    @DrlRule(name = \"beforeUpdate\", when = \"$context : RuleContext(method == 'beforeUpdate')\")\n    public void beforeUpdate(RuleContext<Customer> $context) {\n        Object entity = $context.getParams().get(\"entity\");\n        if (entity instanceof Customer) {\n        \tCustomer customer = (Customer) entity;\n        \tSystem.out.println(\"Before update hook invoked for customer: \" + customer.getName());\n        \tcustomer.setLastLifecycleTouch(Instant.now());\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/convert",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "convert"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7) Convert Java Source And Store CustomerDrlValidatorRuleSource",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set('customerRuleId', String(body.code)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "package com.coredeux.demo.drl.validation;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\nimport com.coredeux.core.validation.ValidationError;\nimport com.coredeux.demo.domain.Customer;\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\nimport com.coredeux.drl.converter.annotations.DrlRule;\nimport com.coredeux.drl.model.RuleContext;\n\n@DrlDefinition(\"customerValidator.drl\")\npublic class CustomerDrlValidatorRuleSource {\n\n    @DrlGlobal\n    public CoredeuxComponentRegistry componentRegistry;\n\n    @DrlRule(name = \"validate\", when = \"$context : RuleContext(method == 'validate')\")\n    public void validate(RuleContext<List<ValidationError>> $context) {\n        Customer customer = (Customer) $context.getParams().get(\"entity\");\n        List<ValidationError> errors = new ArrayList<>();\n        if (customer == null) {\n            errors.add(ValidationError.builder().field(\"entity\").message(\"Customer is required\").build());\n        } else {\n            if (customer.getName() == null || customer.getName().isBlank()) {\n                errors.add(ValidationError.builder().field(\"name\").message(\"Customer name is required\").build());\n            }\n            if (customer.getEmail() == null || !customer.getEmail().contains(\"@\")) {\n                errors.add(ValidationError.builder().field(\"email\").message(\"Customer email must be a valid email\").build());\n            }\n        }\n        $context.setOutput(errors);\n    }\n}\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/convert",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "convert"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8) Convert Java Source And Store CustomerDrlAuditRuleSource",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set('customerRuleId', String(body.code)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "package com.coredeux.demo.drl.audit;\n\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\nimport com.coredeux.demo.domain.Customer;\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\nimport com.coredeux.drl.converter.annotations.DrlRule;\nimport com.coredeux.drl.model.RuleContext;\n\n@DrlDefinition(\"customerAudit.drl\")\npublic class CustomerDrlAuditRuleSource {\n\n    @DrlGlobal\n    public CoredeuxComponentRegistry componentRegistry;\n\n    @DrlRule(name = \"audit\", when = \"$context : RuleContext(method == 'audit')\")\n    public void audit(RuleContext<Customer> $context) {\n    \tSystem.out.println(\"Auditing customer with DRL: \" + $context.getParams().get(\"phase\"));\n        $context.setMessage(\"DRL: Audited \" + $context.getParams().get(\"phase\"));\n    }\n}\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/convert",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "convert"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9) Create Customer - Validation Error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example 5\",\n  \"email\": \"alice+{{$timestamp}}\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{customerEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{customerEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10) Update Java Source And Store CustomerDrlValidatorRuleSource",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.code) { pm.collectionVariables.set('customerRuleId', String(body.code)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "package com.coredeux.demo.drl.validation;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\nimport com.coredeux.core.registry.CoredeuxComponentRegistry;\nimport com.coredeux.core.validation.ValidationError;\nimport com.coredeux.demo.domain.Customer;\nimport com.coredeux.drl.converter.annotations.DrlDefinition;\nimport com.coredeux.drl.converter.annotations.DrlGlobal;\nimport com.coredeux.drl.converter.annotations.DrlRule;\nimport com.coredeux.drl.model.RuleContext;\n\n@DrlDefinition(\"customerValidator.drl\")\npublic class CustomerDrlValidatorRuleSource {\n\n    @DrlGlobal\n    public CoredeuxComponentRegistry componentRegistry;\n\n    @DrlRule(name = \"validate\", when = \"$context : RuleContext(method == 'validate')\")\n    public void validate(RuleContext<List<ValidationError>> $context) {\n        Customer customer = (Customer) $context.getParams().get(\"entity\");\n        List<ValidationError> errors = new ArrayList<>();\n        if (customer == null) {\n            errors.add(ValidationError.builder().field(\"entity\").message(\"Customer is required\").build());\n        } else {\n            if (customer.getName() == null || customer.getName().isBlank()) {\n                errors.add(ValidationError.builder().field(\"name\").message(\"Customer name is required\").build());\n            }\n            if (customer.getEmail() == null || !customer.getEmail().contains(\"@\")) {\n                errors.add(ValidationError.builder().field(\"email\").message(\"Customer email must be a valid email. It needs @.\").build());\n            }\n        }\n        $context.setOutput(errors);\n    }\n}\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drl/rules/convert",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drl",
+                "rules",
+                "convert"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11) Create Customer - Validation Error 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example 5\",\n  \"email\": \"alice+{{$timestamp}}\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{customerEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{customerEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "12) Create Customer - Success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body && body.pk) { pm.collectionVariables.set('customerId', String(body.pk)); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Example\",\n  \"email\": \"alice+{{$timestamp}}@example.com\",\n  \"active\": true,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/entities/{{customerEntityName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "entities",
+                "{{customerEntityName}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "entityId",
+      "value": ""
+    },
+    {
+      "key": "entityName",
+      "value": "customer"
+    },
+    {
+      "key": "customerId",
+      "value": "1"
+    },
+    {
+      "key": "customerEntityName",
+      "value": "customerValidator.drl"
+    },
+    {
+      "key": "drlId",
+      "value": ""
+    },
+    {
+      "key": "drlCode",
+      "value": ""
+    },
+    {
+      "key": "drlEntityName",
+      "value": ""
+    },
+    {
+      "key": "customerRuleId",
+      "value": ""
+    }
+  ]
+}

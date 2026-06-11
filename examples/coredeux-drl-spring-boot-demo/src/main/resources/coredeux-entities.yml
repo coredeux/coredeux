@@ -1,0 +1,33 @@
+coredeux:
+  entities:
+    - full-class-name: com.coredeux.demo.domain.Customer
+      name: customer
+      identifier: pk
+      storage:
+        data-access-service: customerDataAccess.drl
+      modules:
+        - name: validators
+          enabled: true
+          handlers:
+            - customerEmailValidator
+            - customerValidator.drl
+        - name: hooks
+          enabled: true
+          handlers:
+            - demoLifecycleHook
+            - customerHook.drl
+        - name: audit
+          enabled: true
+          handlers:
+            - demoAuditHandler
+            - customerAudit.drl
+          config:
+            operations:
+              - SAVE
+              - UPDATE
+              - DELETE
+    - full-class-name: com.coredeux.demo.domain.DrlRuleRecord
+      name: DrlRuleRecord
+      identifier: pk
+      storage:
+        data-access-service: postgresCoredeuxJpaDataAccessService

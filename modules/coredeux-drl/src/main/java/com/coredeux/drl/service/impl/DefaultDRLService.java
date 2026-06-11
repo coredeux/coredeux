@@ -5,6 +5,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.kie.api.KieBase;
+import org.kie.api.builder.Message;
+import org.kie.api.builder.Results;
+import org.kie.api.io.ResourceType;
+import org.kie.api.runtime.KieSession;
+import org.kie.internal.utils.KieHelper;
+
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.drl.cache.CompiledDRLRule;
@@ -14,13 +21,6 @@ import com.coredeux.drl.config.DrlRuntimeBootstrap;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
-
-import org.kie.api.KieBase;
-import org.kie.api.builder.Message;
-import org.kie.api.builder.Results;
-import org.kie.api.io.ResourceType;
-import org.kie.api.runtime.KieSession;
-import org.kie.internal.utils.KieHelper;
 
 /**
  * Default runtime implementation of {@link DRLService}.
@@ -86,7 +86,7 @@ public class DefaultDRLService implements DRLService {
      * @param context the execution context and fact carrier
      */
     @Override
-    public void execute(String ruleId, RuleContext context) {
+    public <T> void execute(String ruleId, RuleContext<T> context) {
         CompiledDRLRule compiledRule = cache.computeIfAbsent(ruleId, () -> compile(ruleId));
         executeCompiled(compiledRule, context);
     }
@@ -100,7 +100,7 @@ public class DefaultDRLService implements DRLService {
      * @param context the execution context and fact carrier
      */
     @Override
-    public void execute(String ruleId, String source, RuleContext context) {
+    public <T> void execute(String ruleId, String source, RuleContext<T> context) {
         CompiledDRLRule compiledRule = compile(ruleId, source);
         cache.put(ruleId, compiledRule);
         executeCompiled(compiledRule, context);
@@ -113,7 +113,7 @@ public class DefaultDRLService implements DRLService {
      * @param context the execution context and fact carrier
      */
     @Override
-    public void executeSource(String source, RuleContext context) {
+    public <T> void executeSource(String source, RuleContext<T> context) {
         executeCompiled(compile("inline source", source), context);
     }
 
@@ -145,25 +145,55 @@ public class DefaultDRLService implements DRLService {
     public boolean isCached(String ruleId) {
         return cache.contains(ruleId);
     }
+    
 
     /**
-     * Compiles DRL by resolving it from the configured source resolver.
+     * Resolves the rule source through the configured resolver, compiles it, and
+     * stores the compiled rule bundle in the cache without firing any rules.
      *
-     * @param ruleId the rule identifier to resolve
-     * @return the compiled rule bundle
+     * @param ruleId the rule identifier to resolve and cache
      */
-    private CompiledDRLRule compile(String ruleId) {
+	@Override
+	public void compileAndCache(String ruleId) {
+		CompiledDRLRule compiledRule = compile(ruleId);
+		cache.put(ruleId, compiledRule);
+	}
+
+    /**
+     * Compiles the provided source text and stores the compiled rule bundle in
+     * the cache under the supplied rule id without firing any rules.
+     *
+     * @param ruleId the cache key and compilation label for the source
+     * @param source the DRL source text to compile and cache
+     */
+	@Override
+	public void compileAndCache(String ruleId, String source) {
+		CompiledDRLRule compiledRule = compile(ruleId, source);
+		cache.put(ruleId, compiledRule);
+	}
+
+    /**
+     * Resolves DRL through the configured source resolver and compiles it into a
+     * rule bundle without caching or executing it.
+     *
+     * @param ruleId the rule identifier to resolve and use in compilation errors
+     * @return the compiled rule bundle, including KIE base metadata
+     */
+	@Override
+	public CompiledDRLRule compile(String ruleId) {
         return compile(ruleId, sourceResolver.resolve(ruleId));
     }
 
     /**
-     * Compiles DRL from the supplied source text.
+     * Compiles the supplied source text into a rule bundle without caching or
+     * executing it.
      *
      * @param ruleId label used in any compilation error messages
-     * @param drl the DRL source to compile
-     * @return the compiled rule bundle
+     * @param drl the DRL source text to compile
+     * @return the compiled rule bundle, including KIE base metadata
      */
-    private CompiledDRLRule compile(String ruleId, String drl) {
+	@Override
+	public CompiledDRLRule compile(String ruleId, String drl) {
         KieHelper helper = new KieHelper();
         helper.addContent(requireSource(drl, ruleId), ResourceType.DRL);
 
@@ -187,7 +217,7 @@ public class DefaultDRLService implements DRLService {
      * @param compiledRule the compiled rule bundle
      * @param context the execution context to insert and update
      */
-    private void executeCompiled(CompiledDRLRule compiledRule, RuleContext context) {
+    private void executeCompiled(CompiledDRLRule compiledRule, RuleContext<?> context) {
         try (KieSession session = compiledRule.kieBase().newKieSession()) {
             if (compiledRule.requiresComponentRegistry()) {
                 session.setGlobal(COMPONENT_REGISTRY, componentRegistry);

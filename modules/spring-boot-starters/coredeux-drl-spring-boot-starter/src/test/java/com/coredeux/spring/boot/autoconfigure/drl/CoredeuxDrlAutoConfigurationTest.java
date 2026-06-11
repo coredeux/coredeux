@@ -5,21 +5,39 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.mock.env.MockEnvironment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.mock.env.MockEnvironment;
 
+import com.coredeux.core.definition.CoredeuxEntityDefinition;
+import com.coredeux.core.definition.CoredeuxStorageDefinition;
+import com.coredeux.core.module.impl.AuditModuleHandler;
+import com.coredeux.core.module.impl.HooksModuleHandler;
+import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
+import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
+import com.coredeux.core.service.CoredeuxModuleService;
+import com.coredeux.core.service.CoredeuxService;
+import com.coredeux.core.strategy.CoredeuxStrategy;
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.drl.config.DrlRuntimeBootstrap;
+import com.coredeux.drl.core.handler.service.DefaultDRLCoredeuxValueHandlerService;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
+import com.coredeux.drl.core.module.impl.DRLAuditModuleHandler;
+import com.coredeux.drl.core.module.impl.DRLHooksModuleHandler;
+import com.coredeux.drl.core.module.impl.DRLValidatorsModuleHandler;
+import com.coredeux.drl.core.strategy.impl.DefaultDRLCoredeuxStrategy;
 import com.coredeux.spring.boot.autoconfigure.CoredeuxAutoConfiguration;
 import com.coredeux.spring.boot.autoconfigure.SpringCoredeuxComponentRegistry;
 
@@ -37,6 +55,14 @@ class CoredeuxDrlAutoConfigurationTest {
         contextRunner.run(context -> {
             assertInstanceOf(SpringCoredeuxComponentRegistry.class,
                     context.getBean(CoredeuxComponentRegistry.class));
+            assertInstanceOf(DefaultDRLCoredeuxStrategy.class, context.getBean(CoredeuxStrategy.class));
+            assertInstanceOf(DRLValidatorsModuleHandler.class, context.getBean(ValidatorsModuleHandler.class));
+            assertInstanceOf(DRLHooksModuleHandler.class, context.getBean(HooksModuleHandler.class));
+            assertInstanceOf(DRLAuditModuleHandler.class, context.getBean(AuditModuleHandler.class));
+            assertInstanceOf(DefaultDRLCoredeuxValueHandlerService.class,
+                    context.getBean(CoredeuxValueHandlerService.class));
+            assertInstanceOf(CoredeuxModuleService.class, context.getBean(CoredeuxModuleService.class));
+            assertInstanceOf(CoredeuxService.class, context.getBean(CoredeuxService.class));
 
             DRLService drlService = context.getBean(DRLService.class);
             RuleContext ruleContext = RuleContext.method("sample-rule");
@@ -46,6 +72,35 @@ class CoredeuxDrlAutoConfigurationTest {
             assertEquals("ok", ruleContext.getMessage());
             assertEquals(1, ruleContext.getFiredRules());
         });
+    }
+
+    @Test
+    void routesCoreServiceLoadsThroughTheDrlStrategyWhenTheDataAccessBeanUsesTheDrlSuffix() {
+        contextRunner
+                .withBean(EntityDefinitionRegistry.class, this::drlEntityDefinitionRegistry)
+                .withBean(EntityDataAccessResolver.class, () -> definition -> "sample-load.drl")
+                .withBean(DRLSourceResolver.class, () -> ruleId -> """
+                        package com.coredeux.spring.boot.autoconfigure.drl;
+
+                        import com.coredeux.drl.model.RuleContext;
+
+                        rule "sample-load"
+                        when
+                            $context : RuleContext(method == "load")
+                        then
+                            SampleEntity entity = new SampleEntity();
+                            entity.setId("drl-loaded");
+                            $context.setOutput(entity);
+                            $context.setMessage("driven-by-drl");
+                        end
+                        """)
+                .run(context -> {
+                    CoredeuxService coredeuxService = context.getBean(CoredeuxService.class);
+                    SampleEntity loaded = coredeuxService.load("1", SampleEntity.class);
+
+                    assertEquals("drl-loaded", loaded.getId());
+                    assertInstanceOf(DefaultDRLCoredeuxStrategy.class, context.getBean(CoredeuxStrategy.class));
+                });
     }
 
     @Test
@@ -161,6 +216,17 @@ class CoredeuxDrlAutoConfigurationTest {
 
     private String expectedLanguageLevelForCurrentRuntime() {
         return Runtime.version().feature() >= 19 ? "19" : "17";
+    }
+
+    private EntityDefinitionRegistry drlEntityDefinitionRegistry() {
+        CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder()
+                .fullClassName(SampleEntity.class.getName())
+                .name("sample")
+                .identifier("id")
+                .storage(CoredeuxStorageDefinition.builder().dataAccessService("sample-load.drl").build())
+                .modules(List.of())
+                .build();
+        return new InMemoryEntityDefinitionRegistry(List.of(definition));
     }
 
     @Configuration(proxyBeanMethods = false)

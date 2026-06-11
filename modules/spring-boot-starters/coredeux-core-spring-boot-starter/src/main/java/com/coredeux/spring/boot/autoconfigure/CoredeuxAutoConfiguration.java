@@ -24,6 +24,8 @@ import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.module.impl.AuditModuleHandler;
 import com.coredeux.core.module.impl.HooksModuleHandler;
 import com.coredeux.core.module.impl.ValidatorsModuleHandler;
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
+import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
@@ -84,6 +86,12 @@ public class CoredeuxAutoConfiguration {
     @ConditionalOnMissingBean
     CoredeuxComponentRegistry coredeuxComponentRegistry(ApplicationContext applicationContext) {
         return new SpringCoredeuxComponentRegistry(applicationContext);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    CoredeuxValueHandlerService coredeuxValueHandlerService(CoredeuxComponentRegistry componentRegistry) {
+        return new DefaultCoredeuxValueHandlerService(componentRegistry);
     }
 
     @Bean

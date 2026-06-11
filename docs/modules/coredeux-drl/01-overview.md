@@ -35,7 +35,7 @@ flowchart LR
   C --> D[Compile once]
   D --> E[Cache KieBase]
   E --> F[KieSession]
-  F --> G[RuleContext + facts]
+  F --> G[RuleContext<T> + facts]
   F --> H["componentRegistry global"]
 ```
 
@@ -48,13 +48,19 @@ The runtime path is intentionally simple:
 3. `coredeux-drl` compiles the DRL into a `KieBase`
 4. the compiled rule set is cached by `ruleId`
 5. each execution creates a fresh `KieSession`
-6. the runtime inserts the `RuleContext` plus any extra facts
+6. the runtime inserts the `RuleContext<T>` plus any extra facts
 7. the rule session gets the `componentRegistry` global
 8. the rules run and write results back through the context or facts
 
 That shape matters because it keeps the runtime predictable: source lookup is
 separate from compilation, compilation is separate from execution, and
 execution is separate from storage.
+
+One important authoring rule from the POC: the Java source is only an
+authoring surface. After conversion, helper methods in the authoring class are
+not available as reusable DRL methods. Keep each converted rule method
+self-contained, and move reusable behavior into separate DRL sources or
+external services that the rule resolves through the component registry.
 
 The module is intentionally split so the core runtime stays plain Java while
 the Spring Boot starter can layer on environment and application-context
@@ -63,6 +69,18 @@ integration.
 The same `componentRegistry` global works in both worlds: native applications
 can back it with `InMemoryCoredeuxComponentRegistry`, while Spring Boot
 applications get `SpringCoredeuxComponentRegistry` through the starter.
+
+## Hands-On Pages
+
+If you want copyable examples, continue to the dedicated guides.
+They show the Java source first, then the generated DRL, so the authoring flow
+is easy to follow end to end:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
 
 ## What The Rules Look Like
 
@@ -77,7 +95,7 @@ global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
 Then the consequence can resolve beans or services on demand through the
 registry.
 
-Typical rule source also binds a `RuleContext`:
+Typical rule source also binds a `RuleContext<T>`:
 
 ```drl
 rule "check"
@@ -100,7 +118,7 @@ For IDE-assisted Java authoring and source-to-DRL conversion, see
 - keep generated DRL in an external source you control
 - invalidate the cache when the stored DRL changes
 - prefer the component registry over hard-wiring container access into rules
-- treat `RuleContext` as the main result carrier
+- treat `RuleContext<T>` as the main result carrier
 
 ## Where To Go Next
 

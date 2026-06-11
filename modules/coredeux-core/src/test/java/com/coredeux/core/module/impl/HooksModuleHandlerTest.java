@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -85,6 +86,25 @@ class HooksModuleHandlerTest {
                         OperationContext.empty()));
 
         assertTrue(exception.getMessage().contains("does not support entity type"));
+    }
+
+    @Test
+    void shouldSkipBlankHookHandlers() {
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        RecordingHook hook = new RecordingHook();
+        applicationContext.registerSingleton("lifecycleHook", hook);
+        HooksModuleHandler handler = new HooksModuleHandler(applicationContext);
+        CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder().fullClassName("sample.Type").build();
+        List<String> handlers = new ArrayList<>();
+        handlers.add(" ");
+        handlers.add(null);
+        handlers.add("lifecycleHook");
+        CoredeuxModuleDefinition module = CoredeuxModuleDefinition.builder().name("hooks").enabled(true)
+                .handlers(handlers).build();
+
+        handler.execute(new SampleEntity(), definition, module, CoredeuxHookPhases.LOAD, OperationContext.empty());
+
+        assertEquals(1, hook.invocationCount);
     }
 
     private static final class SampleEntity {

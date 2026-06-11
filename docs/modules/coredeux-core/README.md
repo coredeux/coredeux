@@ -27,6 +27,7 @@ Read it in order if you want the full picture:
 17. [Core MongoDB Reference](/17-core-mongodb-reference)
 18. [Core Redis Reference](/18-core-redis-reference)
 19. [Property Resolution Order](/19-property-resolution-order)
+20. [Value Handlers](/20-value-handlers)
 
 The numbered pages are the canonical version of this section.
 

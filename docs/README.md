@@ -186,6 +186,7 @@ enough that both humans and agents can work with them safely.
 - [Core MongoDB Reference](/17-core-mongodb-reference)
 - [Core Redis Reference](/18-core-redis-reference)
 - [Property Resolution Order](/19-property-resolution-order)
+- [Value Handlers](/20-value-handlers)
 
 ## 04. Import And Export
 
@@ -199,6 +200,13 @@ enough that both humans and agents can work with them safely.
 - [Native Runtime](/coredeux-drl-native-runtime)
 - [Spring Boot Starter](/coredeux-drl-spring-boot-starter)
 - [DRL Reference](/coredeux-drl-reference)
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
+- [Import Value Handlers](/coredeux-drl-import-value-handlers)
+- [Export Value Handlers](/coredeux-drl-export-value-handlers)
 
 ## 06. Tools
 

@@ -1,0 +1,124 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.coredeux</groupId>
+        <artifactId>coredeux-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <groupId>com.coredeux</groupId>
+    <artifactId>coredeux-drl-spring-boot-demo</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Coredeux DRL Spring Boot Demo</name>
+    <description>Standalone Spring Boot demo application for Coredeux DRL and starters</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <coredeux.version>0.1.0-SNAPSHOT</coredeux.version>
+        <springdoc-openapi.version>2.5.0</springdoc-openapi.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc-openapi.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-core-spring-boot-starter</artifactId>
+            <version>${coredeux.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-drl-spring-boot-starter</artifactId>
+            <version>${coredeux.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-drl-devtools</artifactId>
+            <version>${coredeux.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-import-spring-boot-starter</artifactId>
+            <version>${coredeux.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coredeux</groupId>
+            <artifactId>coredeux-core-jpa-spring-boot-starter</artifactId>
+            <version>${coredeux.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.3</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>3.2.5</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.2.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

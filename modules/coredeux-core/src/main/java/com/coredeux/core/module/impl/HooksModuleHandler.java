@@ -50,13 +50,13 @@ public class HooksModuleHandler implements CoredeuxEntityModuleHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> CoredeuxEntityHook<T> resolveHook(String hookName, T entity, CoredeuxEntityDefinition definition) {
+    protected <T> CoredeuxEntityHook<T> resolveHook(String hookName, T entity, CoredeuxEntityDefinition definition) {
         CoredeuxEntityHook<?> hook = componentRegistry.getComponent(hookName, CoredeuxEntityHook.class);
         validateSupportedType(hookName, hook.getClass(), entity, definition);
         return (CoredeuxEntityHook<T>) hook;
     }
 
-    private <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
+    protected <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
             CoredeuxEntityDefinition definition) {
         Class<?> supportedType = CoredeuxGenericTypeResolver.resolveFirstGeneric(beanType, CoredeuxEntityHook.class);
         if (supportedType == null || entity == null || supportedType.isAssignableFrom(entity.getClass())) {
@@ -66,7 +66,7 @@ public class HooksModuleHandler implements CoredeuxEntityModuleHandler {
                 + entity.getClass().getName() + " for class: " + definition.getFullClassName());
     }
 
-    private <T> void invokeHook(CoredeuxEntityHook<T> hook, T entity, CoredeuxEntityDefinition definition, String phase,
+    protected <T> void invokeHook(CoredeuxEntityHook<T> hook, T entity, CoredeuxEntityDefinition definition, String phase,
             OperationContext context) {
         switch (phase) {
             case CoredeuxHookPhases.LOAD:

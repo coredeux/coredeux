@@ -47,6 +47,24 @@ level from the running Java version. The current automatic map is:
 That keeps the framework usable on Java 17 and above while staying inside the
 verified Drools surface area.
 
+## What The Starter Overrides
+
+The DRL starter loads before the core starter so the DRL-aware beans win the
+auto-configuration race.
+
+That means Spring applications get:
+
+- `DefaultDRLCoredeuxStrategy`
+- `DRLValidatorsModuleHandler`
+- `DRLHooksModuleHandler`
+- `DRLAuditModuleHandler`
+- `DefaultDRLService`
+
+The core starter still provides the shared infrastructure such as the Spring
+component registry, request context wiring, and the generic Coredeux service
+contracts. The DRL starter simply swaps the strategy and module handlers for
+the DRL-backed versions.
+
 Example `application.yml`:
 
 ```yaml
@@ -57,6 +75,20 @@ coredeux:
     java-compiler: NATIVE
     java-language-level: "19"
 ```
+
+The `examples/coredeux-drl-spring-boot-demo` module shows this in a real
+application with:
+
+- DRL-backed CRUD
+- native and DRL validators side by side
+- native and DRL hooks side by side
+- native and DRL audit handlers side by side
+- database-backed DRL source storage and conversion endpoints
+
+The same authoring rule applies in Spring: each DRL source should be
+self-contained after conversion. Helper methods in the Java source are useful
+for IDE authoring, but they are not reusable DRL methods once the source is
+converted.
 
 ## Property Precedence
 
@@ -100,6 +132,14 @@ then
 end
 ```
 
+When you write the Java-side execution context in Spring code, use the typed
+form too:
+
+```java
+RuleContext<String> context = RuleContext.method("check")
+        .fact(sampleEntity);
+```
+
 ## When You Should Override The Starter
 
 You can override the starter's defaults by providing your own beans if you need
@@ -128,6 +168,16 @@ Use the starter when:
 - Spring only changes how the registry and configuration are supplied
 - if the external rule source changes, purge the runtime cache just like you
   would in native mode
+
+## Hands-On Pages
+
+For full examples of each module style, continue to:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
 
 <!-- docs-nav-start -->
 [Previous: Native Runtime](/coredeux-drl-native-runtime) | [Documentation Home](/) | [Next: Reference](/coredeux-drl-reference)

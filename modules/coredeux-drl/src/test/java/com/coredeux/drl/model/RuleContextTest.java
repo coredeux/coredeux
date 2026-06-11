@@ -17,7 +17,7 @@ class RuleContextTest {
 
     @Test
     void shouldBuildAndMutateTheExecutionEnvelope() {
-        RuleContext context = RuleContext.method("check")
+        RuleContext<String> context = RuleContext.<String>method("check")
                 .param("entity", "original")
                 .fact("first-fact")
                 .fact(null);
@@ -63,7 +63,7 @@ class RuleContextTest {
 
     @Test
     void shouldResetNullCollectionsAndExposeFluentFactInsertions() {
-        RuleContext context = new RuleContext();
+        RuleContext<String> context = new RuleContext<>();
 
         context.setMethod("sample");
         context.setParams(null);
@@ -79,7 +79,7 @@ class RuleContextTest {
         assertTrue(context.getParams().containsKey("x"));
         assertNull(context.getParams().get("missing"));
 
-        RuleContext created = RuleContext.method("created");
+        RuleContext<String> created = RuleContext.method("created");
         assertEquals("created", created.getMethod());
         assertSame(created, created.param("k", "v"));
     }

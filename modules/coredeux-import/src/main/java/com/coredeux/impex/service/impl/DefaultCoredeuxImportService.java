@@ -9,19 +9,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.impex.exception.CoredeuxImportException;
-import com.coredeux.impex.handler.CoredeuxImportValueHandler;
 import com.coredeux.impex.handler.ImportValueContext;
-import com.coredeux.impex.handler.ImportValueHandlerResolver;
 import com.coredeux.impex.handler.impl.DefaultCoredeuxImportValueHandler;
 import com.coredeux.impex.handler.impl.JsonMapImportHandler;
 import com.coredeux.impex.model.ImportColumn;
-import com.coredeux.impex.model.ImportLookup;
 import com.coredeux.impex.model.ImportLog;
+import com.coredeux.impex.model.ImportLookup;
 import com.coredeux.impex.model.ImportMacro;
 import com.coredeux.impex.model.ImportOptions;
 import com.coredeux.impex.model.ImportQueryParam;
@@ -34,13 +33,14 @@ import com.coredeux.impex.service.CoredeuxImportService;
 
 public class DefaultCoredeuxImportService implements CoredeuxImportService {
 
+    private static final String DEFAULT_HANDLER = "coredeuxDefaultImportValueHandler";
     private static final String EQUALS = "EQUALS";
     private static final String ISNULL = "ISNULL";
 
     private final CoredeuxService coredeuxService;
     private final CoredeuxReflectionHelperService reflectionHelperService;
     private final ImportEntityTargetService entityTargetService;
-    private final ImportValueHandlerResolver valueHandlerResolver;
+    private final CoredeuxValueHandlerService coredeuxValueHandlerService;
 
     /**
      * Wires the import orchestrator with core data access, reflection metadata,
@@ -49,11 +49,11 @@ public class DefaultCoredeuxImportService implements CoredeuxImportService {
     public DefaultCoredeuxImportService(CoredeuxService coredeuxService,
             CoredeuxReflectionHelperService reflectionHelperService,
             ImportEntityTargetService entityTargetService,
-            ImportValueHandlerResolver valueHandlerResolver) {
+            CoredeuxValueHandlerService coredeuxValueHandlerService) {
         this.coredeuxService = coredeuxService;
         this.reflectionHelperService = reflectionHelperService;
         this.entityTargetService = entityTargetService;
-        this.valueHandlerResolver = valueHandlerResolver;
+        this.coredeuxValueHandlerService = coredeuxValueHandlerService;
     }
 
     /**
@@ -424,8 +424,7 @@ public class DefaultCoredeuxImportService implements CoredeuxImportService {
             ImportEntityMetadata metadata, Map<String, String> references) {
         try {
             ImportValueContext context = createValueContext(request, statement, row, column, metadata, references);
-            CoredeuxImportValueHandler handler = valueHandlerResolver.resolve(column.getHandler());
-            Object value = handler.handle(context);
+            Object value = coredeuxValueHandlerService.invoke(resolveHandlerName(column), context);
             validateHandlerOutput(column, metadata, value);
             return value;
         } catch (RuntimeException exception) {
@@ -457,6 +456,17 @@ public class DefaultCoredeuxImportService implements CoredeuxImportService {
                 .macros(request == null || request.getMacros() == null ? Map.of() : request.getMacros())
                 .references(references == null ? Map.of() : references)
                 .build();
+    }
+
+    /**
+     * Resolves the configured column handler, falling back to the default import
+     * value handler when the column does not specify one.
+     */
+    private String resolveHandlerName(ImportColumn column) {
+        if (column == null || column.getHandler() == null || column.getHandler().isBlank()) {
+            return DEFAULT_HANDLER;
+        }
+        return column.getHandler().trim();
     }
 
     /**

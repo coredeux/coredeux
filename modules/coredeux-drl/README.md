@@ -4,7 +4,7 @@
 Coredeux.
 
 It resolves DRL by rule id, compiles the rule set once, caches the compiled
-`KieBase`, and executes it against a mutable `RuleContext` plus any extra
+`KieBase`, and executes it against a mutable `RuleContext<T>` plus any extra
 facts you attach with `.fact(...)`. The context can also carry a human-readable
 `message` for agent and tool integrations alongside the typed `output`.
 
@@ -36,7 +36,7 @@ unless you override it in configuration. The current map is:
 
 Detailed reference:
 
-- [docs/modules/coredeux-drl/04-reference.md](/C:/Data/Development/Coredeux/oss/coredeux/docs/modules/coredeux-drl/04-reference.md)
+- [Coredeux DRL Reference](/coredeux-drl-reference)
 
 ## What This Module Provides
 
@@ -45,7 +45,7 @@ Detailed reference:
 - `DRLService`
 - `DRLSourceResolver`
 - `DRLCache`
-- `RuleContext`
+- `RuleContext<T>`
 - `DefaultDRLService`
 - `ClasspathDRLSourceResolver`
 - `InMemoryDRLCache`
@@ -98,6 +98,25 @@ fast instead of silently returning the wrong object.
 
 For Java-to-DRL authoring and conversion tools, see
 `coredeux-drl-devtools`.
+
+That authoring flow is intentionally strict:
+
+- each converted rule source should be self-contained
+- helper methods in the Java source are for authoring convenience only
+- shared logic should live in another DRL source or an external service
+- the demo follows this pattern with concern-based folders like
+  `dataaccess`, `validation`, `hooks`, and `audit`
+
+## Practical Guides
+
+If you want copyable examples instead of the summary above, read the
+dedicated docs:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
 
 ## Native Usage
 
@@ -159,7 +178,7 @@ For fact typing:
 - A typed fact pattern such as `$psu : Psu()` exposes `$psu` as `Psu` in
   `then`.
 - An `Object()` pattern must be cast before subtype methods are called.
-- Values read from `RuleContext.params` must be cast because `Map` returns
+- Values read from `RuleContext<T>.params` must be cast because `Map` returns
   `Object`.
 
 ## Who Should Depend On This Module

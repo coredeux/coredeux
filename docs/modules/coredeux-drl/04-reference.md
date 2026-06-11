@@ -29,9 +29,9 @@ classpath file, a database row, a remote store, or any other source you choose.
 The runtime service has a small surface area on purpose:
 
 ```java
-void execute(String ruleId, RuleContext context);
-void execute(String ruleId, String source, RuleContext context);
-void executeSource(String source, RuleContext context);
+<T> void execute(String ruleId, RuleContext<T> context);
+<T> void execute(String ruleId, String source, RuleContext<T> context);
+<T> void executeSource(String source, RuleContext<T> context);
 void purgeCache();
 void purgeCache(String ruleId);
 boolean isCached(String ruleId);
@@ -116,7 +116,7 @@ The `then` block can then resolve approved Coredeux components on demand.
 
 ## RuleContext Contract
 
-`RuleContext` is the object rules read from and write to during execution.
+`RuleContext<T>` is the object rules read from and write to during execution.
 
 It carries:
 
@@ -131,7 +131,7 @@ It carries:
 Convenience helpers:
 
 ```java
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .param("entity", entity)
         .fact(entity);
 ```
@@ -139,7 +139,7 @@ RuleContext context = RuleContext.method("check")
 After execution, read the result back from the same object:
 
 ```java
-Object output = context.getOutput();
+String output = context.getOutput();
 String message = context.getMessage();
 int firedRules = context.getFiredRules();
 Exception exception = context.getException();
@@ -151,10 +151,15 @@ validation hooks and command-style operations.
 The rule session facts come from `RuleContext.getFacts()`, so the calling code
 can decide what gets inserted without changing the service signature.
 
+Keep the converted rule body self-contained. Helper methods in the Java
+authoring class are not preserved as reusable DRL methods after conversion, so
+shared behavior should live in another DRL source or an external component
+resolved through the registry.
+
 You can use that same shape anywhere you execute a rule:
 
 ```java
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .param("entity", entity)
         .fact(entity);
 drlService.execute("sample-rule", context);
@@ -163,7 +168,7 @@ drlService.execute("sample-rule", context);
 To compile and cache caller-provided source under a known rule id:
 
 ```java
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .fact(entity);
 drlService.execute("sample-rule", """
         rule "sample-rule"
@@ -178,7 +183,7 @@ drlService.execute("sample-rule", """
 To compile and run source immediately without cache or resolver:
 
 ```java
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .fact(entity);
 drlService.executeSource("""
         rule "check"
@@ -244,7 +249,7 @@ CoredeuxComponentRegistry registry = InMemoryCoredeuxComponentRegistry.builder()
         .build();
 DRLService drlService = new DefaultDRLService(sourceResolver, registry);
 
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .param("entity", entity)
         .fact(entity);
 drlService.execute("sample-rule", context);
@@ -255,8 +260,8 @@ That short flow is the heart of the runtime:
 1. identify the rule by id
 2. resolve the stored DRL
 3. compile and cache it
-4. execute it with context and facts from the same `RuleContext`
-5. read the output back from the same `RuleContext`
+4. execute it with context and facts from the same `RuleContext<T>`
+5. read the output back from the same `RuleContext<T>`
 
 The Java-to-DRL converter and its annotations live in
 `coredeux-drl-devtools`.
@@ -266,8 +271,8 @@ The Java-to-DRL converter and its annotations live in
 - the `DRLService` instance can be reused across calls
 - a new `KieSession` is created for every execution
 - the compiled cache is concurrent
-- `RuleContext` is mutable and should be treated as one request object
-- do not share the same `RuleContext` across concurrent executions
+- `RuleContext<T>` is mutable and should be treated as one request object
+- do not share the same `RuleContext<T>` across concurrent executions
 - if multiple workers may update rule source, decide in advance who calls
   `purgeCache(...)`
 
@@ -275,6 +280,20 @@ The Java-to-DRL converter and its annotations live in
 
 If you are authoring annotated Java-like rule source, see
 `coredeux-drl-devtools`.
+
+## Practical Guides
+
+If you want the full examples instead of the reference summary, use the
+dedicated pages:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
+
+Each of those guides shows the Java source first and the generated DRL right
+after it, so the authoring path stays obvious for both developers and agents.
 
 ## Update Strategy
 

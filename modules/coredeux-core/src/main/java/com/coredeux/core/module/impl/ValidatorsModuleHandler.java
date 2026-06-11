@@ -67,7 +67,7 @@ public class ValidatorsModuleHandler implements CoredeuxEntityModuleHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> CoredeuxEntityValidator<T> resolveValidator(String validatorName, T entity,
+    protected <T> CoredeuxEntityValidator<T> resolveValidator(String validatorName, T entity,
             CoredeuxEntityDefinition definition) {
         CoredeuxEntityValidator<?> validator = componentRegistry.getComponent(validatorName,
                 CoredeuxEntityValidator.class);
@@ -75,7 +75,7 @@ public class ValidatorsModuleHandler implements CoredeuxEntityModuleHandler {
         return (CoredeuxEntityValidator<T>) validator;
     }
 
-    private <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
+    protected <T> void validateSupportedType(String beanName, Class<?> beanType, T entity,
             CoredeuxEntityDefinition definition, String contractName) {
         Class<?> supportedType = CoredeuxGenericTypeResolver.resolveFirstGeneric(beanType,
                 CoredeuxEntityValidator.class);

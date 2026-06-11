@@ -2,6 +2,7 @@ package com.coredeux.drl.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.drl.cache.DRLCache;
+import com.coredeux.drl.cache.CompiledDRLRule;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
 
@@ -149,5 +151,75 @@ class DefaultDRLServiceCoverageTest {
                     $context.setException(new RuntimeException("boom"));
                 end
                 """, context));
+    }
+
+    @Test
+    void shouldCompileAndCacheResolvedAndInlineRules() {
+        DRLSourceResolver resolver = mock(DRLSourceResolver.class);
+        when(resolver.resolve("resolved-rule")).thenReturn("""
+                package rules.resolved;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "resolvedRule"
+                when
+                    $context : RuleContext(method == "resolved")
+                then
+                    $context.setOutput("resolved-ok");
+                end
+                """);
+
+        DefaultDRLService service = new DefaultDRLService(resolver,
+                new InMemoryCoredeuxComponentRegistry(Map.of("sampleMessage", "hello")));
+
+        service.compileAndCache("resolved-rule");
+        CompiledDRLRule resolved = service.compile("resolved-rule");
+        assertNotNull(resolved.kieBase());
+        assertTrue(service.isCached("resolved-rule"));
+
+        service.compileAndCache("inline-rule", """
+                package rules.inline;
+
+                import com.coredeux.drl.model.RuleContext;
+                global com.coredeux.core.registry.CoredeuxComponentRegistry componentRegistry;
+
+                rule "inlineRule"
+                when
+                    $context : RuleContext(method == "inline")
+                then
+                    $context.setOutput(componentRegistry.getComponent("sampleMessage", String.class));
+                end
+                """);
+        CompiledDRLRule inline = service.compile("inline-rule", """
+                package rules.inline;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "inlineRule"
+                when
+                    $context : RuleContext(method == "inline")
+                then
+                    $context.setOutput("inline-ok");
+                end
+                """);
+
+        assertNotNull(inline.kieBase());
+        assertTrue(service.isCached("inline-rule"));
+    }
+
+    @Test
+    void shouldRejectInvalidDrlDuringCompile() {
+        DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
+
+        assertThrows(IllegalStateException.class,
+                () -> service.compile("bad-rule", """
+                        package rules.bad;
+
+                        rule "bad"
+                        when
+                            $context : com.coredeux.drl.model.RuleContext(method == "bad")
+                        then
+                            $context.setOutput("broken")
+                        """));
     }
 }

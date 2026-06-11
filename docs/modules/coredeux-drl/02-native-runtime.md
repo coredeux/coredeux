@@ -42,7 +42,7 @@ A native host usually does three things:
 
 1. create a resolver that knows where the DRL lives
 2. register the application components the rules are allowed to use
-3. execute the rule by id with a `RuleContext`
+3. execute the rule by id with a `RuleContext<T>`
 
 Example:
 
@@ -58,21 +58,25 @@ CoredeuxComponentRegistry componentRegistry = InMemoryCoredeuxComponentRegistry.
 
 DRLService drlService = new DefaultDRLService(sourceResolver, componentRegistry);
 
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .param("entity", sampleEntity)
         .fact(sampleEntity);
 drlService.execute("sample-rule", context);
 
-Object output = context.getOutput();
+String output = context.getOutput();
 int firedRules = context.getFiredRules();
 ```
+
+Keep the authored rule source self-contained. Any helper methods that exist in
+the Java authoring class are for authoring convenience only; the converted DRL
+should not depend on them as reusable rule methods.
 
 When the rule throws, the runtime stores the exception on the context and then
 raises an `IllegalStateException` so the caller can handle it in one place.
 
 ## Rule Context Contract
 
-`RuleContext` is the object you pass into the runtime and read from after the
+`RuleContext<T>` is the object you pass into the runtime and read from after the
 rule runs.
 
 It carries:
@@ -89,14 +93,14 @@ where the caller wants a mutable result object instead of a new return type.
 
 ## Working With Facts
 
-Put additional session facts on the `RuleContext` with `.fact(...)` before you
+Put additional session facts on the `RuleContext<T>` with `.fact(...)` before you
 call `execute(...)`.
 
 If you want to compile and run a source string immediately without resolver
 lookup or cache storage, use `executeSource(...)`:
 
 ```java
-RuleContext context = RuleContext.method("check")
+RuleContext<String> context = RuleContext.method("check")
         .fact(sampleEntity);
 drlService.executeSource("""
         rule "check"
@@ -158,6 +162,16 @@ compiled cache entry.
 This is the right model when the source is external and may change while the
 application is running. The runtime does not try to guess whether the source
 changed. You decide when the compiled version should be discarded.
+
+## Hands-On Pages
+
+For full examples of each module style, continue to:
+
+- [Data Access With DRL](/coredeux-drl-data-access)
+- [Validators With DRL](/coredeux-drl-validators)
+- [Hooks With DRL](/coredeux-drl-hooks)
+- [Audit With DRL](/coredeux-drl-audit)
+- [Custom Handlers](/coredeux-drl-custom-handlers)
 
 <!-- docs-nav-start -->
 [Previous: Overview](/coredeux-drl-overview) | [Documentation Home](/) | [Next: Spring Boot Starter](/coredeux-drl-spring-boot-starter)

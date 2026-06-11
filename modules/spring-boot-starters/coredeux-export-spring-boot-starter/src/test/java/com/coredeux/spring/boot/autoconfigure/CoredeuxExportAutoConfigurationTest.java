@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
@@ -21,7 +22,6 @@ import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
-import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.log.impl.DefaultCoredeuxExportLogServiceResolver;
 import com.coredeux.export.queue.impl.FileCoredeuxExportQueueService;
 import com.coredeux.export.model.ExportFormat;
@@ -45,7 +45,7 @@ class CoredeuxExportAutoConfigurationTest {
     @Test
     void registersExportBeans() {
         contextRunner.run(context -> assertThat(context)
-                .hasSingleBean(ExportValueHandlerResolver.class)
+                .hasSingleBean(CoredeuxValueHandlerService.class)
                 .hasSingleBean(DefaultCoredeuxExportLogServiceResolver.class)
                 .hasSingleBean(DefaultCoredeuxExportStorageServiceResolver.class)
                 .hasSingleBean(FileCoredeuxExportQueueService.class)

@@ -31,6 +31,22 @@ annotated Java-like source -> convert -> store DRL -> execute through coredeux-d
 The runtime module remains focused on execution, caching, and component
 registry access. This module stays focused on conversion and authoring support.
 
+## Java First, DRL Second
+
+When you document or author a rule source, show the full Java-like source first
+and the generated DRL immediately after it.
+
+That ordering helps a developer or agent understand the intended workflow:
+
+1. write the full Java source in the IDE
+2. implement every method required by the contract
+3. use DevTools to generate DRL from that source
+4. store the generated DRL externally
+5. execute the DRL later through `coredeux-drl`
+
+The examples below follow that pattern on purpose. They are not compressed
+fragments.
+
 ## Quick Conversion Flow
 
 The typical flow is:
@@ -83,13 +99,17 @@ public class SampleRuleSource {
     public CoredeuxComponentRegistry componentRegistry;
 
     @DrlRule(name = "check", when = "$context : RuleContext(method == 'check')")
-    public void check(RuleContext $context) {
+    public void check(RuleContext<String> $context) {
         SampleService sampleService = componentRegistry.getComponent("sampleService", SampleService.class);
         $context.setOutput(sampleService.message());
         $context.setMessage("Check rule completed successfully.");
     }
 }
 ```
+
+The annotations are the conversion markers. They are present in the Java source
+so DevTools can discover the rule source id, globals, and individual rule
+methods before it strips the annotation layer and emits DRL.
 
 ## Generated DRL
 
@@ -157,6 +177,8 @@ runtime resolver.
 
 Do:
 
+- show the complete source class first and the generated DRL second
+- keep every method in the contract visible in the example
 - keep each rule method body self-contained
 - import every runtime type used by the rule
 - use typed Drools fact bindings when you need subtype methods

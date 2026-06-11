@@ -10,13 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
-import com.coredeux.impex.handler.ImportValueHandlerResolver;
 import com.coredeux.impex.parser.excel.CoredeuxExcelImportParser;
 import com.coredeux.impex.parser.text.CoredeuxTextImportParser;
 import com.coredeux.impex.service.CoredeuxImportService;
@@ -38,7 +38,7 @@ class CoredeuxImportAutoConfigurationTest {
                 .hasSingleBean(CoredeuxImportProperties.class)
                 .hasSingleBean(CoredeuxTextImportParser.class)
                 .hasSingleBean(CoredeuxExcelImportParser.class)
-                .hasSingleBean(ImportValueHandlerResolver.class)
+                .hasSingleBean(CoredeuxValueHandlerService.class)
                 .hasSingleBean(ImportEntityTargetService.class)
                 .hasSingleBean(CoredeuxImportService.class));
     }

@@ -29,21 +29,21 @@ public class DrlSampleController {
     }
 
     @PostMapping("/greet")
-    public RuleContext greet(@RequestBody(required = false) RuleContext context) {
-        RuleContext actualContext = sampleContext(context, "greet");
+    public RuleContext<String> greet(@RequestBody(required = false) RuleContext<String> context) {
+        RuleContext<String> actualContext = sampleContext(context, "greet");
         drlService.execute(SAMPLE_RULE_ID, actualContext);
         return actualContext;
     }
 
     @PostMapping("/count-facts")
-    public RuleContext countFacts(@RequestBody(required = false) RuleContext context) {
-        RuleContext actualContext = sampleContext(context, "countFacts");
+    public RuleContext<Integer> countFacts(@RequestBody(required = false) RuleContext<Integer> context) {
+        RuleContext<Integer> actualContext = sampleContext(context, "countFacts");
         drlService.execute(SAMPLE_RULE_ID, actualContext);
         return actualContext;
     }
 
-    private RuleContext sampleContext(RuleContext context, String method) {
-        RuleContext actual = context == null ? RuleContext.method(method) : context;
+    private <T> RuleContext<T> sampleContext(RuleContext<T> context, String method) {
+        RuleContext<T> actual = context == null ? RuleContext.method(method) : context;
         if (actual.getMethod() == null || actual.getMethod().isBlank()) {
             actual.setMethod(method);
         }

@@ -195,6 +195,9 @@ The writer creates one sheet named `export`.
 
 Every field can pass through an export value handler.
 When no handler is set, Coredeux uses `defaultCoredeuxExportValueHandler`.
+The handler receives an `ExportValueContext`, which is a small data payload and
+not a service container. The `handler` field can point to either a native bean
+name or a `.drl` handler name when the DRL starter is active.
 
 Example handler:
 
@@ -223,6 +226,20 @@ The default handler already knows how to deal with:
 - Java time values
 - enums
 - everything else through `String.valueOf(...)`
+
+### DRL-backed Export Value Handlers
+
+The same handler slot can also be backed by DRL when the DRL starter is on the
+classpath.
+
+In that mode:
+
+- native bean names still resolve through the Java pipeline
+- handler names ending in `.drl` are routed through the DRL runtime
+- the DRL rule receives the same `ExportValueContext` payload
+
+Use the DRL-specific guide when you want the export formatting logic authored
+as a rule source instead of a Java bean.
 
 ## Java Usage
 

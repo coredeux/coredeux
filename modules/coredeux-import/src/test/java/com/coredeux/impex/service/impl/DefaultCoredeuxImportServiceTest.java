@@ -3,10 +3,14 @@ package com.coredeux.impex.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.net.URL;
@@ -24,17 +28,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
+import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.impex.handler.CoredeuxImportValueHandler;
-import com.coredeux.impex.handler.ImportValueHandlerResolver;
 import com.coredeux.impex.handler.impl.DefaultCoredeuxImportValueHandler;
 import com.coredeux.impex.handler.impl.JsonMapImportHandler;
 import com.coredeux.impex.model.ImportColumn;
 import com.coredeux.impex.model.ImportLookup;
+import com.coredeux.impex.model.ImportMacro;
 import com.coredeux.impex.model.ImportOperation;
 import com.coredeux.impex.model.ImportOptions;
 import com.coredeux.impex.model.ImportQuery;
@@ -68,13 +74,14 @@ class DefaultCoredeuxImportServiceTest {
                         .identifier("id")
                         .build()));
         ImportEntityTargetService entityTargetService = new ImportEntityTargetService(reflection, registry);
-        Map<String, CoredeuxImportValueHandler> handlers = new LinkedHashMap<>();
-        handlers.put(ImportValueHandlerResolver.DEFAULT_HANDLER, new DefaultCoredeuxImportValueHandler(coredeuxService));
-        handlers.put("uppercaseHandler", context -> context.getEffectiveValue().toUpperCase());
-        handlers.put("wrongTypeHandler", context -> "not-a-number");
-        handlers.put("jsonMapImportHandler", new JsonMapImportHandler());
+        InMemoryCoredeuxComponentRegistry componentRegistry = InMemoryCoredeuxComponentRegistry.builder()
+                .component("coredeuxDefaultImportValueHandler", new DefaultCoredeuxImportValueHandler(coredeuxService))
+                .component("uppercaseHandler", (CoredeuxImportValueHandler) context -> context.getEffectiveValue().toUpperCase())
+                .component("wrongTypeHandler", (CoredeuxImportValueHandler) context -> "not-a-number")
+                .component("jsonMapImportHandler", new JsonMapImportHandler())
+                .build();
         importService = new DefaultCoredeuxImportService(coredeuxService, reflection, entityTargetService,
-                new ImportValueHandlerResolver(handlers));
+                new DefaultCoredeuxValueHandlerService(componentRegistry));
     }
 
     @Test
@@ -198,6 +205,35 @@ class DefaultCoredeuxImportServiceTest {
         assertTrue(saved.active);
         assertEquals(ProductCategory.HARDWARE, saved.category);
         assertEquals(new LinkedHashSet<>(List.of("featured", "sale")), saved.tags);
+    }
+
+    @Test
+    void shouldFallBackToTheDefaultHandlerWhenTheColumnHandlerIsBlank() {
+        ImportRequest request = ImportRequest.builder()
+                .statements(List.of(ImportStatement.builder()
+                        .operation(ImportOperation.CREATE)
+                        .entity(Product.class.getName())
+                        .columns(List.of(
+                                ImportColumn.builder().name("sku").handler(" ").build(),
+                                ImportColumn.builder().name("price").build(),
+                                ImportColumn.builder().name("active").build(),
+                                ImportColumn.builder().name("category").build(),
+                                ImportColumn.builder().name("tags").build()))
+                        .rows(List.of(row("&product-blank-handler", Map.of(
+                                "sku", "sku-blank-handler",
+                                "price", "100",
+                                "active", "true",
+                                "category", "SOFTWARE",
+                                "tags", "default"))))
+                        .build()))
+                .build();
+
+        ImportResponse response = importService.importData(request);
+
+        assertFalse(response.hasErrors());
+        Product saved = coredeuxService.saved(Product.class).get(0);
+        assertEquals("sku-blank-handler", saved.sku);
+        assertEquals(new BigInteger("100"), saved.price);
     }
 
     @Test
@@ -1166,6 +1202,166 @@ class DefaultCoredeuxImportServiceTest {
         assertEquals(2, response.getLogs().size());
         assertTrue(response.getLogs().get(0).getMessage().contains("Only one existing-entity resolution strategy"));
         assertTrue(response.getLogs().get(1).getMessage().contains("unique columns, lookup, or query"));
+    }
+
+    @Test
+    void shouldCoverValidationBranchesAndInitializeMissingRows() {
+        ImportResponse nullRequest = importService.validateData(null);
+        ImportResponse emptyStatements = importService.validateData(ImportRequest.builder().build());
+
+        assertTrue(nullRequest.hasErrors());
+        assertTrue(nullRequest.getLogs().get(0).getMessage().contains("must not be null"));
+        assertTrue(emptyStatements.hasErrors());
+        assertTrue(emptyStatements.getLogs().get(0).getMessage().contains("at least one statement"));
+
+        assertThrows(RuntimeException.class,
+                () -> invokePrivate("validateStatement", new Class<?>[] { ImportStatement.class }, (Object) null));
+        assertThrows(RuntimeException.class,
+                () -> invokePrivate("validateStatement", new Class<?>[] { ImportStatement.class },
+                        ImportStatement.builder().build()));
+        assertThrows(RuntimeException.class,
+                () -> invokePrivate("validateStatement", new Class<?>[] { ImportStatement.class },
+                        ImportStatement.builder()
+                                .operation(ImportOperation.CREATE)
+                                .entity(Product.class.getName())
+                                .columns(List.of())
+                                .build()));
+
+        ImportStatement statement = ImportStatement.builder()
+                .operation(ImportOperation.CREATE)
+                .entity(Product.class.getName())
+                .columns(List.of(ImportColumn.builder().name("sku").build()))
+                .build();
+        invokePrivate("validateStatement", new Class<?>[] { ImportStatement.class }, statement);
+
+        assertNotNull(statement.getRows());
+        assertTrue(statement.getRows().isEmpty());
+    }
+
+    @Test
+    void shouldResolveStrategiesColumnsAndEffectiveValues() {
+        ImportStatement queryStatement = ImportStatement.builder()
+                .operation(ImportOperation.MODIFY)
+                .entity(Product.class.getName())
+                .query(ImportQuery.builder().build())
+                .columns(List.of(
+                        ImportColumn.builder().name("sku").build(),
+                        ImportColumn.builder().name("price").build()))
+                .build();
+        ImportStatement lookupStatement = ImportStatement.builder()
+                .operation(ImportOperation.MODIFY)
+                .entity(Product.class.getName())
+                .lookup(List.of(ImportLookup.builder().field("sku").build()))
+                .columns(List.of(
+                        ImportColumn.builder().name("sku").build(),
+                        ImportColumn.builder().name("price").build()))
+                .build();
+        ImportStatement uniqueStatement = ImportStatement.builder()
+                .operation(ImportOperation.MODIFY)
+                .entity(Product.class.getName())
+                .columns(List.of(ImportColumn.builder().name("sku").unique(true).build()))
+                .build();
+
+        assertEquals("query", invokePrivate("resolutionStrategy", new Class<?>[] { ImportStatement.class },
+                queryStatement));
+        assertEquals("lookup", invokePrivate("resolutionStrategy", new Class<?>[] { ImportStatement.class },
+                lookupStatement));
+        assertEquals("unique columns", invokePrivate("resolutionStrategy", new Class<?>[] { ImportStatement.class },
+                uniqueStatement));
+
+        ImportColumn queryColumn = (ImportColumn) invokePrivate("queryColumn",
+                new Class<?>[] { String.class, ImportQueryParam.class, ImportStatement.class }, "skuAlias",
+                ImportQueryParam.builder().column("sku").build(), queryStatement);
+        ImportColumn lookupColumn = (ImportColumn) invokePrivate("lookupColumn",
+                new Class<?>[] { ImportLookup.class, ImportStatement.class },
+                ImportLookup.builder().field("sku").column("price").build(), lookupStatement);
+        String comparator = (String) invokePrivate("comparator", new Class<?>[] { ImportLookup.class },
+                ImportLookup.builder().field("sku").comparator(" ").build());
+
+        assertEquals("sku", queryColumn.getName());
+        assertEquals("price", lookupColumn.getName());
+        assertEquals("EQUALS", comparator);
+
+        assertThrows(RuntimeException.class,
+                () -> invokePrivate("queryColumn", new Class<?>[] { String.class, ImportQueryParam.class,
+                        ImportStatement.class }, "missing", ImportQueryParam.builder().column("missing").build(),
+                        queryStatement));
+        assertThrows(RuntimeException.class,
+                () -> invokePrivate("lookupColumn", new Class<?>[] { ImportLookup.class, ImportStatement.class },
+                        ImportLookup.builder().field("sku").column("missing").build(), lookupStatement));
+
+        ImportRequest request = ImportRequest.builder()
+                .macros(Map.of("&macro-1", ImportMacro.builder().value("macro-value").build()))
+                .build();
+        ImportColumn column = ImportColumn.builder().name("sku").defaultValue("fallback").build();
+        assertEquals("fallback", invokePrivate("effectiveValue",
+                new Class<?>[] { Object.class, ImportColumn.class, ImportRequest.class }, null, column, request));
+        assertEquals("macro-value", invokePrivate("effectiveValue",
+                new Class<?>[] { Object.class, ImportColumn.class, ImportRequest.class }, "&macro-1", column, request));
+    }
+
+    @Test
+    void shouldValidateHandlerOutputsStoreReferencesAndBoxPrimitiveTypes() {
+        ImportEntityMetadata metadata = ImportEntityMetadata.builder()
+                .targetClass(Product.class)
+                .identifierPath("id")
+                .build();
+        ImportColumn primitiveColumn = ImportColumn.builder().name("active").build();
+        ImportColumn incompatibleColumn = ImportColumn.builder().name("price").build();
+        ImportColumn missingColumn = ImportColumn.builder().name("missing").build();
+
+        assertThrows(RuntimeException.class,
+                () -> invokePrivate("validateHandlerOutput", new Class<?>[] { ImportColumn.class,
+                        ImportEntityMetadata.class, Object.class }, primitiveColumn, metadata, null));
+        assertThrows(RuntimeException.class,
+                () -> invokePrivate("validateHandlerOutput", new Class<?>[] { ImportColumn.class,
+                        ImportEntityMetadata.class, Object.class }, incompatibleColumn, metadata, "wrong"));
+        invokePrivate("validateHandlerOutput", new Class<?>[] { ImportColumn.class, ImportEntityMetadata.class,
+                Object.class }, missingColumn, metadata, "ignored");
+
+        Map<String, String> references = new LinkedHashMap<>();
+        ImportRow blankKeyRow = ImportRow.builder().key(" ").build();
+        Product product = product("product-reference-id", "sku-reference");
+        invokePrivate("storeReference",
+                new Class<?>[] { ImportRow.class, String.class, Object.class, ImportEntityMetadata.class, Map.class },
+                blankKeyRow, null, product, metadata, references);
+        assertTrue(references.isEmpty());
+
+        ImportRow row = ImportRow.builder().key("product-key").build();
+        invokePrivate("storeReference",
+                new Class<?>[] { ImportRow.class, String.class, Object.class, ImportEntityMetadata.class, Map.class },
+                row, null, product, metadata, references);
+        assertEquals("product-reference-id", references.get("product-key"));
+
+        assertEquals(Boolean.class, invokePrivate("box", new Class<?>[] { Class.class }, boolean.class));
+        assertEquals(Integer.class, invokePrivate("box", new Class<?>[] { Class.class }, int.class));
+        assertEquals(Long.class, invokePrivate("box", new Class<?>[] { Class.class }, long.class));
+        assertEquals(Short.class, invokePrivate("box", new Class<?>[] { Class.class }, short.class));
+        assertEquals(Byte.class, invokePrivate("box", new Class<?>[] { Class.class }, byte.class));
+        assertEquals(Double.class, invokePrivate("box", new Class<?>[] { Class.class }, double.class));
+        assertEquals(Float.class, invokePrivate("box", new Class<?>[] { Class.class }, float.class));
+        assertEquals(Character.class, invokePrivate("box", new Class<?>[] { Class.class }, char.class));
+        assertEquals(String.class, invokePrivate("box", new Class<?>[] { Class.class }, String.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T invokePrivate(String methodName, Class<?>[] parameterTypes, Object... args) {
+        try {
+            Method method = DefaultCoredeuxImportService.class.getDeclaredMethod(methodName, parameterTypes);
+            method.setAccessible(true);
+            return (T) method.invoke(importService, args);
+        } catch (InvocationTargetException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new RuntimeException(cause);
+        } catch (ReflectiveOperationException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 
     private ImportStatement productStatement(ImportOperation operation, ImportRow row) {

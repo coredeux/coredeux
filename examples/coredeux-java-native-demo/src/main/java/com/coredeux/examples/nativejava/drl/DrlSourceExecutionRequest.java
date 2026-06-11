@@ -5,7 +5,7 @@ import com.coredeux.drl.model.RuleContext;
 public class DrlSourceExecutionRequest {
 
     private String source;
-    private RuleContext context;
+    private RuleContext<?> context;
 
     public String getSource() {
         return source;
@@ -15,11 +15,11 @@ public class DrlSourceExecutionRequest {
         this.source = source;
     }
 
-    public RuleContext getContext() {
+    public RuleContext<?> getContext() {
         return context;
     }
 
-    public void setContext(RuleContext context) {
+    public void setContext(RuleContext<?> context) {
         this.context = context;
     }
 }

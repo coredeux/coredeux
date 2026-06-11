@@ -40,6 +40,7 @@ import com.coredeux.examples.nativejava.drl.DrlRuleRecord;
 import com.coredeux.examples.nativejava.drl.DrlRuleUpsertRequest;
 import com.coredeux.examples.nativejava.drl.DrlSourceExecutionRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -864,7 +865,7 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
             methodNotAllowed(exchange, "POST");
             return;
         }
-        RuleContext context = readJson(exchange, RuleContext.class);
+        RuleContext<?> context = readRuleContext(exchange);
         runtime.drlService().execute(ruleId, context);
         writeJson(exchange, 200, context);
     }
@@ -875,7 +876,7 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
             return;
         }
         DrlSourceExecutionRequest request = readJson(exchange, DrlSourceExecutionRequest.class);
-        RuleContext context = request == null ? null : request.getContext();
+        RuleContext<?> context = request == null ? null : request.getContext();
         runtime.drlService().execute(ruleId, request == null ? null : request.getSource(), context);
         writeJson(exchange, 200, context);
     }
@@ -886,7 +887,7 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
             return;
         }
         DrlSourceExecutionRequest request = readJson(exchange, DrlSourceExecutionRequest.class);
-        RuleContext context = request == null ? null : request.getContext();
+        RuleContext<?> context = request == null ? null : request.getContext();
         runtime.drlService().executeSource(request == null ? null : request.getSource(), context);
         writeJson(exchange, 200, context);
     }
@@ -924,11 +925,11 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
         String path = exchange.getRequestURI().getPath();
         try {
             if (path.equals(DRL_SAMPLE_PATH + "/greet")) {
-                executeSampleDrlRule(exchange, "greet");
+                executeGreetingSampleDrlRule(exchange);
                 return;
             }
             if (path.equals(DRL_SAMPLE_PATH + "/count-facts")) {
-                executeSampleDrlRule(exchange, "countFacts");
+                executeCountFactsSampleDrlRule(exchange);
                 return;
             }
             sendError(exchange, 404, "Unknown DRL sample endpoint: " + path);
@@ -939,18 +940,35 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
         }
     }
 
-    private void executeSampleDrlRule(HttpExchange exchange, String method) throws IOException {
+    private void executeGreetingSampleDrlRule(HttpExchange exchange) throws IOException {
         if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
             methodNotAllowed(exchange, "POST");
             return;
         }
-        RuleContext context = readJsonOrNull(exchange, RuleContext.class);
+        RuleContext<String> context = readGreetingRuleContextOrNull(exchange);
         if (context == null) {
-            context = RuleContext.method(method);
+            context = RuleContext.method("greet");
         } else if (context.getMethod() == null || context.getMethod().isBlank()) {
-            context.setMethod(method);
+            context.setMethod("greet");
         } else {
-            context.setMethod(method);
+            context.setMethod("greet");
+        }
+        runtime.drlService().execute("demoGreetingRuleSource", context);
+        writeJson(exchange, 200, context);
+    }
+
+    private void executeCountFactsSampleDrlRule(HttpExchange exchange) throws IOException {
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            methodNotAllowed(exchange, "POST");
+            return;
+        }
+        RuleContext<Integer> context = readCountFactsRuleContextOrNull(exchange);
+        if (context == null) {
+            context = RuleContext.method("countFacts");
+        } else if (context.getMethod() == null || context.getMethod().isBlank()) {
+            context.setMethod("countFacts");
+        } else {
+            context.setMethod("countFacts");
         }
         runtime.drlService().execute("demoGreetingRuleSource", context);
         writeJson(exchange, 200, context);
@@ -1038,6 +1056,42 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
             return null;
         }
         return objectMapper.readValue(body, type);
+    }
+
+    private RuleContext<?> readRuleContext(HttpExchange exchange) throws IOException {
+        byte[] body = exchange.getRequestBody().readAllBytes();
+        if (body.length == 0) {
+            throw new IOException("Request body must not be empty");
+        }
+        return objectMapper.readValue(body, new TypeReference<RuleContext<?>>() {
+        });
+    }
+
+    private RuleContext<?> readRuleContextOrNull(HttpExchange exchange) throws IOException {
+        byte[] body = exchange.getRequestBody().readAllBytes();
+        if (body.length == 0) {
+            return null;
+        }
+        return objectMapper.readValue(body, new TypeReference<RuleContext<?>>() {
+        });
+    }
+
+    private RuleContext<String> readGreetingRuleContextOrNull(HttpExchange exchange) throws IOException {
+        byte[] body = exchange.getRequestBody().readAllBytes();
+        if (body.length == 0) {
+            return null;
+        }
+        return objectMapper.readValue(body, new TypeReference<RuleContext<String>>() {
+        });
+    }
+
+    private RuleContext<Integer> readCountFactsRuleContextOrNull(HttpExchange exchange) throws IOException {
+        byte[] body = exchange.getRequestBody().readAllBytes();
+        if (body.length == 0) {
+            return null;
+        }
+        return objectMapper.readValue(body, new TypeReference<RuleContext<Integer>>() {
+        });
     }
 
     private void sendValidationErrors(HttpExchange exchange, CoredeuxValidationException exception) throws IOException {
