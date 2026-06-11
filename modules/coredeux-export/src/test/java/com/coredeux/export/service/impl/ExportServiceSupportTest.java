@@ -15,8 +15,10 @@ import org.junit.jupiter.api.Test;
 
 import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
+import com.coredeux.core.handler.CoredeuxValueHandler;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.export.exception.CoredeuxExportException;
+import com.coredeux.export.handler.ExportValueContext;
 import com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler;
 import com.coredeux.export.model.ExportField;
 import com.coredeux.export.model.ExportFormat;
@@ -84,6 +86,22 @@ class ExportServiceSupportTest {
                 () -> resolver.resolve(product, Product.class, path("missing"), null, request));
         assertThrows(CoredeuxExportException.class,
                 () -> resolver.resolve(product, Product.class, path("groups:children"), null, request));
+    }
+
+    @Test
+    void resolverUsesNamedHandlerWhenConfigured() {
+        ExportValueResolver resolver = new ExportValueResolver(new DefaultCoredeuxReflectionHelperService(),
+                new ExportValueFormatter(), new DefaultCoredeuxValueHandlerService(
+                        InMemoryCoredeuxComponentRegistry.builder()
+                                .component("defaultCoredeuxExportValueHandler", (CoredeuxValueHandler<Object, ExportValueContext>) context -> "default")
+                                .component("customExportHandler", (CoredeuxValueHandler<Object, ExportValueContext>) context -> "named")
+                                .build()));
+
+        ExportRequest request = ExportRequest.builder().entity("Product").build();
+        ExportField field = ExportField.builder().path("name").handler(" customExportHandler ").build();
+        ExportFieldPath path = new ExportFieldPathParser().parse(List.of(field)).get(0);
+
+        assertEquals("named", resolver.resolve(new Product(), Product.class, path, null, request));
     }
 
     private ExportValueResolver resolver() {

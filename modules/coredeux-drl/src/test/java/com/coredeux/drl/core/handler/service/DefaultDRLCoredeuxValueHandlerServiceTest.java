@@ -72,6 +72,17 @@ class DefaultDRLCoredeuxValueHandlerServiceTest {
         assertEquals("Value handler name is required", exception.getMessage());
     }
 
+    @Test
+    void rejectsNullContextForDrlHandlers() {
+        DefaultDRLCoredeuxValueHandlerService service = new DefaultDRLCoredeuxValueHandlerService(
+                InMemoryCoredeuxComponentRegistry.builder().build(), mock(DRLService.class));
+
+        CoredeuxValueHandlerException exception = assertThrows(CoredeuxValueHandlerException.class,
+                () -> service.invoke("sample-handler.drl", null));
+
+        assertEquals("Value handler context must not be null", exception.getMessage());
+    }
+
     private static final class DemoValueContext implements ValueContext {
 
         private final String text;

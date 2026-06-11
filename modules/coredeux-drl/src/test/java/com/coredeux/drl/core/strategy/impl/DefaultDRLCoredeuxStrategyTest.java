@@ -2,6 +2,7 @@ package com.coredeux.drl.core.strategy.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
@@ -78,13 +80,59 @@ class DefaultDRLCoredeuxStrategyTest {
                 dataAccessService, new RecordingModuleHandler("hooks"));
 
         SampleEntity loaded = strategy.load("1", SampleEntity.class);
+        SearchResult<SampleEntity> queryResult = strategy.query("from SampleEntity", Map.of(), SampleEntity.class, 10,
+                1);
+        SearchResult<SampleEntity> loadAllResult = strategy.loadAll(List.of(), SampleEntity.class, 10, 1);
         Set<String> comparators = strategy.supportedComparators(SampleEntity.class);
+        String savedIdentifier = strategy.save(new SampleEntity("1", "incoming"));
+        strategy.update(new SampleEntity("1", "updated"));
+        strategy.remove("1", SampleEntity.class);
+        strategy.remove(new SampleEntity("1", "incoming"));
+        strategy.refresh(new SampleEntity("1", "refresh"));
 
         assertEquals("1", loaded.getId());
         assertEquals("loaded-from-java", loaded.getValue());
+        assertEquals(0, queryResult.getResults().size());
+        assertEquals(0, loadAllResult.getResults().size());
         assertEquals(Set.of("java-eq"), comparators);
-        assertEquals(1, dataAccessService.loadCount);
+        assertEquals("java-saved-id", savedIdentifier);
+        assertEquals(6, dataAccessService.loadCount);
+        assertEquals(1, dataAccessService.queryCount);
+        assertEquals(1, dataAccessService.loadAllCount);
         assertEquals(1, dataAccessService.supportedComparatorsCount);
+        assertEquals(1, dataAccessService.saveCount);
+        assertEquals(1, dataAccessService.updateCount);
+        assertEquals(2, dataAccessService.removeCount);
+        assertEquals(1, dataAccessService.refreshCount);
+    }
+
+    @Test
+    void fallsBackToTheJavaStrategyWhenTheDrlComparatorReturnsNull() {
+        RecordingJavaDataAccessService dataAccessService = new RecordingJavaDataAccessService();
+        RecordingDrlService drlService = new RecordingDrlService();
+        drlService.setOutput("supportedComparators", null);
+        CoredeuxComponentRegistry registry = InMemoryCoredeuxComponentRegistry.builder()
+                .component("coredeuxDrlService", drlService)
+                .component("customerDataAccess.drl", dataAccessService)
+                .build();
+        EntityDefinitionRegistry definitionRegistry = new InMemoryEntityDefinitionRegistry(
+                List.of(entityDefinition("customerDataAccess.drl")));
+        DefaultDRLCoredeuxStrategy strategy = new DefaultDRLCoredeuxStrategy(definitionRegistry, new FixedResolver(),
+                registry, new DefaultCoredeuxReflectionHelperService(), () -> null,
+                List.of(new RecordingModuleHandler("hooks")));
+
+        Set<String> comparators = strategy.supportedComparators(SampleEntity.class);
+
+        assertEquals(Set.of("java-eq"), comparators);
+        assertEquals(1, dataAccessService.supportedComparatorsCount);
+        assertEquals(1, drlService.methodCounts.getOrDefault("supportedComparators", 0));
+    }
+
+    @Test
+    void surfacesDrlServiceResolutionFailures() {
+        DefaultDRLCoredeuxStrategy strategy = strategyWithoutDrlService("customerDataAccess.drl");
+
+        assertThrows(CoredeuxStrategyException.class, () -> strategy.load("1", SampleEntity.class));
     }
 
     private DefaultDRLCoredeuxStrategy strategy(String dataAccessService, DRLService drlService,
@@ -103,6 +151,15 @@ class DefaultDRLCoredeuxStrategyTest {
         moduleHandlers.addAll(List.of(handlers));
         return new DefaultDRLCoredeuxStrategy(definitionRegistry, new FixedResolver(), registry,
                 new DefaultCoredeuxReflectionHelperService(), () -> null, moduleHandlers);
+    }
+
+    private DefaultDRLCoredeuxStrategy strategyWithoutDrlService(String dataAccessService) {
+        CoredeuxComponentRegistry registry = InMemoryCoredeuxComponentRegistry.builder()
+                .component("customerDataAccess", new RecordingJavaDataAccessService())
+                .build();
+        EntityDefinitionRegistry definitionRegistry = new InMemoryEntityDefinitionRegistry(List.of(entityDefinition(dataAccessService)));
+        return new DefaultDRLCoredeuxStrategy(definitionRegistry, new FixedResolver(), registry,
+                new DefaultCoredeuxReflectionHelperService(), () -> null, List.of(new RecordingModuleHandler("hooks")));
     }
 
     private CoredeuxEntityDefinition entityDefinition(String dataAccessService) {
@@ -129,7 +186,13 @@ class DefaultDRLCoredeuxStrategyTest {
     private static final class RecordingJavaDataAccessService implements CoredeuxDataAccessService {
 
         private int loadCount;
+        private int queryCount;
+        private int loadAllCount;
         private int supportedComparatorsCount;
+        private int saveCount;
+        private int updateCount;
+        private int removeCount;
+        private int refreshCount;
 
         @Override
         public <T> T load(String id, Class<T> type) {
@@ -142,25 +205,30 @@ class DefaultDRLCoredeuxStrategyTest {
 
         @Override
         public <T> String save(T entity) {
+            saveCount++;
             return "java-saved-id";
         }
 
         @Override
         public <T> void update(T entity) {
+            updateCount++;
         }
 
         @Override
         public <T> void remove(T entity) {
+            removeCount++;
         }
 
         @Override
         public <T> SearchResult<T> loadAll(List<SearchParams> params, Class<T> type, int pageSize, int currentPage) {
+            loadAllCount++;
             return SearchResult.<T>builder().results(List.of()).build();
         }
 
         @Override
         public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
                 int currentPage) {
+            queryCount++;
             return SearchResult.<T>builder().results(List.of()).build();
         }
 
@@ -172,6 +240,7 @@ class DefaultDRLCoredeuxStrategyTest {
 
         @Override
         public <T> void refresh(T entity) {
+            refreshCount++;
         }
     }
 
@@ -201,6 +270,11 @@ class DefaultDRLCoredeuxStrategyTest {
         private final Map<String, Integer> methodCounts = new HashMap<>();
         private final List<String> invocations = new ArrayList<>();
         private final List<String> lastOperationsSnapshot = new ArrayList<>();
+        private final Map<String, Object> fixedOutputs = new HashMap<>();
+
+        private void setOutput(String method, Object output) {
+            fixedOutputs.put(method, output);
+        }
 
         @Override
         public <T> void execute(String ruleId, RuleContext<T> context) {
@@ -254,6 +328,11 @@ class DefaultDRLCoredeuxStrategyTest {
             invocations.add(ruleId + ":" + method);
             methodCounts.merge(method, 1, Integer::sum);
             lastOperationsSnapshot.add(method);
+
+            if (fixedOutputs.containsKey(method)) {
+                context.setOutput((T) fixedOutputs.get(method));
+                return;
+            }
 
             switch (method) {
                 case "load" -> context.setOutput((T) new SampleEntity(
