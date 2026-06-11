@@ -19,6 +19,7 @@ Detailed reference:
 - YAML-backed entity definitions and registry/resolver support
 - framework context objects such as `RequestContext`, `OperationContext`, and `EntityLifecycleContext`
 - extension contracts for validators, hooks, and audit handlers
+- shared value handler contracts and the handler invocation service
 - framework exception hierarchy
 
 ## Layering
@@ -189,6 +190,8 @@ A typical application will place entity definitions on the classpath and inject 
 Core extension contracts in this module include:
 
 - `CoredeuxDataAccessService`
+- `CoredeuxValueHandler`
+- `CoredeuxValueHandlerService`
 - `CoredeuxEntityValidator`
 - `CoredeuxEntityHook`
 - `CoredeuxEntityAuditHandler`

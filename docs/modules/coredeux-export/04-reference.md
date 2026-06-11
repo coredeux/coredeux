@@ -156,6 +156,11 @@ implementations, but the Coredeux export contract stays the same.
 Use a custom handler when the exported value needs formatting, redaction, or a
 legacy code-to-label mapping.
 
+The same export field contract can also route to a `.drl` handler when the
+DRL starter is active. Native handlers still implement
+`CoredeuxExportValueHandler`; DRL-backed handlers use the same field name and
+are resolved through the shared value-handler service.
+
 ### Custom Storage
 
 Implement `CoredeuxExportStorageService` when you want database, cloud, or

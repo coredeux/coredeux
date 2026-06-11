@@ -399,7 +399,8 @@ Fields:
 - `mode`: collection update mode for POJO collection fields. Supported values
   are `replace`, `append`, and `clear`; default is `replace`.
 - `reference`: reference lookup instruction. See "References".
-- `handler`: Spring bean name of a custom value handler.
+- `handler`: Spring bean name of a custom value handler, or a `.drl`
+  handler name when the DRL starter is active.
 - `metadata`: opaque extension map. See "Metadata Fields".
 
 Column `name` is both the row value key and the target entity field name.
@@ -935,6 +936,8 @@ public interface CoredeuxImportValueHandler {
 ```
 
 Register handlers as Spring beans. Use the bean name in `ImportColumn.handler`.
+The handler receives an `ImportValueContext`, which is a data-only payload.
+Keep services in the handler bean itself, not in the context object.
 
 Example:
 
@@ -1026,6 +1029,22 @@ The column opts into the handler by bean name:
   "handler": "demoUriImportHandler"
 }
 ```
+
+### DRL-backed Import Value Handlers
+
+The same import value-handler contract can also be backed by DRL when the
+DRL starter is present.
+
+In that mode:
+
+- native handler names keep using the Java bean pipeline
+- handler names ending in `.drl` route through the DRL runtime
+- the DRL rule receives the same `ImportValueContext` as a context payload
+
+That means a DRL author can keep the column contract stable and replace only
+the conversion logic.
+
+See the DRL-specific guide for a full authoring example.
 
 Example row:
 

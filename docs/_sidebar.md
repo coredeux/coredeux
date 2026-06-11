@@ -28,6 +28,7 @@
   * [Core MongoDB Reference](/17-core-mongodb-reference)
   * [Core Redis Reference](/18-core-redis-reference)
   * [Property Resolution Order](/19-property-resolution-order)
+  * [Value Handlers](/20-value-handlers)
 * Import And Export
   * [Coredeux Import](/coredeux-import-overview)
   * [Raw JSON Import](/02-raw-json-import)
@@ -48,6 +49,8 @@
   * [Hooks With DRL](/coredeux-drl-hooks)
   * [Audit With DRL](/coredeux-drl-audit)
   * [Custom Handlers](/coredeux-drl-custom-handlers)
+  * [Import Value Handlers](/coredeux-drl-import-value-handlers)
+  * [Export Value Handlers](/coredeux-drl-export-value-handlers)
 * Tools
   * [Coredeux DRL DevTools](/coredeux-drl-devtools)
 * Native Demo Companion

@@ -22,6 +22,8 @@ Read it in order if you want the full picture:
 7. [Hooks With DRL](/coredeux-drl-hooks)
 8. [Audit With DRL](/coredeux-drl-audit)
 9. [Custom Handlers](/coredeux-drl-custom-handlers)
+10. [Import Value Handlers](/coredeux-drl-import-value-handlers)
+11. [Export Value Handlers](/coredeux-drl-export-value-handlers)
 
 The numbered pages are the canonical version of this section.
 
@@ -40,6 +42,8 @@ POC:
   services
 - DRL source packages are split by concern, such as `dataaccess`, `hooks`,
   `validation`, and `audit`
+- the same DRL-backed handler pattern also applies to import and export field
+  handlers
 
 If you want authoring-time Java-to-DRL conversion, use the tools section:
 
