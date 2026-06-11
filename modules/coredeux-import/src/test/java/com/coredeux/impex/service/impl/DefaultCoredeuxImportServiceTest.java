@@ -24,13 +24,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
+import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.impex.handler.CoredeuxImportValueHandler;
-import com.coredeux.impex.handler.ImportValueHandlerResolver;
 import com.coredeux.impex.handler.impl.DefaultCoredeuxImportValueHandler;
 import com.coredeux.impex.handler.impl.JsonMapImportHandler;
 import com.coredeux.impex.model.ImportColumn;
@@ -68,13 +69,14 @@ class DefaultCoredeuxImportServiceTest {
                         .identifier("id")
                         .build()));
         ImportEntityTargetService entityTargetService = new ImportEntityTargetService(reflection, registry);
-        Map<String, CoredeuxImportValueHandler> handlers = new LinkedHashMap<>();
-        handlers.put(ImportValueHandlerResolver.DEFAULT_HANDLER, new DefaultCoredeuxImportValueHandler(coredeuxService));
-        handlers.put("uppercaseHandler", context -> context.getEffectiveValue().toUpperCase());
-        handlers.put("wrongTypeHandler", context -> "not-a-number");
-        handlers.put("jsonMapImportHandler", new JsonMapImportHandler());
+        InMemoryCoredeuxComponentRegistry componentRegistry = InMemoryCoredeuxComponentRegistry.builder()
+                .component("coredeuxDefaultImportValueHandler", new DefaultCoredeuxImportValueHandler(coredeuxService))
+                .component("uppercaseHandler", (CoredeuxImportValueHandler) context -> context.getEffectiveValue().toUpperCase())
+                .component("wrongTypeHandler", (CoredeuxImportValueHandler) context -> "not-a-number")
+                .component("jsonMapImportHandler", new JsonMapImportHandler())
+                .build();
         importService = new DefaultCoredeuxImportService(coredeuxService, reflection, entityTargetService,
-                new ImportValueHandlerResolver(handlers));
+                new DefaultCoredeuxValueHandlerService(componentRegistry));
     }
 
     @Test

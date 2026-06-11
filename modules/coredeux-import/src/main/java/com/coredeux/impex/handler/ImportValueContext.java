@@ -2,6 +2,7 @@ package com.coredeux.impex.handler;
 
 import java.util.Map;
 
+import com.coredeux.core.handler.ValueContext;
 import com.coredeux.impex.model.ImportColumn;
 import com.coredeux.impex.model.ImportMacro;
 import com.coredeux.impex.model.ImportRow;
@@ -12,7 +13,7 @@ import lombok.Value;
 
 @Value
 @Builder
-public class ImportValueContext {
+public class ImportValueContext implements ValueContext {
 
     /**
      * Original value exactly as supplied in the row map.

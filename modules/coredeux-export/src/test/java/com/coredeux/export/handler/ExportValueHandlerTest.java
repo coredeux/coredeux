@@ -13,7 +13,9 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.coredeux.export.exception.CoredeuxExportException;
+import com.coredeux.core.exceptions.CoredeuxValueHandlerException;
+import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
+import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler;
 import com.coredeux.export.model.ExportField;
 import com.coredeux.export.model.ExportFormat;
@@ -63,17 +65,30 @@ class ExportValueHandlerTest {
     void resolverUsesDefaultTrimmedNamedAndErrorPaths() {
         CoredeuxExportValueHandler named = value -> "named";
         CoredeuxExportValueHandler fallback = value -> "default";
-        ExportValueHandlerResolver resolver = new ExportValueHandlerResolver(Map.of(
-                "defaultCoredeuxExportValueHandler", fallback,
-                "customHandler", named));
+        DefaultCoredeuxValueHandlerService service = new DefaultCoredeuxValueHandlerService(
+                InMemoryCoredeuxComponentRegistry.builder()
+                        .component("defaultCoredeuxExportValueHandler", fallback)
+                        .component("customHandler", named)
+                        .build());
 
-        assertSame(fallback, resolver.resolve(null));
-        assertSame(fallback, resolver.resolve(" "));
-        assertSame(named, resolver.resolve(" customHandler "));
+        assertEquals("default", service.invoke("defaultCoredeuxExportValueHandler", context("raw")));
+        assertEquals("named", service.invoke(" customHandler ", context("raw")));
 
-        CoredeuxExportException exception = assertThrows(CoredeuxExportException.class,
-                () -> resolver.resolve("missingHandler"));
-        assertTrue(exception.getMessage().contains("missingHandler"));
+        CoredeuxValueHandlerException exception = assertThrows(CoredeuxValueHandlerException.class,
+                () -> service.invoke("missingHandler", context("raw")));
+        assertTrue(exception.getMessage().contains("Unable to resolve value handler: missingHandler"));
+    }
+
+    @Test
+    void serviceRejectsBlankHandlerNames() {
+        DefaultCoredeuxValueHandlerService service = new DefaultCoredeuxValueHandlerService(
+                InMemoryCoredeuxComponentRegistry.builder().build());
+
+        com.coredeux.core.exceptions.CoredeuxValueHandlerException exception = assertThrows(
+                com.coredeux.core.exceptions.CoredeuxValueHandlerException.class,
+                () -> service.invoke(" ", context("raw")));
+
+        assertEquals("Value handler name is required", exception.getMessage());
     }
 
     private ExportValueContext context(Object value) {

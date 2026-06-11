@@ -28,7 +28,9 @@ import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.service.CoredeuxModuleService;
 import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.core.strategy.CoredeuxStrategy;
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.drl.config.DrlRuntimeBootstrap;
+import com.coredeux.drl.core.handler.service.DefaultDRLCoredeuxValueHandlerService;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
@@ -57,6 +59,8 @@ class CoredeuxDrlAutoConfigurationTest {
             assertInstanceOf(DRLValidatorsModuleHandler.class, context.getBean(ValidatorsModuleHandler.class));
             assertInstanceOf(DRLHooksModuleHandler.class, context.getBean(HooksModuleHandler.class));
             assertInstanceOf(DRLAuditModuleHandler.class, context.getBean(AuditModuleHandler.class));
+            assertInstanceOf(DefaultDRLCoredeuxValueHandlerService.class,
+                    context.getBean(CoredeuxValueHandlerService.class));
             assertInstanceOf(CoredeuxModuleService.class, context.getBean(CoredeuxModuleService.class));
             assertInstanceOf(CoredeuxService.class, context.getBean(CoredeuxService.class));
 

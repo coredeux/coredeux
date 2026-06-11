@@ -26,8 +26,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
+import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
@@ -52,7 +54,6 @@ import com.coredeux.export.storage.CoredeuxExportStorageServiceResolver;
 import com.coredeux.export.log.impl.DefaultCoredeuxExportLogServiceResolver;
 import com.coredeux.export.storage.impl.DefaultCoredeuxExportStorageServiceResolver;
 import com.coredeux.export.storage.impl.DefaultCoredeuxFileSystemExportStorageService;
-import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.writer.ExcelExportWriter;
 import com.coredeux.export.writer.TextExportWriter;
 import com.coredeux.export.worker.DefaultCoredeuxExportWorker;
@@ -75,9 +76,12 @@ class DefaultCoredeuxExportServiceTest {
         InMemoryEntityDefinitionRegistry registry = new InMemoryEntityDefinitionRegistry(List.of(
                 CoredeuxEntityDefinition.builder().fullClassName(Customer.class.getName()).identifier("id").build()));
         ExportValueFormatter formatter = new ExportValueFormatter();
-        ExportValueHandlerResolver handlerResolver = new ExportValueHandlerResolver(Map.of(
-                "defaultCoredeuxExportValueHandler", new com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler(),
-                "dateOnlyExportHandler", new DateOnlyExportHandler()));
+        DefaultCoredeuxValueHandlerService handlerService = new DefaultCoredeuxValueHandlerService(
+                InMemoryCoredeuxComponentRegistry.builder()
+                        .component("defaultCoredeuxExportValueHandler",
+                                new com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler())
+                        .component("dateOnlyExportHandler", new DateOnlyExportHandler())
+                        .build());
 
         Map<String, CoredeuxExportStorageService> storageServices = new LinkedHashMap<>();
         storageServices.put("defaultCoredeuxExportStorageService",
@@ -92,7 +96,7 @@ class DefaultCoredeuxExportServiceTest {
                 "defaultCoredeuxExportLogService");
 
         exportService = new DefaultCoredeuxExportService(coredeuxService, reflection, registry,
-                new ExportFieldPathParser(), new ExportValueResolver(reflection, formatter, handlerResolver),
+                new ExportFieldPathParser(), new ExportValueResolver(reflection, formatter, handlerService),
                 storageResolver, logResolver, queueService, new TextExportWriter(), new ExcelExportWriter());
 
         worker = new DefaultCoredeuxExportWorker(queueService, exportService, logResolver, 1, true);

@@ -13,9 +13,10 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
+import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.export.exception.CoredeuxExportException;
-import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler;
 import com.coredeux.export.model.ExportField;
 import com.coredeux.export.model.ExportFormat;
@@ -87,8 +88,9 @@ class ExportServiceSupportTest {
 
     private ExportValueResolver resolver() {
         return new ExportValueResolver(new DefaultCoredeuxReflectionHelperService(), new ExportValueFormatter(),
-                new ExportValueHandlerResolver(Map.of("defaultCoredeuxExportValueHandler",
-                        new DefaultCoredeuxExportValueHandler())));
+                new DefaultCoredeuxValueHandlerService(InMemoryCoredeuxComponentRegistry.builder()
+                        .component("defaultCoredeuxExportValueHandler", new DefaultCoredeuxExportValueHandler())
+                        .build()));
     }
 
     private ExportFieldPath path(String value) {

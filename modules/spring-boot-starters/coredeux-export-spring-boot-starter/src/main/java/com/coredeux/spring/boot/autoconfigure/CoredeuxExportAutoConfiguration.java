@@ -5,16 +5,16 @@ import java.util.Map;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.coredeux.core.config.CoredeuxProperties;
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.export.handler.CoredeuxExportValueHandler;
-import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler;
 import com.coredeux.export.log.CoredeuxExportLogService;
 import com.coredeux.export.log.CoredeuxExportLogServiceResolver;
@@ -61,24 +61,17 @@ public class CoredeuxExportAutoConfiguration {
         return new ExportValueFormatter();
     }
 
-    @Bean(name = ExportValueHandlerResolver.DEFAULT_HANDLER)
-    @ConditionalOnMissingBean(name = ExportValueHandlerResolver.DEFAULT_HANDLER)
+    @Bean(name = "defaultCoredeuxExportValueHandler")
+    @ConditionalOnMissingBean(name = "defaultCoredeuxExportValueHandler")
     CoredeuxExportValueHandler coredeuxDefaultExportValueHandler() {
         return new DefaultCoredeuxExportValueHandler();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    ExportValueHandlerResolver coredeuxExportValueHandlerResolver(
-            Map<String, CoredeuxExportValueHandler> handlers) {
-        return new ExportValueHandlerResolver(handlers);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
     ExportValueResolver coredeuxExportValueResolver(CoredeuxReflectionHelperService reflectionHelperService,
-            ExportValueFormatter formatter, ExportValueHandlerResolver handlerResolver) {
-        return new ExportValueResolver(reflectionHelperService, formatter, handlerResolver);
+            ExportValueFormatter formatter, CoredeuxValueHandlerService coredeuxValueHandlerService) {
+        return new ExportValueResolver(reflectionHelperService, formatter, coredeuxValueHandlerService);
     }
 
     @Bean(name = "consoleCoredeuxExportLogService")

@@ -1,43 +1,52 @@
 package com.coredeux.impex.handler;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 
-import com.coredeux.impex.exception.CoredeuxImportException;
+import com.coredeux.core.exceptions.CoredeuxValueHandlerException;
+import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
+import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 
 class ImportValueHandlerResolverTest {
 
-    private final CoredeuxImportValueHandler defaultHandler = context -> context.getEffectiveValue();
-    private final CoredeuxImportValueHandler namedHandler = context -> "named";
-
-    @Test
-    void shouldResolveDefaultHandlerForBlankNames() {
-        ImportValueHandlerResolver resolver = new ImportValueHandlerResolver(Map.of(
-                ImportValueHandlerResolver.DEFAULT_HANDLER, defaultHandler));
-
-        assertSame(defaultHandler, resolver.resolve(null));
-        assertSame(defaultHandler, resolver.resolve(" "));
-    }
-
     @Test
     void shouldTrimAndResolveNamedHandler() {
-        ImportValueHandlerResolver resolver = new ImportValueHandlerResolver(Map.of("customHandler", namedHandler));
+        DefaultCoredeuxValueHandlerService service = new DefaultCoredeuxValueHandlerService(
+                InMemoryCoredeuxComponentRegistry.builder()
+                        .component("customHandler", (CoredeuxImportValueHandler) context -> "named")
+                        .build());
 
-        assertSame(namedHandler, resolver.resolve(" customHandler "));
+        assertEquals("named", service.invoke(" customHandler ", context("demo")));
     }
 
     @Test
     void shouldRejectMissingHandler() {
-        ImportValueHandlerResolver resolver = new ImportValueHandlerResolver(null);
+        DefaultCoredeuxValueHandlerService service = new DefaultCoredeuxValueHandlerService(
+                InMemoryCoredeuxComponentRegistry.builder().build());
 
-        CoredeuxImportException exception = assertThrows(CoredeuxImportException.class,
-                () -> resolver.resolve("missingHandler"));
+        CoredeuxValueHandlerException exception = assertThrows(CoredeuxValueHandlerException.class,
+                () -> service.invoke("missingHandler", context("demo")));
 
-        assertTrue(exception.getMessage().contains("Import value handler not found: missingHandler"));
+        assertTrue(exception.getMessage().contains("Unable to resolve value handler: missingHandler"));
+    }
+
+    @Test
+    void shouldRejectBlankHandlerNames() {
+        DefaultCoredeuxValueHandlerService service = new DefaultCoredeuxValueHandlerService(
+                InMemoryCoredeuxComponentRegistry.builder().build());
+
+        CoredeuxValueHandlerException exception = assertThrows(CoredeuxValueHandlerException.class,
+                () -> service.invoke(" ", context("demo")));
+
+        assertEquals("Value handler name is required", exception.getMessage());
+    }
+
+    private ImportValueContext context(String effectiveValue) {
+        return ImportValueContext.builder()
+                .effectiveValue(effectiveValue)
+                .build();
     }
 }
