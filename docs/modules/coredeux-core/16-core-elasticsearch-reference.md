@@ -1,7 +1,7 @@
 # Coredeux Core Elasticsearch Reference
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core JDBC](/15-core-jdbc-reference) | [Documentation Home](/) | [Next: Coredeux Core MongoDB](/17-core-mongodb-reference)
+[Previous: Coredeux Core JDBC](/modules/coredeux-core/15-core-jdbc-reference) | [Documentation Home](/) | [Next: Coredeux Core MongoDB](/modules/coredeux-core/17-core-mongodb-reference)
 <!-- docs-nav-end -->
 
 This document is the detailed reference for `coredeux-core-elasticsearch`.
@@ -258,5 +258,5 @@ Depend on `coredeux-core-elasticsearch` if your application or module:
   `supportedComparators(Class<?> type)`
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core JDBC](/15-core-jdbc-reference) | [Documentation Home](/) | [Next: Coredeux Core MongoDB](/17-core-mongodb-reference)
+[Previous: Coredeux Core JDBC](/modules/coredeux-core/15-core-jdbc-reference) | [Documentation Home](/) | [Next: Coredeux Core MongoDB](/modules/coredeux-core/17-core-mongodb-reference)
 <!-- docs-nav-end -->

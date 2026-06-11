@@ -1,7 +1,7 @@
 # External Entity Definition Sources
 
 <!-- docs-nav-start -->
-[Previous: Entity Definitions](/03-entity-definitions) | [Documentation Home](/) | [Next: Module System](/05-modules)
+[Previous: Entity Definitions](/modules/coredeux-core/03-entity-definitions) | [Documentation Home](/) | [Next: Module System](/modules/coredeux-core/05-modules)
 <!-- docs-nav-end -->
 
 This guide explains how to replace the default `classpath:coredeux-entities.yml`
@@ -337,5 +337,5 @@ This is the preferred current approach because it:
 - keeps the external-source concern in the application layer
 
 <!-- docs-nav-start -->
-[Previous: Entity Definitions](/03-entity-definitions) | [Documentation Home](/) | [Next: Module System](/05-modules)
+[Previous: Entity Definitions](/modules/coredeux-core/03-entity-definitions) | [Documentation Home](/) | [Next: Module System](/modules/coredeux-core/05-modules)
 <!-- docs-nav-end -->

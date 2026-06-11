@@ -1,7 +1,7 @@
 # Coredeux Vision
 
 <!-- docs-nav-start -->
-[Previous: Overview](/overview) | [Documentation Home](/) | [Next: Roadmap](/roadmap)
+[Previous: Overview](/overview/) | [Documentation Home](/) | [Next: Roadmap](/overview/roadmap)
 <!-- docs-nav-end -->
 
 Coredeux is an enterprise application runtime that keeps the repetitive
@@ -60,5 +60,5 @@ about code generation. It is about the runtime shape that keeps enterprise
 behavior predictable when agents are involved.
 
 <!-- docs-nav-start -->
-[Previous: Overview](/overview) | [Documentation Home](/) | [Next: Roadmap](/roadmap)
+[Previous: Overview](/overview/) | [Documentation Home](/) | [Next: Roadmap](/overview/roadmap)
 <!-- docs-nav-end -->

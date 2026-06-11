@@ -1,7 +1,7 @@
 # Getting Started With The Native Demo In 10 Minutes
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Export Reference](/coredeux-export-reference) | [Documentation Home](/) | [Next: Native Tour Of The Demo](/02-native-tour-of-the-demo)
+[Previous: Coredeux Export Reference](/modules/coredeux-export/04-reference) | [Documentation Home](/) | [Next: Native Tour Of The Demo](/miscellaneous/02-native-tour-of-the-demo)
 <!-- docs-nav-end -->
 
 This is the fastest way to meet the Coredeux native demo in a running
@@ -18,8 +18,8 @@ application surface.
 
 If you want the Spring Boot version of the same starting point, see:
 
-- [Getting Started In 10 Minutes](../02-getting-started-in-10-minutes.md)
-- [Tour Of The Demo](../03-tour-of-the-demo.md)
+- [Getting Started In 10 Minutes](/02-getting-started-in-10-minutes)
+- [Tour Of The Demo](/03-tour-of-the-demo)
 
 ## The Story
 
@@ -246,8 +246,8 @@ That is the native shape of Coredeux.
 
 If you want to understand how the native demo is built, continue with:
 
-- [Native Tour Of The Demo](/02-native-tour-of-the-demo)
+- [Native Tour Of The Demo](/miscellaneous/02-native-tour-of-the-demo)
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Export Reference](/coredeux-export-reference) | [Documentation Home](/) | [Next: Native Tour Of The Demo](/02-native-tour-of-the-demo)
+[Previous: Coredeux Export Reference](/modules/coredeux-export/04-reference) | [Documentation Home](/) | [Next: Native Tour Of The Demo](/miscellaneous/02-native-tour-of-the-demo)
 <!-- docs-nav-end -->

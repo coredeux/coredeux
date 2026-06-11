@@ -1,7 +1,7 @@
 # Entity Definitions
 
 <!-- docs-nav-start -->
-[Previous: Lifecycle Model](/02-lifecycle) | [Documentation Home](/) | [Next: External Entity Definition Sources](/04-external-entity-definition-source)
+[Previous: Lifecycle Model](/modules/coredeux-core/02-lifecycle) | [Documentation Home](/) | [Next: External Entity Definition Sources](/modules/coredeux-core/04-external-entity-definition-source)
 <!-- docs-nav-end -->
 
 Coredeux entities are configured through YAML.
@@ -174,5 +174,5 @@ Feature-specific behavior should stay under `modules` so future modules can be
 added without repeatedly changing the core entity contract.
 
 <!-- docs-nav-start -->
-[Previous: Lifecycle Model](/02-lifecycle) | [Documentation Home](/) | [Next: External Entity Definition Sources](/04-external-entity-definition-source)
+[Previous: Lifecycle Model](/modules/coredeux-core/02-lifecycle) | [Documentation Home](/) | [Next: External Entity Definition Sources](/modules/coredeux-core/04-external-entity-definition-source)
 <!-- docs-nav-end -->

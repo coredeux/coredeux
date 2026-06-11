@@ -1,21 +1,21 @@
 # Overview
 
 <!-- docs-nav-start -->
-[Previous: Tour Of The Demo](/03-tour-of-the-demo) | [Documentation Home](/) | [Next: Vision](/vision)
+[Previous: Tour Of The Demo](/03-tour-of-the-demo) | [Documentation Home](/) | [Next: Vision](/overview/vision)
 <!-- docs-nav-end -->
 
 This section explains where Coredeux is going and why it exists.
 
 Use it when you want the project story before the implementation details.
 
-- [Vision](/vision)
-- [Roadmap](/roadmap)
-- [Coredeux Core Reference](/13-reference)
+- [Vision](/overview/vision)
+- [Roadmap](/overview/roadmap)
+- [Coredeux Core Reference](/modules/coredeux-core/13-reference)
 
 The detailed framework mechanics now live in the core module documentation,
-especially [coredeux-core Reference](/13-reference).
+especially [coredeux-core Reference](/modules/coredeux-core/13-reference).
 That keeps this section focused on direction rather than internals.
 
 <!-- docs-nav-start -->
-[Previous: Tour Of The Demo](/03-tour-of-the-demo) | [Documentation Home](/) | [Next: Vision](/vision)
+[Previous: Tour Of The Demo](/03-tour-of-the-demo) | [Documentation Home](/) | [Next: Vision](/overview/vision)
 <!-- docs-nav-end -->

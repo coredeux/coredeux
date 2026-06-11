@@ -1,7 +1,7 @@
 # Overview
 
 <!-- docs-nav-start -->
-[Previous: Coredeux DRL](/coredeux-drl) | [Documentation Home](/) | [Next: Native Runtime](/coredeux-drl-native-runtime)
+[Previous: Coredeux DRL](/modules/coredeux-drl/) | [Documentation Home](/) | [Next: Native Runtime](/modules/coredeux-drl/02-native-runtime)
 <!-- docs-nav-end -->
 
 `coredeux-drl` is the Coredeux runtime that executes DRL by rule id instead of
@@ -76,11 +76,11 @@ If you want copyable examples, continue to the dedicated guides.
 They show the Java source first, then the generated DRL, so the authoring flow
 is easy to follow end to end:
 
-- [Data Access With DRL](/coredeux-drl-data-access)
-- [Validators With DRL](/coredeux-drl-validators)
-- [Hooks With DRL](/coredeux-drl-hooks)
-- [Audit With DRL](/coredeux-drl-audit)
-- [Custom Handlers](/coredeux-drl-custom-handlers)
+- [Data Access With DRL](/modules/coredeux-drl/05-data-access)
+- [Validators With DRL](/modules/coredeux-drl/06-validators)
+- [Hooks With DRL](/modules/coredeux-drl/07-hooks)
+- [Audit With DRL](/modules/coredeux-drl/08-audit)
+- [Custom Handlers](/modules/coredeux-drl/09-custom-handlers)
 
 ## What The Rules Look Like
 
@@ -127,5 +127,5 @@ If you are using plain Java, read the native runtime page.
 If you are using Spring Boot, read the starter page.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux DRL](/coredeux-drl) | [Documentation Home](/) | [Next: Native Runtime](/coredeux-drl-native-runtime)
+[Previous: Coredeux DRL](/modules/coredeux-drl/) | [Documentation Home](/) | [Next: Native Runtime](/modules/coredeux-drl/02-native-runtime)
 <!-- docs-nav-end -->

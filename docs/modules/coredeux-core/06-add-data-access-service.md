@@ -1,7 +1,7 @@
 # Add Or Choose A Data Access Service
 
 <!-- docs-nav-start -->
-[Previous: Module System](/05-modules) | [Documentation Home](/) | [Next: Available Data Access Implementations](/07-available-data-access-implementations)
+[Previous: Module System](/modules/coredeux-core/05-modules) | [Documentation Home](/) | [Next: Available Data Access Implementations](/modules/coredeux-core/07-available-data-access-implementations)
 <!-- docs-nav-end -->
 
 Every Coredeux entity needs a `CoredeuxDataAccessService` that knows how to
@@ -239,9 +239,9 @@ The framework uses that link to route CRUD and query work to the right backend.
 
 ## What To Read Next
 
-- [Available Data Access Implementations](/07-available-data-access-implementations)
-- [Adding a New Entity](11-add-new-entity.md)
+- [Available Data Access Implementations](/modules/coredeux-core/07-available-data-access-implementations)
+- [Adding a New Entity](/modules/coredeux-core/11-add-new-entity)
 
 <!-- docs-nav-start -->
-[Previous: Module System](/05-modules) | [Documentation Home](/) | [Next: Available Data Access Implementations](/07-available-data-access-implementations)
+[Previous: Module System](/modules/coredeux-core/05-modules) | [Documentation Home](/) | [Next: Available Data Access Implementations](/modules/coredeux-core/07-available-data-access-implementations)
 <!-- docs-nav-end -->

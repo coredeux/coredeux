@@ -1,7 +1,7 @@
 # Hooks
 
 <!-- docs-nav-start -->
-[Previous: Validators](/coredeux-drl-validators) | [Documentation Home](/) | [Next: Audit](/coredeux-drl-audit)
+[Previous: Validators](/modules/coredeux-drl/06-validators) | [Documentation Home](/) | [Next: Audit](/modules/coredeux-drl/08-audit)
 <!-- docs-nav-end -->
 
 This page shows the Java-first way to author DRL-backed lifecycle hooks.
@@ -266,5 +266,5 @@ If you want to emit audit history in the same Java-first style, continue to
 the audit page.
 
 <!-- docs-nav-start -->
-[Previous: Validators](/coredeux-drl-validators) | [Documentation Home](/) | [Next: Audit](/coredeux-drl-audit)
+[Previous: Validators](/modules/coredeux-drl/06-validators) | [Documentation Home](/) | [Next: Audit](/modules/coredeux-drl/08-audit)
 <!-- docs-nav-end -->

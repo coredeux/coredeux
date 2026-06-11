@@ -1,7 +1,7 @@
 # coredeux-core Reference
 
 <!-- docs-nav-start -->
-[Previous: Adding a Core Module](/12-add-core-module) | [Documentation Home](/) | [Next: Core JPA Reference](/14-core-jpa-reference)
+[Previous: Adding a Core Module](/modules/coredeux-core/12-add-core-module) | [Documentation Home](/) | [Next: Core JPA Reference](/modules/coredeux-core/14-core-jpa-reference)
 <!-- docs-nav-end -->
 
 This is the technical reference for the Coredeux core layer and its storage
@@ -14,18 +14,18 @@ them, and the places where you extend or replace behavior.
 
 Use this document together with:
 
-- [Overview](01-overview.md)
-- [Lifecycle Model](02-lifecycle.md)
-- [Entity Definitions](03-entity-definitions.md)
-- [Property Resolution Order](19-property-resolution-order.md)
-- [Module System](05-modules.md)
-- [Add Or Choose A Data Access Service](06-add-data-access-service.md)
-- [Available Data Access Implementations](07-available-data-access-implementations.md)
-- [Add a Hook](08-add-hook.md)
-- [Add a Validator](09-add-validator.md)
-- [Add Audit](10-add-audit.md)
-- [Adding a New Entity](11-add-new-entity.md)
-- [Adding a Core Module](/12-add-core-module)
+- [Overview](/modules/coredeux-core/01-overview)
+- [Lifecycle Model](/modules/coredeux-core/02-lifecycle)
+- [Entity Definitions](/modules/coredeux-core/03-entity-definitions)
+- [Property Resolution Order](/modules/coredeux-core/19-property-resolution-order)
+- [Module System](/modules/coredeux-core/05-modules)
+- [Add Or Choose A Data Access Service](/modules/coredeux-core/06-add-data-access-service)
+- [Available Data Access Implementations](/modules/coredeux-core/07-available-data-access-implementations)
+- [Add a Hook](/modules/coredeux-core/08-add-hook)
+- [Add a Validator](/modules/coredeux-core/09-add-validator)
+- [Add Audit](/modules/coredeux-core/10-add-audit)
+- [Adding a New Entity](/modules/coredeux-core/11-add-new-entity)
+- [Adding a Core Module](/modules/coredeux-core/12-add-core-module)
 
 ## What This Layer Is
 
@@ -55,7 +55,7 @@ It does not own:
 Those live in adapter modules, Spring starters, or host applications.
 
 If you are trying to understand where a property value comes from in a Spring
-Boot host, read [Property Resolution Order](19-property-resolution-order.md).
+Boot host, read [Property Resolution Order](/modules/coredeux-core/19-property-resolution-order).
 That page explains the override order without mixing it into the rest of the
 core runtime reference.
 
@@ -412,9 +412,9 @@ Registry behavior:
 - duplicate entity definitions are rejected
 - the registry is immutable after construction in the common in-memory path
 
-Spring bean:
+Spring Boot auto-configuration:
 
-- [CoredeuxEntityDefinitionConfiguration.java](../../../modules/coredeux-core/src/main/java/com/coredeux/core/config/CoredeuxEntityDefinitionConfiguration.java)
+- [CoredeuxAutoConfiguration.java](../../../modules/spring-boot-starters/coredeux-core-spring-boot-starter/src/main/java/com/coredeux/spring/boot/autoconfigure/CoredeuxAutoConfiguration.java)
 
 Config key:
 
@@ -458,9 +458,9 @@ Fields:
 - `tenantId`
 - `locale`
 
-Resolver:
+Resolver contract:
 
-- [DefaultCoredeuxRequestContextResolver.java](../../../modules/coredeux-core/src/main/java/com/coredeux/core/resolver/context/DefaultCoredeuxRequestContextResolver.java)
+- [CoredeuxRequestContextResolver.java](../../../modules/coredeux-core/src/main/java/com/coredeux/core/resolver/context/CoredeuxRequestContextResolver.java)
 
 Resolution order:
 
@@ -862,5 +862,5 @@ The framework is intentionally explicit. That makes it predictable for humans
 and legible for agents.
 
 <!-- docs-nav-start -->
-[Previous: Adding a Core Module](/12-add-core-module) | [Documentation Home](/) | [Next: Core JPA Reference](/14-core-jpa-reference)
+[Previous: Adding a Core Module](/modules/coredeux-core/12-add-core-module) | [Documentation Home](/) | [Next: Core JPA Reference](/modules/coredeux-core/14-core-jpa-reference)
 <!-- docs-nav-end -->

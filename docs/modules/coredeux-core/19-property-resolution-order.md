@@ -1,7 +1,7 @@
 # Property Resolution Order
 
 <!-- docs-nav-start -->
-[Previous: Core Redis Reference](/18-core-redis-reference) | [Documentation Home](/) | [Next: Coredeux Import](/coredeux-import-overview)
+[Previous: Core Redis Reference](/modules/coredeux-core/18-core-redis-reference) | [Documentation Home](/) | [Next: Coredeux Import](/modules/coredeux-import/01-overview)
 <!-- docs-nav-end -->
 
 This page explains how Coredeux resolves configuration in practice.
@@ -93,5 +93,5 @@ That is the only thing you need to remember when you are wiring Coredeux
 properties in a Spring Boot host.
 
 <!-- docs-nav-start -->
-[Previous: Core Redis Reference](/18-core-redis-reference) | [Documentation Home](/) | [Next: Coredeux Import](/coredeux-import-overview)
+[Previous: Core Redis Reference](/modules/coredeux-core/18-core-redis-reference) | [Documentation Home](/) | [Next: Coredeux Import](/modules/coredeux-import/01-overview)
 <!-- docs-nav-end -->

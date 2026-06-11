@@ -1,7 +1,7 @@
 # Adding a Core Module
 
 <!-- docs-nav-start -->
-[Previous: Adding a New Entity](/11-add-new-entity) | [Documentation Home](/) | [Next: Reference](/13-reference)
+[Previous: Adding a New Entity](/modules/coredeux-core/11-add-new-entity) | [Documentation Home](/) | [Next: Reference](/modules/coredeux-core/13-reference)
 <!-- docs-nav-end -->
 
 This guide describes how to add a new entity-level module to `coredeux-core`.
@@ -458,5 +458,5 @@ mvn -pl modules/coredeux-core clean test
 - `docs/modules/coredeux-core/05-modules.md` documents user-facing configuration.
 
 <!-- docs-nav-start -->
-[Previous: Adding a New Entity](/11-add-new-entity) | [Documentation Home](/) | [Next: Reference](/13-reference)
+[Previous: Adding a New Entity](/modules/coredeux-core/11-add-new-entity) | [Documentation Home](/) | [Next: Reference](/modules/coredeux-core/13-reference)
 <!-- docs-nav-end -->

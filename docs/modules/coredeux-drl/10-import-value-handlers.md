@@ -1,7 +1,7 @@
 # Import Value Handlers With DRL
 
 <!-- docs-nav-start -->
-[Previous: Coredeux DRL Custom Handlers](/coredeux-drl-custom-handlers) | [Documentation Home](/) | [Next: Export Value Handlers With DRL](/coredeux-drl-export-value-handlers)
+[Previous: Coredeux DRL Custom Handlers](/modules/coredeux-drl/09-custom-handlers) | [Documentation Home](/) | [Next: Export Value Handlers With DRL](/modules/coredeux-drl/11-export-value-handlers)
 <!-- docs-nav-end -->
 
 This page shows how to author an import value handler as DRL-backed logic
@@ -148,5 +148,5 @@ It only asks the shared value-handler service to invoke the named handler.
 If you also need the export side, read the next page.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux DRL Custom Handlers](/coredeux-drl-custom-handlers) | [Documentation Home](/) | [Next: Export Value Handlers With DRL](/coredeux-drl-export-value-handlers)
+[Previous: Coredeux DRL Custom Handlers](/modules/coredeux-drl/09-custom-handlers) | [Documentation Home](/) | [Next: Export Value Handlers With DRL](/modules/coredeux-drl/11-export-value-handlers)
 <!-- docs-nav-end -->

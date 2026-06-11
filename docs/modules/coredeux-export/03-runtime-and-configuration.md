@@ -1,7 +1,7 @@
 # Export Runtime And Configuration
 
 <!-- docs-nav-start -->
-[Previous: Export Request And Output](/02-request-and-output) | [Documentation Home](/) | [Next: Export Reference](/coredeux-export-reference)
+[Previous: Export Request And Output](/modules/coredeux-export/02-request-and-output) | [Documentation Home](/) | [Next: Export Reference](/modules/coredeux-export/04-reference)
 <!-- docs-nav-end -->
 
 This page explains how export is wired in Spring Boot and in the native demo.
@@ -224,5 +224,5 @@ If no request override is given, Coredeux falls back to the configured default
 storage service.
 
 <!-- docs-nav-start -->
-[Previous: Export Request And Output](/02-request-and-output) | [Documentation Home](/) | [Next: Export Reference](/coredeux-export-reference)
+[Previous: Export Request And Output](/modules/coredeux-export/02-request-and-output) | [Documentation Home](/) | [Next: Export Reference](/modules/coredeux-export/04-reference)
 <!-- docs-nav-end -->

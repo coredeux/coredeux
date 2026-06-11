@@ -1,7 +1,7 @@
 # Coredeux DRL Spring Boot Demo
 
 <!-- docs-nav-start -->
-[Previous: Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app) | [Documentation Home](/) | [Next: Platform Documentation](/platform)
+[Previous: Import Into An Existing Spring Boot App](/miscellaneous/03-import-into-an-existing-spring-boot-app) | [Documentation Home](/) | [Next: Platform Documentation](/platform/)
 <!-- docs-nav-end -->
 
 This guide explains the `examples/coredeux-drl-spring-boot-demo` module as it
@@ -801,5 +801,5 @@ examples/coredeux-drl-spring-boot-demo/src/main/resources/application.yml
 ```
 
 <!-- docs-nav-start -->
-[Previous: Import Into An Existing Spring Boot App](/03-import-into-an-existing-spring-boot-app) | [Documentation Home](/) | [Next: Platform Documentation](/platform)
+[Previous: Import Into An Existing Spring Boot App](/miscellaneous/03-import-into-an-existing-spring-boot-app) | [Documentation Home](/) | [Next: Platform Documentation](/platform/)
 <!-- docs-nav-end -->

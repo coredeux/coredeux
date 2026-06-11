@@ -1,7 +1,7 @@
 # Export Value Handlers With DRL
 
 <!-- docs-nav-start -->
-[Previous: Import Value Handlers With DRL](/coredeux-drl-import-value-handlers) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/coredeux-drl-devtools)
+[Previous: Import Value Handlers With DRL](/modules/coredeux-drl/10-import-value-handlers) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/modules/coredeux-drl-devtools/)
 <!-- docs-nav-end -->
 
 This page shows how to author an export value handler as DRL-backed logic.
@@ -158,5 +158,5 @@ starter decides whether that handler is native or rule-backed.
 If you need the import-side equivalent, go back to the previous page.
 
 <!-- docs-nav-start -->
-[Previous: Import Value Handlers With DRL](/coredeux-drl-import-value-handlers) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/coredeux-drl-devtools)
+[Previous: Import Value Handlers With DRL](/modules/coredeux-drl/10-import-value-handlers) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/modules/coredeux-drl-devtools/)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Validators
 
 <!-- docs-nav-start -->
-[Previous: Data Access](/coredeux-drl-data-access) | [Documentation Home](/) | [Next: Hooks](/coredeux-drl-hooks)
+[Previous: Data Access](/modules/coredeux-drl/05-data-access) | [Documentation Home](/) | [Next: Hooks](/modules/coredeux-drl/07-hooks)
 <!-- docs-nav-end -->
 
 This page shows the Java-first way to author DRL-backed validators.
@@ -177,5 +177,5 @@ If you want lifecycle behavior around load/save/update/delete, continue to the
 hooks page.
 
 <!-- docs-nav-start -->
-[Previous: Data Access](/coredeux-drl-data-access) | [Documentation Home](/) | [Next: Hooks](/coredeux-drl-hooks)
+[Previous: Data Access](/modules/coredeux-drl/05-data-access) | [Documentation Home](/) | [Next: Hooks](/modules/coredeux-drl/07-hooks)
 <!-- docs-nav-end -->

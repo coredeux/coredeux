@@ -1,7 +1,7 @@
 # Coredeux Import Reference
 
 <!-- docs-nav-start -->
-[Previous: Text And Excel File Import](/03-text-and-excel-file-import) | [Documentation Home](/) | [Next: Coredeux Export](/coredeux-export-overview)
+[Previous: Text And Excel File Import](/modules/coredeux-import/03-text-and-excel-file-import) | [Documentation Home](/) | [Next: Coredeux Export](/modules/coredeux-export/01-overview)
 <!-- docs-nav-end -->
 
 This document explains the current `coredeux-import` module in enough detail for
@@ -44,7 +44,7 @@ coredeux-import
         -> validation + execution through Coredeux core services
 ```
 
-See [Text And Excel File Import](/03-text-and-excel-file-import) for the
+See [Text And Excel File Import](/modules/coredeux-import/03-text-and-excel-file-import) for the
 text and workbook parsers that convert import files into `ImportRequest`.
 
 ## Module Location
@@ -2080,5 +2080,5 @@ The host application can own concerns such as:
 - Public API examples should stay aligned with the Postman collection.
 
 <!-- docs-nav-start -->
-[Previous: Text And Excel File Import](/03-text-and-excel-file-import) | [Documentation Home](/) | [Next: Coredeux Export](/coredeux-export-overview)
+[Previous: Text And Excel File Import](/modules/coredeux-import/03-text-and-excel-file-import) | [Documentation Home](/) | [Next: Coredeux Export](/modules/coredeux-export/01-overview)
 <!-- docs-nav-end -->

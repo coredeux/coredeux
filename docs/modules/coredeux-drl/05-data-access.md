@@ -1,7 +1,7 @@
 # Data Access
 
 <!-- docs-nav-start -->
-[Previous: Reference](/coredeux-drl-reference) | [Documentation Home](/) | [Next: Validators](/coredeux-drl-validators)
+[Previous: Reference](/modules/coredeux-drl/04-reference) | [Documentation Home](/) | [Next: Validators](/modules/coredeux-drl/06-validators)
 <!-- docs-nav-end -->
 
 This page shows the Java-first way to author a DRL-backed data access
@@ -300,5 +300,5 @@ If you want to see how validation rules follow the same Java-first shape,
 continue to the validators page.
 
 <!-- docs-nav-start -->
-[Previous: Reference](/coredeux-drl-reference) | [Documentation Home](/) | [Next: Validators](/coredeux-drl-validators)
+[Previous: Reference](/modules/coredeux-drl/04-reference) | [Documentation Home](/) | [Next: Validators](/modules/coredeux-drl/06-validators)
 <!-- docs-nav-end -->

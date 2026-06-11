@@ -1,7 +1,7 @@
 # Spring Boot Starter
 
 <!-- docs-nav-start -->
-[Previous: Native Runtime](/coredeux-drl-native-runtime) | [Documentation Home](/) | [Next: Reference](/coredeux-drl-reference)
+[Previous: Native Runtime](/modules/coredeux-drl/02-native-runtime) | [Documentation Home](/) | [Next: Reference](/modules/coredeux-drl/04-reference)
 <!-- docs-nav-end -->
 
 The Spring Boot starter is the easiest way to use `coredeux-drl` in a Spring
@@ -173,12 +173,12 @@ Use the starter when:
 
 For full examples of each module style, continue to:
 
-- [Data Access With DRL](/coredeux-drl-data-access)
-- [Validators With DRL](/coredeux-drl-validators)
-- [Hooks With DRL](/coredeux-drl-hooks)
-- [Audit With DRL](/coredeux-drl-audit)
-- [Custom Handlers](/coredeux-drl-custom-handlers)
+- [Data Access With DRL](/modules/coredeux-drl/05-data-access)
+- [Validators With DRL](/modules/coredeux-drl/06-validators)
+- [Hooks With DRL](/modules/coredeux-drl/07-hooks)
+- [Audit With DRL](/modules/coredeux-drl/08-audit)
+- [Custom Handlers](/modules/coredeux-drl/09-custom-handlers)
 
 <!-- docs-nav-start -->
-[Previous: Native Runtime](/coredeux-drl-native-runtime) | [Documentation Home](/) | [Next: Reference](/coredeux-drl-reference)
+[Previous: Native Runtime](/modules/coredeux-drl/02-native-runtime) | [Documentation Home](/) | [Next: Reference](/modules/coredeux-drl/04-reference)
 <!-- docs-nav-end -->

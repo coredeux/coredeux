@@ -1,7 +1,7 @@
 # Coredeux Roadmap
 
 <!-- docs-nav-start -->
-[Previous: Vision](/vision) | [Documentation Home](/) | [Next: Modules](/modules)
+[Previous: Vision](/overview/vision) | [Documentation Home](/) | [Next: Modules](/modules/)
 <!-- docs-nav-end -->
 
 Coredeux is being built in stages so the framework stays usable while the
@@ -41,5 +41,5 @@ a stable structure that survives long-lived systems and repeated agent-assisted
 changes.
 
 <!-- docs-nav-start -->
-[Previous: Vision](/vision) | [Documentation Home](/) | [Next: Modules](/modules)
+[Previous: Vision](/overview/vision) | [Documentation Home](/) | [Next: Modules](/modules/)
 <!-- docs-nav-end -->

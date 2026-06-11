@@ -1,7 +1,7 @@
 # Security Policy
 
 <!-- docs-nav-start -->
-[Previous: Versioning And Branching](/versioning) | [Documentation Home](/) | [Next: Third-Party Notices](/third-party-notices)
+[Previous: Versioning And Branching](/project/versioning) | [Documentation Home](/) | [Next: Third-Party Notices](/project/third-party-notices)
 <!-- docs-nav-end -->
 
 ## Reporting Vulnerabilities
@@ -30,5 +30,5 @@ Please allow maintainers time to fix before public disclosure.
 -   Avoid insecure defaults
 
 <!-- docs-nav-start -->
-[Previous: Versioning And Branching](/versioning) | [Documentation Home](/) | [Next: Third-Party Notices](/third-party-notices)
+[Previous: Versioning And Branching](/project/versioning) | [Documentation Home](/) | [Next: Third-Party Notices](/project/third-party-notices)
 <!-- docs-nav-end -->

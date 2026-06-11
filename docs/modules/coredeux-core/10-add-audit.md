@@ -1,7 +1,7 @@
 # Add Audit
 
 <!-- docs-nav-start -->
-[Previous: Add a Validator](/09-add-validator) | [Documentation Home](/) | [Next: Adding a New Entity](/11-add-new-entity)
+[Previous: Add a Validator](/modules/coredeux-core/09-add-validator) | [Documentation Home](/) | [Next: Adding a New Entity](/modules/coredeux-core/11-add-new-entity)
 <!-- docs-nav-end -->
 
 Audit handlers record meaningful business operations as the framework runs.
@@ -209,9 +209,9 @@ The only difference is how the bean is registered:
 
 ## What To Read Next
 
-- [Adding a New Entity](/11-add-new-entity)
-- [Adding a Core Module](12-add-core-module.md)
+- [Adding a New Entity](/modules/coredeux-core/11-add-new-entity)
+- [Adding a Core Module](/modules/coredeux-core/12-add-core-module)
 
 <!-- docs-nav-start -->
-[Previous: Add a Validator](/09-add-validator) | [Documentation Home](/) | [Next: Adding a New Entity](/11-add-new-entity)
+[Previous: Add a Validator](/modules/coredeux-core/09-add-validator) | [Documentation Home](/) | [Next: Adding a New Entity](/modules/coredeux-core/11-add-new-entity)
 <!-- docs-nav-end -->

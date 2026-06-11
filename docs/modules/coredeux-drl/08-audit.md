@@ -1,7 +1,7 @@
 # Audit
 
 <!-- docs-nav-start -->
-[Previous: Hooks](/coredeux-drl-hooks) | [Documentation Home](/) | [Next: Custom Handlers](/coredeux-drl-custom-handlers)
+[Previous: Hooks](/modules/coredeux-drl/07-hooks) | [Documentation Home](/) | [Next: Custom Handlers](/modules/coredeux-drl/09-custom-handlers)
 <!-- docs-nav-end -->
 
 This page shows the Java-first way to author DRL-backed audit handlers.
@@ -139,5 +139,5 @@ If you want to see how to build your own module families with the same
 Java-first style, continue to the custom handlers page.
 
 <!-- docs-nav-start -->
-[Previous: Hooks](/coredeux-drl-hooks) | [Documentation Home](/) | [Next: Custom Handlers](/coredeux-drl-custom-handlers)
+[Previous: Hooks](/modules/coredeux-drl/07-hooks) | [Documentation Home](/) | [Next: Custom Handlers](/modules/coredeux-drl/09-custom-handlers)
 <!-- docs-nav-end -->

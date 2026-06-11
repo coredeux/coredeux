@@ -1,7 +1,7 @@
 # Available Data Access Implementations
 
 <!-- docs-nav-start -->
-[Previous: Add Or Choose A Data Access Service](/06-add-data-access-service) | [Documentation Home](/) | [Next: Add a Hook](/08-add-hook)
+[Previous: Add Or Choose A Data Access Service](/modules/coredeux-core/06-add-data-access-service) | [Documentation Home](/) | [Next: Add a Hook](/modules/coredeux-core/08-add-hook)
 <!-- docs-nav-end -->
 
 This page lists the built-in `CoredeuxDataAccessService` implementations
@@ -151,14 +151,14 @@ as long as the YAML points at the right bean name.
 
 ## What To Read Next
 
-- [Add Or Choose A Data Access Service](/06-add-data-access-service)
-- [Add a Hook](/08-add-hook)
-- [Core JPA Reference](14-core-jpa-reference.md)
-- [Core JDBC Reference](15-core-jdbc-reference.md)
-- [Core Elasticsearch Reference](16-core-elasticsearch-reference.md)
-- [Core MongoDB Reference](17-core-mongodb-reference.md)
-- [Core Redis Reference](18-core-redis-reference.md)
+- [Add Or Choose A Data Access Service](/modules/coredeux-core/06-add-data-access-service)
+- [Add a Hook](/modules/coredeux-core/08-add-hook)
+- [Core JPA Reference](/modules/coredeux-core/14-core-jpa-reference)
+- [Core JDBC Reference](/modules/coredeux-core/15-core-jdbc-reference)
+- [Core Elasticsearch Reference](/modules/coredeux-core/16-core-elasticsearch-reference)
+- [Core MongoDB Reference](/modules/coredeux-core/17-core-mongodb-reference)
+- [Core Redis Reference](/modules/coredeux-core/18-core-redis-reference)
 
 <!-- docs-nav-start -->
-[Previous: Add Or Choose A Data Access Service](/06-add-data-access-service) | [Documentation Home](/) | [Next: Add a Hook](/08-add-hook)
+[Previous: Add Or Choose A Data Access Service](/modules/coredeux-core/06-add-data-access-service) | [Documentation Home](/) | [Next: Add a Hook](/modules/coredeux-core/08-add-hook)
 <!-- docs-nav-end -->

@@ -1,7 +1,7 @@
 # Add a Validator
 
 <!-- docs-nav-start -->
-[Previous: Add a Hook](/08-add-hook) | [Documentation Home](/) | [Next: Add Audit](/10-add-audit)
+[Previous: Add a Hook](/modules/coredeux-core/08-add-hook) | [Documentation Home](/) | [Next: Add Audit](/modules/coredeux-core/10-add-audit)
 <!-- docs-nav-end -->
 
 Validators stop bad entity state before the framework saves or updates it.
@@ -127,9 +127,9 @@ The only difference is how the bean is registered:
 
 ## What To Read Next
 
-- [Add Audit](/10-add-audit)
-- [Adding a New Entity](11-add-new-entity.md)
+- [Add Audit](/modules/coredeux-core/10-add-audit)
+- [Adding a New Entity](/modules/coredeux-core/11-add-new-entity)
 
 <!-- docs-nav-start -->
-[Previous: Add a Hook](/08-add-hook) | [Documentation Home](/) | [Next: Add Audit](/10-add-audit)
+[Previous: Add a Hook](/modules/coredeux-core/08-add-hook) | [Documentation Home](/) | [Next: Add Audit](/modules/coredeux-core/10-add-audit)
 <!-- docs-nav-end -->

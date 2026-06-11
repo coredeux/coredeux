@@ -1,7 +1,7 @@
 # Coredeux DRL DevTools
 
 <!-- docs-nav-start -->
-[Previous: Coredeux DRL Reference](/coredeux-drl-reference) | [Documentation Home](/) | [Next: Coredeux Import](/coredeux-import-overview)
+[Previous: Coredeux DRL Reference](/modules/coredeux-drl/04-reference) | [Documentation Home](/) | [Next: Coredeux Import](/modules/coredeux-import/01-overview)
 <!-- docs-nav-end -->
 
 `coredeux-drl-devtools` is the authoring-time companion to the DRL runtime.
@@ -306,12 +306,12 @@ Psu psu = (Psu) $context.getParams().get("entity");
 
 If you want the runtime story, read the DRL module pages:
 
-- [Coredeux DRL](/coredeux-drl)
-- [DRL Overview](/coredeux-drl-overview)
-- [Native Runtime](/coredeux-drl-native-runtime)
-- [Spring Boot Starter](/coredeux-drl-spring-boot-starter)
-- [DRL Reference](/coredeux-drl-reference)
+- [Coredeux DRL](/modules/coredeux-drl/)
+- [DRL Overview](/modules/coredeux-drl/01-overview)
+- [Native Runtime](/modules/coredeux-drl/02-native-runtime)
+- [Spring Boot Starter](/modules/coredeux-drl/03-spring-boot-starter)
+- [DRL Reference](/modules/coredeux-drl/04-reference)
 
 <!-- docs-nav-start -->
-[Previous: Coredeux DRL Reference](/coredeux-drl-reference) | [Documentation Home](/) | [Next: Coredeux Import](/coredeux-import-overview)
+[Previous: Coredeux DRL Reference](/modules/coredeux-drl/04-reference) | [Documentation Home](/) | [Next: Coredeux Import](/modules/coredeux-import/01-overview)
 <!-- docs-nav-end -->

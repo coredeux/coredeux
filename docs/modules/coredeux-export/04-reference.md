@@ -1,7 +1,7 @@
 # Coredeux Export Reference
 
 <!-- docs-nav-start -->
-[Previous: Export Runtime And Configuration](/03-runtime-and-configuration) | [Documentation Home](/) | [Next: Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes)
+[Previous: Export Runtime And Configuration](/modules/coredeux-export/03-runtime-and-configuration) | [Documentation Home](/) | [Next: Native Getting Started In 10 Minutes](/miscellaneous/01-native-getting-started-in-10-minutes)
 <!-- docs-nav-end -->
 
 This is the technical reference for `coredeux-export` and the export starter.
@@ -206,5 +206,5 @@ Those fields are the reason the module works cleanly in both HTTP controllers
 and direct host applications.
 
 <!-- docs-nav-start -->
-[Previous: Export Runtime And Configuration](/03-runtime-and-configuration) | [Documentation Home](/) | [Next: Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes)
+[Previous: Export Runtime And Configuration](/modules/coredeux-export/03-runtime-and-configuration) | [Documentation Home](/) | [Next: Native Getting Started In 10 Minutes](/miscellaneous/01-native-getting-started-in-10-minutes)
 <!-- docs-nav-end -->

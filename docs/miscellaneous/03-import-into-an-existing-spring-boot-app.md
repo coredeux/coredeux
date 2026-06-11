@@ -1,7 +1,7 @@
 # Import Into An Existing Spring Boot App
 
 <!-- docs-nav-start -->
-[Previous: Native Tour Of The Demo](/02-native-tour-of-the-demo) | [Documentation Home](/) | [Next: Platform Documentation](/platform)
+[Previous: Native Tour Of The Demo](/miscellaneous/02-native-tour-of-the-demo) | [Documentation Home](/) | [Next: Platform Documentation](/platform/)
 <!-- docs-nav-end -->
 
 This tutorial shows how to add Coredeux import to an existing Spring Boot
@@ -428,5 +428,5 @@ If those ten steps work, Coredeux import is wired into the existing Spring Boot
 app.
 
 <!-- docs-nav-start -->
-[Previous: Native Tour Of The Demo](/02-native-tour-of-the-demo) | [Documentation Home](/) | [Next: Platform Documentation](/platform)
+[Previous: Native Tour Of The Demo](/miscellaneous/02-native-tour-of-the-demo) | [Documentation Home](/) | [Next: Platform Documentation](/platform/)
 <!-- docs-nav-end -->

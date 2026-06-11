@@ -1,7 +1,7 @@
 # Custom Handlers
 
 <!-- docs-nav-start -->
-[Previous: Audit](/coredeux-drl-audit) | [Documentation Home](/) | [Next: Reference](/coredeux-drl-reference)
+[Previous: Audit](/modules/coredeux-drl/08-audit) | [Documentation Home](/) | [Next: Reference](/modules/coredeux-drl/04-reference)
 <!-- docs-nav-end -->
 
 This page shows how to build your own handler family with a Java-first source
@@ -214,5 +214,5 @@ If you need the shorter summary of contracts and update rules, continue to the
 reference page.
 
 <!-- docs-nav-start -->
-[Previous: Audit](/coredeux-drl-audit) | [Documentation Home](/) | [Next: Reference](/coredeux-drl-reference)
+[Previous: Audit](/modules/coredeux-drl/08-audit) | [Documentation Home](/) | [Next: Reference](/modules/coredeux-drl/04-reference)
 <!-- docs-nav-end -->

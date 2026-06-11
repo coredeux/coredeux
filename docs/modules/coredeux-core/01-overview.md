@@ -1,7 +1,7 @@
 # Overview
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core](/coredeux-core) | [Documentation Home](/) | [Next: Lifecycle Model](/02-lifecycle)
+[Previous: Coredeux Core](/modules/coredeux-core/) | [Documentation Home](/) | [Next: Lifecycle Model](/modules/coredeux-core/02-lifecycle)
 <!-- docs-nav-end -->
 
 Coredeux Core is the contract layer between application intent and backend
@@ -97,5 +97,5 @@ If you are new to the core framework, read the pages in this order:
 5. the reference page when you need deeper detail
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Core](/coredeux-core) | [Documentation Home](/) | [Next: Lifecycle Model](/02-lifecycle)
+[Previous: Coredeux Core](/modules/coredeux-core/) | [Documentation Home](/) | [Next: Lifecycle Model](/modules/coredeux-core/02-lifecycle)
 <!-- docs-nav-end -->

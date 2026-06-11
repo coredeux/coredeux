@@ -1,7 +1,7 @@
 # Release Process
 
 <!-- docs-nav-start -->
-[Previous: Governance Model](/governance) | [Documentation Home](/) | [Next: Versioning And Branching](/versioning)
+[Previous: Governance Model](/project/governance) | [Documentation Home](/) | [Next: Versioning And Branching](/project/versioning)
 <!-- docs-nav-end -->
 
 Coredeux follows semantic versioning.
@@ -29,5 +29,5 @@ MAJOR.MINOR.PATCH
 -   release/\* → stabilization
 
 <!-- docs-nav-start -->
-[Previous: Governance Model](/governance) | [Documentation Home](/) | [Next: Versioning And Branching](/versioning)
+[Previous: Governance Model](/project/governance) | [Documentation Home](/) | [Next: Versioning And Branching](/project/versioning)
 <!-- docs-nav-end -->

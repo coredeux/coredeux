@@ -1,7 +1,7 @@
 # Tour Of The Demo
 
 <!-- docs-nav-start -->
-[Previous: Getting Started In 10 Minutes](/02-getting-started-in-10-minutes) | [Documentation Home](/) | [Next: Overview](/overview)
+[Previous: Getting Started In 10 Minutes](/02-getting-started-in-10-minutes) | [Documentation Home](/) | [Next: Overview](/overview/)
 <!-- docs-nav-end -->
 
 The Spring Boot demo is not just a smoke test. It is a small application that
@@ -16,8 +16,8 @@ the map of the application surface you are expected to work with.
 
 If you want to compare it with the plain Java version of the demo, see:
 
-- [Native Getting Started In 10 Minutes](/01-native-getting-started-in-10-minutes)
-- [Native Tour Of The Demo](/02-native-tour-of-the-demo)
+- [Native Getting Started In 10 Minutes](/miscellaneous/01-native-getting-started-in-10-minutes)
+- [Native Tour Of The Demo](/miscellaneous/02-native-tour-of-the-demo)
 
 ## The Point Of The Demo
 
@@ -191,10 +191,10 @@ Those are the reusable ideas the demo is showing.
 
 If you want the deeper architecture view, continue with:
 
-- [Overview](/overview)
-- [Coredeux Core Reference](modules/coredeux-core/13-reference.md)
-- [Lifecycle Model](modules/coredeux-core/02-lifecycle.md)
+- [Overview](/overview/)
+- [Coredeux Core Reference](/modules/coredeux-core/13-reference)
+- [Lifecycle Model](/modules/coredeux-core/02-lifecycle)
 
 <!-- docs-nav-start -->
-[Previous: Getting Started In 10 Minutes](/02-getting-started-in-10-minutes) | [Documentation Home](/) | [Next: Overview](/overview)
+[Previous: Getting Started In 10 Minutes](/02-getting-started-in-10-minutes) | [Documentation Home](/) | [Next: Overview](/overview/)
 <!-- docs-nav-end -->

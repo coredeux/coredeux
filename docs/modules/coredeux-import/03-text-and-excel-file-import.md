@@ -1,13 +1,13 @@
 # Text And Excel File Import
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Raw JSON Import](/02-raw-json-import) | [Documentation Home](/) | [Next: Coredeux Export Overview](/coredeux-export-overview)
+[Previous: Coredeux Raw JSON Import](/modules/coredeux-import/02-raw-json-import) | [Documentation Home](/) | [Next: Coredeux Export Overview](/modules/coredeux-export/01-overview)
 <!-- docs-nav-end -->
 
 This guide teaches the Coredeux import file format from scratch.
 
 If you want the JSON request form that the file parser ultimately produces,
-see [Coredeux Raw JSON Import](/02-raw-json-import).
+see [Coredeux Raw JSON Import](/modules/coredeux-import/02-raw-json-import).
 
 An import file is a readable table-shaped source that describes:
 
@@ -894,5 +894,5 @@ The parser should remain a compiler into `ImportRequest`, not a second import
 engine.
 
 <!-- docs-nav-start -->
-[Previous: Coredeux Raw JSON Import](/02-raw-json-import) | [Documentation Home](/) | [Next: Coredeux Export Overview](/coredeux-export-overview)
+[Previous: Coredeux Raw JSON Import](/modules/coredeux-import/02-raw-json-import) | [Documentation Home](/) | [Next: Coredeux Export Overview](/modules/coredeux-export/01-overview)
 <!-- docs-nav-end -->

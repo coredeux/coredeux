@@ -1,7 +1,7 @@
 # Reference
 
 <!-- docs-nav-start -->
-[Previous: Spring Boot Starter](/coredeux-drl-spring-boot-starter) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/coredeux-drl-devtools)
+[Previous: Spring Boot Starter](/modules/coredeux-drl/03-spring-boot-starter) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/modules/coredeux-drl-devtools/)
 <!-- docs-nav-end -->
 
 This page is the quick reference for the DRL runtime.
@@ -286,11 +286,11 @@ If you are authoring annotated Java-like rule source, see
 If you want the full examples instead of the reference summary, use the
 dedicated pages:
 
-- [Data Access With DRL](/coredeux-drl-data-access)
-- [Validators With DRL](/coredeux-drl-validators)
-- [Hooks With DRL](/coredeux-drl-hooks)
-- [Audit With DRL](/coredeux-drl-audit)
-- [Custom Handlers](/coredeux-drl-custom-handlers)
+- [Data Access With DRL](/modules/coredeux-drl/05-data-access)
+- [Validators With DRL](/modules/coredeux-drl/06-validators)
+- [Hooks With DRL](/modules/coredeux-drl/07-hooks)
+- [Audit With DRL](/modules/coredeux-drl/08-audit)
+- [Custom Handlers](/modules/coredeux-drl/09-custom-handlers)
 
 Each of those guides shows the Java source first and the generated DRL right
 after it, so the authoring path stays obvious for both developers and agents.
@@ -312,5 +312,5 @@ Good practice:
   happened
 
 <!-- docs-nav-start -->
-[Previous: Spring Boot Starter](/coredeux-drl-spring-boot-starter) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/coredeux-drl-devtools)
+[Previous: Spring Boot Starter](/modules/coredeux-drl/03-spring-boot-starter) | [Documentation Home](/) | [Next: Coredeux DRL DevTools](/modules/coredeux-drl-devtools/)
 <!-- docs-nav-end -->

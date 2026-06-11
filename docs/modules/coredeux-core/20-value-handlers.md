@@ -1,7 +1,7 @@
 # Coredeux Value Handlers
 
 <!-- docs-nav-start -->
-[Previous: Property Resolution Order](/19-property-resolution-order) | [Documentation Home](/) | [Next: Coredeux Import](/coredeux-import-overview)
+[Previous: Property Resolution Order](/modules/coredeux-core/19-property-resolution-order) | [Documentation Home](/) | [Next: Coredeux Import](/modules/coredeux-import/01-overview)
 <!-- docs-nav-end -->
 
 This page explains the shared value-handler contract used by Coredeux import,
@@ -182,5 +182,5 @@ The value-handler model is meant to be the small, shared seam that import,
 export, and DRL features can all rely on.
 
 <!-- docs-nav-start -->
-[Previous: Property Resolution Order](/19-property-resolution-order) | [Documentation Home](/) | [Next: Coredeux Import](/coredeux-import-overview)
+[Previous: Property Resolution Order](/modules/coredeux-core/19-property-resolution-order) | [Documentation Home](/) | [Next: Coredeux Import](/modules/coredeux-import/01-overview)
 <!-- docs-nav-end -->
