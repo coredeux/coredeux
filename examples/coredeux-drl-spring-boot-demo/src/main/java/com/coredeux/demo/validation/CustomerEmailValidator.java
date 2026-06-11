@@ -22,12 +22,6 @@ public class CustomerEmailValidator implements CoredeuxEntityValidator<Customer>
             errors.add(ValidationError.builder().field("entity").message("Customer is required").build());
             return errors;
         }
-        if (customer.getName() == null || customer.getName().isBlank()) {
-            errors.add(ValidationError.builder().field("name").message("Customer name is required").build());
-        }
-        if (customer.getEmail() == null || !customer.getEmail().contains("@")) {
-            errors.add(ValidationError.builder().field("email").message("Customer email must be valid").build());
-        }
         if (customer.getStatus() == null) {
             errors.add(ValidationError.builder().field("status").message("Customer status is required").build());
         }

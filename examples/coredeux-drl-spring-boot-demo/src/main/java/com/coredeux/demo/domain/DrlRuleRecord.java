@@ -16,7 +16,7 @@ public class DrlRuleRecord extends Item {
     private String description;
 
     @Lob
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String drl;
 
     public String getCode() {

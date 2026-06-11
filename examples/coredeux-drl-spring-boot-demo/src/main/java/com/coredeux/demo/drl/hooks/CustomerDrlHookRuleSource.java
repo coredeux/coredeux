@@ -19,7 +19,9 @@ public class CustomerDrlHookRuleSource {
     public void beforeSave(RuleContext<Customer> $context) {
         Object entity = $context.getParams().get("entity");
         if (entity instanceof Customer) {
-            ((Customer) entity).setLastLifecycleTouch(Instant.now());
+        	Customer customer = (Customer) entity;
+        	System.out.println("Before Save hook invoked for customer: " + customer.getName());
+        	customer.setLastLifecycleTouch(Instant.now());
         }
     }
 
@@ -27,7 +29,9 @@ public class CustomerDrlHookRuleSource {
     public void beforeUpdate(RuleContext<Customer> $context) {
         Object entity = $context.getParams().get("entity");
         if (entity instanceof Customer) {
-            ((Customer) entity).setLastLifecycleTouch(Instant.now());
+        	Customer customer = (Customer) entity;
+        	System.out.println("Before update hook invoked for customer: " + customer.getName());
+        	customer.setLastLifecycleTouch(Instant.now());
         }
     }
 }

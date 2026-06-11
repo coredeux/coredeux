@@ -15,6 +15,7 @@ public class CustomerDrlAuditRuleSource {
 
     @DrlRule(name = "audit", when = "$context : RuleContext(method == 'audit')")
     public void audit(RuleContext<Customer> $context) {
-        $context.setMessage("Audited " + $context.getParams().get("phase"));
+    	System.out.println("Auditing customer with DRL: " + $context.getParams().get("phase"));
+        $context.setMessage("DRL: Audited " + $context.getParams().get("phase"));
     }
 }

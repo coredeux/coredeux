@@ -28,7 +28,7 @@ public class CustomerDrlValidatorRuleSource {
                 errors.add(ValidationError.builder().field("name").message("Customer name is required").build());
             }
             if (customer.getEmail() == null || !customer.getEmail().contains("@")) {
-                errors.add(ValidationError.builder().field("email").message("Customer email must be valid").build());
+                errors.add(ValidationError.builder().field("email").message("Customer email must be a valid email").build());
             }
         }
         $context.setOutput(errors);

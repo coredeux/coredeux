@@ -1,7 +1,6 @@
 package com.coredeux.demo.audit;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -18,16 +17,10 @@ public class DemoAuditHandler implements CoredeuxEntityAuditHandler<Customer> {
 
     @Override
     public synchronized void audit(Customer entity, CoredeuxEntityDefinition definition, OperationContext context) {
+    	System.out.println("Auditing entity: " + entity + " with definition: " + definition.getName() + " in context: "
+				+ (context != null ? context.getLifecycleContext() : "null"));
         auditEntries.add(definition.getName() + ":" + (context != null && context.getLifecycleContext() != null
                 ? context.getLifecycleContext().getOperation()
                 : "unknown"));
-    }
-
-    public synchronized List<String> getAuditEntries() {
-        return Collections.unmodifiableList(new ArrayList<>(auditEntries));
-    }
-
-    public synchronized void clear() {
-        auditEntries.clear();
     }
 }
