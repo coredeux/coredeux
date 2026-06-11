@@ -612,7 +612,7 @@ The important files to check while you watch this happen are:
 - [DRLService.java](C:/Data/Development/Coredeux/oss/coredeux/modules/coredeux-drl/src/main/java/com/coredeux/drl/service/DRLService.java)
 - [DefaultDRLService.java](C:/Data/Development/Coredeux/oss/coredeux/modules/coredeux-drl/src/main/java/com/coredeux/drl/service/impl/DefaultDRLService.java)
 
-### Step 9: Validation Fails With The Old Message
+### Step 9: Validation Fails With The Initial Message
 
 Step 9 tries to create a `Customer` with:
 
@@ -641,8 +641,7 @@ What is happening here:
 
 1. `CoredeuxCrudController` handles the create request
 2. the runtime resolves the entity definition for `Customer`
-3. the YAML declares both a Java validator and a DRL validator for the same
-   module
+3. the YAML declares both a Java validator and a DRL validator for the same module
 4. validation runs against the current configuration
 5. the result is returned as `validationErrors`
 
@@ -700,16 +699,8 @@ The response now returns the updated email message:
 }
 ```
 
-This step is the point of the exercise:
-
-- the Java source changed
-- the source was converted again
-- the database record changed
-- the DRL cache was refreshed
-- the validation result changed without restarting the app
-
-If you want to understand why that works, read the source files above and
-compare them with the controller flow.
+This is the core runtime lesson of the demo: the behavior changed without
+rebuilding the application.
 
 ### Step 12: Successful Create And Lifecycle Output
 
