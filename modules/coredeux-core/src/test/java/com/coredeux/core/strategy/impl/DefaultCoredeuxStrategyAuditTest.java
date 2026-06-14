@@ -1,10 +1,13 @@
 package com.coredeux.core.strategy.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import com.coredeux.core.testsupport.TestComponentRegistry;
@@ -59,6 +62,31 @@ class DefaultCoredeuxStrategyAuditTest {
         assertEquals("1", auditHandler.identifiers.get(2));
     }
 
+    @Test
+    void shouldFreezeOldValueBeforeEntityGraphChangesLater() {
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
+        RecordingAuditHandler auditHandler = new RecordingAuditHandler();
+        SampleEntity existing = new SampleEntity("1", "old-value");
+        existing.getGroups().add("group-1");
+        dataAccessService.existingEntities.put("1", existing);
+        applicationContext.registerSingleton("customerDataAccess", dataAccessService);
+        applicationContext.registerSingleton("defaultAuditHandler", auditHandler);
+
+        DefaultCoredeuxStrategy strategy = new DefaultCoredeuxStrategy(registryWithAuditModule(),
+                new EntityDefinitionBackedDataAccessResolver(), applicationContext,
+                new DefaultCoredeuxReflectionHelperService(), () -> null,
+                moduleHandlers(applicationContext));
+
+        strategy.update(new SampleEntity("1", "new-update"));
+        existing.getGroups().add("group-2");
+
+        SampleEntity oldSnapshot = (SampleEntity) auditHandler.oldValues.get(0);
+        assertNotSame(existing, oldSnapshot);
+        assertEquals(List.of("group-1"), oldSnapshot.getGroups());
+        assertEquals(List.of("group-1", "group-2"), existing.getGroups());
+    }
+
     private EntityDefinitionRegistry registryWithAuditModule() {
         CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder()
                 .fullClassName(SampleEntity.class.getName())
@@ -80,8 +108,12 @@ class DefaultCoredeuxStrategyAuditTest {
 
     private static final class SampleEntity {
 
-        private final String id;
-        private final String value;
+        private String id;
+        private String value;
+        private List<String> groups = new ArrayList<>();
+
+        private SampleEntity() {
+        }
 
         private SampleEntity(String id, String value) {
             this.id = id;
@@ -95,6 +127,28 @@ class DefaultCoredeuxStrategyAuditTest {
         @SuppressWarnings("unused")
         public String getValue() {
             return value;
+        }
+
+        public List<String> getGroups() {
+            return groups;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
+            }
+            if (!(object instanceof SampleEntity other)) {
+                return false;
+            }
+            return Objects.equals(id, other.id)
+                    && Objects.equals(value, other.value)
+                    && Objects.equals(groups, other.groups);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, value, groups);
         }
     }
 

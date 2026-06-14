@@ -15,6 +15,7 @@ import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.coredeux.core.snapshot.CoredeuxEntitySnapshotService;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
 import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
 import com.coredeux.core.strategy.CoredeuxStrategy;
@@ -32,6 +33,16 @@ public class DefaultCoredeuxStrategy extends AbstractCoredeuxStrategy implements
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         super(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry, reflectionHelperService,
                 requestContextResolver, moduleHandlers);
+    }
+
+    public DefaultCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
+            EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
+            CoredeuxReflectionHelperService reflectionHelperService,
+            CoredeuxRequestContextResolver requestContextResolver,
+            CoredeuxEntitySnapshotService entitySnapshotService,
+            List<CoredeuxEntityModuleHandler> moduleHandlers) {
+        super(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry, reflectionHelperService,
+                requestContextResolver, entitySnapshotService, moduleHandlers);
     }
 
     @Override

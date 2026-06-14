@@ -20,6 +20,8 @@ import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.coredeux.core.snapshot.CoredeuxEntitySnapshotService;
+import com.coredeux.core.snapshot.impl.DefaultCoredeuxEntitySnapshotService;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
 import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
 
@@ -34,6 +36,7 @@ public abstract class AbstractCoredeuxStrategy {
     private final CoredeuxComponentRegistry componentRegistry;
     private final CoredeuxReflectionHelperService reflectionHelperService;
     private final CoredeuxRequestContextResolver requestContextResolver;
+    private final CoredeuxEntitySnapshotService entitySnapshotService;
     private final Map<String, CoredeuxEntityModuleHandler> moduleHandlers;
 
     protected AbstractCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
@@ -41,11 +44,24 @@ public abstract class AbstractCoredeuxStrategy {
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
+        this(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry, reflectionHelperService,
+                requestContextResolver, new DefaultCoredeuxEntitySnapshotService(), moduleHandlers);
+    }
+
+    protected AbstractCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
+            EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
+            CoredeuxReflectionHelperService reflectionHelperService,
+            CoredeuxRequestContextResolver requestContextResolver,
+            CoredeuxEntitySnapshotService entitySnapshotService,
+            List<CoredeuxEntityModuleHandler> moduleHandlers) {
         this.entityDefinitionRegistry = entityDefinitionRegistry;
         this.entityDataAccessResolver = entityDataAccessResolver;
         this.componentRegistry = componentRegistry;
         this.reflectionHelperService = reflectionHelperService;
         this.requestContextResolver = requestContextResolver;
+        this.entitySnapshotService = entitySnapshotService == null
+                ? new DefaultCoredeuxEntitySnapshotService()
+                : entitySnapshotService;
         this.moduleHandlers = toModuleHandlerMap(moduleHandlers);
     }
 
@@ -108,13 +124,14 @@ public abstract class AbstractCoredeuxStrategy {
 
     protected <T> OperationContext createOperationContext(String operationName, Object identifier, T oldValue,
             T newValue) {
+        T oldSnapshot = entitySnapshotService.snapshot(oldValue);
         return OperationContext.builder()
                 .invokedAt(Instant.now())
                 .requestContext(requestContextResolver.resolve())
                 .lifecycleContext(EntityLifecycleContext.<T>builder()
                         .operation(operationName)
                         .identifier(identifier)
-                        .oldValue(oldValue)
+                        .oldValue(oldSnapshot)
                         .newValue(newValue)
                         .build())
                 .build();

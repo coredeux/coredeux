@@ -36,6 +36,8 @@ import com.coredeux.core.service.CoredeuxModuleService;
 import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.core.service.impl.DefaultCoredeuxModuleService;
 import com.coredeux.core.service.impl.DefaultCoredeuxService;
+import com.coredeux.core.snapshot.CoredeuxEntitySnapshotService;
+import com.coredeux.core.snapshot.impl.DefaultCoredeuxEntitySnapshotService;
 import com.coredeux.core.strategy.CoredeuxStrategy;
 import com.coredeux.core.strategy.impl.DefaultCoredeuxStrategy;
 
@@ -96,6 +98,12 @@ public class CoredeuxAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    CoredeuxEntitySnapshotService coredeuxEntitySnapshotService() {
+        return new DefaultCoredeuxEntitySnapshotService();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     ValidatorsModuleHandler coredeuxValidatorsModuleHandler(CoredeuxComponentRegistry componentRegistry) {
         return new ValidatorsModuleHandler(componentRegistry);
     }
@@ -118,9 +126,10 @@ public class CoredeuxAutoConfiguration {
             EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
+            CoredeuxEntitySnapshotService entitySnapshotService,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         return new DefaultCoredeuxStrategy(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry,
-                reflectionHelperService, requestContextResolver, moduleHandlers);
+                reflectionHelperService, requestContextResolver, entitySnapshotService, moduleHandlers);
     }
 
     @Bean
@@ -129,9 +138,10 @@ public class CoredeuxAutoConfiguration {
             EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
+            CoredeuxEntitySnapshotService entitySnapshotService,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         return new DefaultCoredeuxModuleService(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry,
-                reflectionHelperService, requestContextResolver, moduleHandlers);
+                reflectionHelperService, requestContextResolver, entitySnapshotService, moduleHandlers);
     }
 
     @Bean
