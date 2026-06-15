@@ -144,10 +144,13 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             }
             session.finish();
         } catch (IOException exception) {
-            queueService.markError(uid, exception.getMessage());
-            logService.error(uid, "Unable to write export file", exception, Map.of("entity", request.getEntity()));
-            deleteQuietly(tempFile);
+            markExportError(uid, request, tempFile, logService, "Unable to write export file", exception);
             throw new CoredeuxExportException("Unable to write export file", exception);
+        } catch (RuntimeException exception) {
+            markExportError(uid, request, tempFile, logService, "Unable to execute export", exception);
+            throw exception instanceof CoredeuxExportException coredeuxExportException
+                    ? coredeuxExportException
+                    : new CoredeuxExportException("Unable to execute export", exception);
         }
 
         try {
@@ -183,6 +186,13 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             deleteQuietly(tempFile);
             throw exception;
         }
+    }
+
+    private void markExportError(String uid, ExportRequest request, Path tempFile, CoredeuxExportLogService logService,
+            String message, Exception exception) {
+        queueService.markError(uid, exception.getMessage());
+        logService.error(uid, message, exception, Map.of("entity", request.getEntity()));
+        deleteQuietly(tempFile);
     }
 
     private void validateRequest(ExportRequest request) {

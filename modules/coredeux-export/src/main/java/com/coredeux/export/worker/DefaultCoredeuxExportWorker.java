@@ -42,7 +42,7 @@ public class DefaultCoredeuxExportWorker {
             List<ExportJob> jobs = queueService.claimNext(availableSlots);
             CoredeuxExportLogService logService = logServiceResolver.resolve(null);
             for (ExportJob job : jobs) {
-                executorService.submit(() -> executionService.execute(job.getUid(), job.getRequest()));
+                executorService.submit(() -> executeSafely(job, logService));
                 logService.info(job.getUid(), "Export job dispatched to worker", null);
             }
         } finally {
@@ -53,5 +53,14 @@ public class DefaultCoredeuxExportWorker {
     public void shutdown() throws InterruptedException {
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.SECONDS);
+    }
+
+    private void executeSafely(ExportJob job, CoredeuxExportLogService logService) {
+        try {
+            executionService.execute(job.getUid(), job.getRequest());
+        } catch (RuntimeException exception) {
+            queueService.markError(job.getUid(), exception.getMessage());
+            logService.error(job.getUid(), "Export worker execution failed", exception, null);
+        }
     }
 }
