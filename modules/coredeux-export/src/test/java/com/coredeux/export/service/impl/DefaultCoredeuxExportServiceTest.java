@@ -305,7 +305,7 @@ class DefaultCoredeuxExportServiceTest {
 
             ExportJob errored = localQueue.findByUid(job.getUid()).orElseThrow();
             assertEquals("worker boom", errored.getErrorMessage());
-            assertTrue(localLog.findByUid(job.getUid()).stream()
+            assertTrue(awaitLogMessage(localLog, job.getUid(), "Export worker execution failed").stream()
                     .anyMatch(log -> "Export worker execution failed".equals(log.getMessage())));
         } finally {
             failingWorker.shutdown();
@@ -332,6 +332,18 @@ class DefaultCoredeuxExportServiceTest {
             Thread.sleep(100);
         }
         throw new AssertionError("Timed out waiting for export status " + expected);
+    }
+
+    private List<ExportLogEntry> awaitLogMessage(InMemoryLogService logService, String uid, String message)
+            throws InterruptedException {
+        for (int attempt = 0; attempt < 50; attempt++) {
+            List<ExportLogEntry> entries = logService.findByUid(uid);
+            if (entries.stream().anyMatch(log -> message.equals(log.getMessage()))) {
+                return entries;
+            }
+            Thread.sleep(100);
+        }
+        return logService.findByUid(uid);
     }
 
     private ExportRequest baseRequest() {
@@ -540,22 +552,22 @@ class DefaultCoredeuxExportServiceTest {
         private final Map<String, List<ExportLogEntry>> logs = new LinkedHashMap<>();
 
         @Override
-        public void info(String uid, String message, Map<String, Object> metadata) {
+        public synchronized void info(String uid, String message, Map<String, Object> metadata) {
             append(uid, "INFO", message, null, metadata);
         }
 
         @Override
-        public void warn(String uid, String message, Map<String, Object> metadata) {
+        public synchronized void warn(String uid, String message, Map<String, Object> metadata) {
             append(uid, "WARN", message, null, metadata);
         }
 
         @Override
-        public void error(String uid, String message, Throwable error, Map<String, Object> metadata) {
+        public synchronized void error(String uid, String message, Throwable error, Map<String, Object> metadata) {
             append(uid, "ERROR", message, error, metadata);
         }
 
         @Override
-        public List<ExportLogEntry> findByUid(String uid) {
+        public synchronized List<ExportLogEntry> findByUid(String uid) {
             return logs.getOrDefault(uid, List.of());
         }
 
