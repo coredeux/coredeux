@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.AfterEach;
@@ -55,6 +56,7 @@ import com.coredeux.export.log.impl.DefaultCoredeuxExportLogServiceResolver;
 import com.coredeux.export.storage.impl.DefaultCoredeuxExportStorageServiceResolver;
 import com.coredeux.export.storage.impl.DefaultCoredeuxFileSystemExportStorageService;
 import com.coredeux.export.writer.ExcelExportWriter;
+import com.coredeux.export.writer.ExportWriteSession;
 import com.coredeux.export.writer.TextExportWriter;
 import com.coredeux.export.worker.DefaultCoredeuxExportWorker;
 
@@ -72,34 +74,8 @@ class DefaultCoredeuxExportServiceTest {
         queueService = new InMemoryQueueService();
         logService = new InMemoryLogService();
 
-        DefaultCoredeuxReflectionHelperService reflection = new DefaultCoredeuxReflectionHelperService();
-        InMemoryEntityDefinitionRegistry registry = new InMemoryEntityDefinitionRegistry(List.of(
-                CoredeuxEntityDefinition.builder().fullClassName(Customer.class.getName()).identifier("id").build()));
-        ExportValueFormatter formatter = new ExportValueFormatter();
-        DefaultCoredeuxValueHandlerService handlerService = new DefaultCoredeuxValueHandlerService(
-                InMemoryCoredeuxComponentRegistry.builder()
-                        .component("defaultCoredeuxExportValueHandler",
-                                new com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler())
-                        .component("dateOnlyExportHandler", new DateOnlyExportHandler())
-                        .build());
-
-        Map<String, CoredeuxExportStorageService> storageServices = new LinkedHashMap<>();
-        storageServices.put("defaultCoredeuxExportStorageService",
-                new DefaultCoredeuxFileSystemExportStorageService(testBaseDirectory()));
-        storageServices.put("customStorageService", new RecordingStorageService("customStorageService"));
-
-        CoredeuxExportStorageServiceResolver storageResolver = new DefaultCoredeuxExportStorageServiceResolver(
-                storageServices, "defaultCoredeuxExportStorageService");
-        CoredeuxExportLogServiceResolver logResolver = new DefaultCoredeuxExportLogServiceResolver(Map.of(
-                "defaultCoredeuxExportLogService", new com.coredeux.export.log.impl.FileCoredeuxExportLogService(),
-                "consoleCoredeuxExportLogService", new com.coredeux.export.log.impl.ConsoleCoredeuxExportLogService()),
-                "defaultCoredeuxExportLogService");
-
-        exportService = new DefaultCoredeuxExportService(coredeuxService, reflection, registry,
-                new ExportFieldPathParser(), new ExportValueResolver(reflection, formatter, handlerService),
-                storageResolver, logResolver, queueService, new TextExportWriter(), new ExcelExportWriter());
-
-        worker = new DefaultCoredeuxExportWorker(queueService, exportService, logResolver, 1, true);
+        exportService = newExportService(new TextExportWriter(), new ExcelExportWriter());
+        worker = new DefaultCoredeuxExportWorker(queueService, exportService, logResolver(logService), 1, true);
     }
 
     @AfterEach
@@ -258,6 +234,45 @@ class DefaultCoredeuxExportServiceTest {
     }
 
     @Test
+    void executeExportMarksErrorAndStopsBeforeStorageWhenWriterFails() {
+        coredeuxService.results = List.of(sampleCustomer());
+        AtomicBoolean storageCalled = new AtomicBoolean();
+        DefaultCoredeuxExportService failingService = newExportService(new FailingTextExportWriter(),
+                new ExcelExportWriter(), storageCalled);
+
+        ExportJob job = queueService.enqueue(baseRequest());
+        job.getRequest().getOptions().setStorageService("trackingStorageService");
+        queueService.claimNext(1);
+
+        CoredeuxExportException exception = assertThrows(CoredeuxExportException.class,
+                () -> failingService.execute(job.getUid(), job.getRequest()));
+
+        assertEquals("Unable to write export file", exception.getMessage());
+        assertEquals(ExportStatus.ERROR, failingService.getExport(job.getUid()).getStatus());
+        assertTrue(failingService.getExport(job.getUid()).getLogs().stream()
+                .anyMatch(log -> "Unable to write export file".equals(log.getMessage())));
+        assertFalse(storageCalled.get());
+    }
+
+    @Test
+    void workerMarksJobErrorWhenExecutionFails() throws InterruptedException {
+        CoredeuxExportExecutionService failingExecutionService = (uid, request) -> {
+            throw new CoredeuxExportException("boom");
+        };
+        DefaultCoredeuxExportWorker failingWorker = new DefaultCoredeuxExportWorker(queueService, failingExecutionService,
+                logResolver(logService), 1, true);
+
+        ExportJob job = queueService.enqueue(baseRequest());
+
+        failingWorker.processPendingExports();
+        awaitCompletion(job.getUid());
+
+        assertEquals(ExportStatus.ERROR, queueService.findByUid(job.getUid()).orElseThrow().getStatus());
+        assertTrue(logService.findByUid(job.getUid()).stream()
+                .anyMatch(log -> "Export worker execution failed".equals(log.getMessage())));
+    }
+
+    @Test
     void workerProcessesQueuedJobInBackground() throws Exception {
         coredeuxService.results = List.of(sampleCustomer());
         ExportJob job = queueService.enqueue(baseRequest());
@@ -308,6 +323,49 @@ class DefaultCoredeuxExportServiceTest {
         return java.util.Arrays.stream(paths)
                 .map(path -> ExportField.builder().path(path).build())
                 .toList();
+    }
+
+    private DefaultCoredeuxExportService newExportService(TextExportWriter textWriter, ExcelExportWriter excelWriter) {
+        return newExportService(textWriter, excelWriter, null);
+    }
+
+    private DefaultCoredeuxExportService newExportService(TextExportWriter textWriter, ExcelExportWriter excelWriter,
+            AtomicBoolean storageCalled) {
+        DefaultCoredeuxReflectionHelperService reflection = new DefaultCoredeuxReflectionHelperService();
+        InMemoryEntityDefinitionRegistry registry = new InMemoryEntityDefinitionRegistry(List.of(
+                CoredeuxEntityDefinition.builder().fullClassName(Customer.class.getName()).identifier("id").build()));
+        ExportValueFormatter formatter = new ExportValueFormatter();
+        DefaultCoredeuxValueHandlerService handlerService = new DefaultCoredeuxValueHandlerService(
+                InMemoryCoredeuxComponentRegistry.builder()
+                        .component("defaultCoredeuxExportValueHandler",
+                                new com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler())
+                        .component("dateOnlyExportHandler", new DateOnlyExportHandler())
+                        .build());
+
+        Map<String, CoredeuxExportStorageService> storageServices = new LinkedHashMap<>();
+        storageServices.put("defaultCoredeuxExportStorageService",
+                new DefaultCoredeuxFileSystemExportStorageService(testBaseDirectory()));
+        storageServices.put("customStorageService", new RecordingStorageService("customStorageService"));
+        if (storageCalled != null) {
+            storageServices.put("trackingStorageService", new TrackingStorageService(storageCalled));
+        }
+
+        CoredeuxExportStorageServiceResolver storageResolver = new DefaultCoredeuxExportStorageServiceResolver(
+                storageServices, "defaultCoredeuxExportStorageService");
+
+        return new DefaultCoredeuxExportService(coredeuxService, reflection, registry, new ExportFieldPathParser(),
+                new ExportValueResolver(reflection, formatter, handlerService), storageResolver,
+                logResolver(logService), queueService, textWriter, excelWriter);
+    }
+
+    private CoredeuxExportLogServiceResolver logResolver(CoredeuxExportLogService defaultService) {
+        CoredeuxExportLogService resolvedDefault = defaultService == null
+                ? new com.coredeux.export.log.impl.FileCoredeuxExportLogService()
+                : defaultService;
+        return new DefaultCoredeuxExportLogServiceResolver(Map.of(
+                "defaultCoredeuxExportLogService", resolvedDefault,
+                "consoleCoredeuxExportLogService", new com.coredeux.export.log.impl.ConsoleCoredeuxExportLogService()),
+                "defaultCoredeuxExportLogService");
     }
 
     private String storedText(ExportResponse response) throws Exception {
@@ -540,6 +598,58 @@ class DefaultCoredeuxExportServiceTest {
             } catch (IOException exception) {
                 throw new IllegalStateException(exception);
             }
+        }
+    }
+
+    static class TrackingStorageService implements CoredeuxExportStorageService {
+
+        private final AtomicBoolean storeCalled;
+
+        TrackingStorageService(AtomicBoolean storeCalled) {
+            this.storeCalled = storeCalled;
+        }
+
+        @Override
+        public ExportStorageArtifact store(com.coredeux.export.model.ExportStorageRequest request) {
+            storeCalled.set(true);
+            return ExportStorageArtifact.builder()
+                    .storageType("tracking")
+                    .fileName(request.getFileName())
+                    .absolutePath(request.getSourceFile().toAbsolutePath().toString())
+                    .relativePath(request.getSourceFile().getFileName().toString())
+                    .url(request.getSourceFile().toUri().toString())
+                    .canonicalUrl(request.getSourceFile().toUri().toString())
+                    .size(0L)
+                    .contentType(request.getContentType())
+                    .metadata(Map.of())
+                    .build();
+        }
+    }
+
+    static class FailingTextExportWriter extends TextExportWriter {
+
+        @Override
+        public ExportWriteSession open(Path targetFile, ExportOptions options) {
+            return new ExportWriteSession() {
+
+                @Override
+                public void writeHeader(List<String> values) throws IOException {
+                    throw new IOException("boom");
+                }
+
+                @Override
+                public void writeRow(List<String> values) throws IOException {
+                    throw new IOException("boom");
+                }
+
+                @Override
+                public void finish() throws IOException {
+                }
+
+                @Override
+                public void close() throws IOException {
+                }
+            };
         }
     }
 

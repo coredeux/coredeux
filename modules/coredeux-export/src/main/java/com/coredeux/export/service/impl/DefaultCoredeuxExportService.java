@@ -12,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
@@ -37,6 +38,9 @@ import com.coredeux.export.writer.ExportWriteSession;
 import com.coredeux.export.writer.ExportWriter;
 import com.coredeux.export.writer.TextExportWriter;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class DefaultCoredeuxExportService implements CoredeuxExportService, CoredeuxExportExecutionService {
 
     private static final int DEFAULT_BATCH_SIZE = 100;
@@ -125,7 +129,8 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             int limit = limit(options);
             while (limit < 0 || rowCount < limit) {
                 int pageSize = limit < 0 ? batchSize : Math.min(batchSize, (int) (limit - rowCount));
-                SearchResult<?> result = loadPage(request, entityType, pageSize, page++);
+                int currentPage = page++;
+                SearchResult<?> result = loadPage(request, entityType, pageSize, currentPage);
                 if (result == null || CollectionUtils.isEmpty(result.getResults())) {
                     break;
                 }
@@ -138,16 +143,21 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
                 }
                 queueService.updateProgress(uid, rowCount);
                 logService.info(uid, "Export page processed", Map.of("rowCount", rowCount));
-                if (result.getResults().size() < pageSize) {
+                if (!hasMorePages(result, currentPage, pageSize)) {
                     break;
                 }
             }
             session.finish();
         } catch (IOException exception) {
-            queueService.markError(uid, exception.getMessage());
-            logService.error(uid, "Unable to write export file", exception, Map.of("entity", request.getEntity()));
-            deleteQuietly(tempFile);
+            log.error("Export execution failed while writing file for entity {}", request.getEntity(), exception);
+            markExportError(uid, request, tempFile, logService, "Unable to write export file", exception);
             throw new CoredeuxExportException("Unable to write export file", exception);
+        } catch (Exception exception) {
+            log.error("Export execution failed while processing entity {}", request.getEntity(), exception);
+            markExportError(uid, request, tempFile, logService, "Unable to execute export", exception);
+            throw exception instanceof CoredeuxExportException coredeuxExportException
+                    ? coredeuxExportException
+                    : new CoredeuxExportException("Unable to execute export", exception);
         }
 
         try {
@@ -183,6 +193,13 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             deleteQuietly(tempFile);
             throw exception;
         }
+    }
+    
+    private void markExportError(String uid, ExportRequest request, Path tempFile, CoredeuxExportLogService logService,
+            String message, Exception exception) {
+        queueService.markError(uid, exception.getMessage());
+        logService.error(uid, message, exception, Map.of("entity", request.getEntity()));
+        deleteQuietly(tempFile);
     }
 
     private void validateRequest(ExportRequest request) {
@@ -288,6 +305,21 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
         }
         List<SearchParams> params = request.getSearchParams() == null ? List.of() : request.getSearchParams();
         return coredeuxService.loadAll(params, entityType, pageSize, page);
+    }
+    
+    private boolean hasMorePages(SearchResult<?> result, int currentPage, int pageSize) {
+        PaginationData pagination = result.getPagination();
+        if (pagination != null) {
+            Long totalPages = pagination.getTotalPages();
+            if (totalPages != null && totalPages >= 0) {
+                return currentPage < totalPages;
+            }
+            Long resultSize = pagination.getResultSize();
+            if (resultSize != null && resultSize < pageSize) {
+                return false;
+            }
+        }
+        return result.getResults().size() >= pageSize;
     }
 
     private List<String> createRow(Object entity, Class<?> entityType, List<ExportFieldPath> fieldPaths,
