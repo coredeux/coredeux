@@ -36,6 +36,7 @@ import com.coredeux.export.writer.ExcelExportWriter;
 import com.coredeux.export.writer.ExportWriteSession;
 import com.coredeux.export.writer.ExportWriter;
 import com.coredeux.export.writer.TextExportWriter;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -149,7 +150,7 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             log.error("Export execution failed while writing file for entity {}", request.getEntity(), exception);
             markExportError(uid, request, tempFile, logService, "Unable to write export file", exception);
             throw new CoredeuxExportException("Unable to write export file", exception);
-        } catch (RuntimeException exception) {
+        } catch (Exception exception) {
             log.error("Export execution failed while processing entity {}", request.getEntity(), exception);
             markExportError(uid, request, tempFile, logService, "Unable to execute export", exception);
             throw exception instanceof CoredeuxExportException coredeuxExportException
