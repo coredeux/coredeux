@@ -201,7 +201,6 @@ like:
 - the entity-definition location
 - the import default parser
 - the export default format
-- the export directory
 - export storage and worker settings
 
 The JPA layer also has its own persistence contract in:

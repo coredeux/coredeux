@@ -12,7 +12,6 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
-import com.coredeux.core.search.PaginationData;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxService;
@@ -38,9 +37,6 @@ import com.coredeux.export.writer.ExportWriteSession;
 import com.coredeux.export.writer.ExportWriter;
 import com.coredeux.export.writer.TextExportWriter;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class DefaultCoredeuxExportService implements CoredeuxExportService, CoredeuxExportExecutionService {
 
     private static final int DEFAULT_BATCH_SIZE = 100;
@@ -56,7 +52,6 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
     private final TextExportWriter textWriter;
     private final ExcelExportWriter excelWriter;
     private final ExportFormat defaultFormat;
-    private final Path tempDirectory;
 
     public DefaultCoredeuxExportService(CoredeuxService coredeuxService,
             CoredeuxReflectionHelperService reflectionHelperService, EntityDefinitionRegistry entityDefinitionRegistry,
@@ -66,7 +61,7 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             TextExportWriter textWriter, ExcelExportWriter excelWriter) {
         this(coredeuxService, reflectionHelperService, entityDefinitionRegistry, fieldPathParser, valueResolver,
                 storageServiceResolver, logServiceResolver, queueService, textWriter, excelWriter,
-                ExportFormat.TEXT, null);
+                ExportFormat.TEXT);
     }
 
     public DefaultCoredeuxExportService(CoredeuxService coredeuxService,
@@ -75,18 +70,6 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             CoredeuxExportStorageServiceResolver storageServiceResolver,
             CoredeuxExportLogServiceResolver logServiceResolver, CoredeuxExportQueueService queueService,
             TextExportWriter textWriter, ExcelExportWriter excelWriter, ExportFormat defaultFormat) {
-        this(coredeuxService, reflectionHelperService, entityDefinitionRegistry, fieldPathParser, valueResolver,
-                storageServiceResolver, logServiceResolver, queueService, textWriter, excelWriter, defaultFormat,
-                null);
-    }
-
-    public DefaultCoredeuxExportService(CoredeuxService coredeuxService,
-            CoredeuxReflectionHelperService reflectionHelperService, EntityDefinitionRegistry entityDefinitionRegistry,
-            ExportFieldPathParser fieldPathParser, ExportValueResolver valueResolver,
-            CoredeuxExportStorageServiceResolver storageServiceResolver,
-            CoredeuxExportLogServiceResolver logServiceResolver, CoredeuxExportQueueService queueService,
-            TextExportWriter textWriter, ExcelExportWriter excelWriter, ExportFormat defaultFormat,
-            String tempDirectory) {
         this.coredeuxService = coredeuxService;
         this.reflectionHelperService = reflectionHelperService;
         this.entityDefinitionRegistry = entityDefinitionRegistry;
@@ -98,7 +81,6 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
         this.textWriter = textWriter;
         this.excelWriter = excelWriter;
         this.defaultFormat = defaultFormat == null ? ExportFormat.TEXT : defaultFormat;
-        this.tempDirectory = tempDirectory == null || tempDirectory.isBlank() ? null : Path.of(tempDirectory.trim());
     }
 
     @Override
@@ -143,8 +125,7 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             int limit = limit(options);
             while (limit < 0 || rowCount < limit) {
                 int pageSize = limit < 0 ? batchSize : Math.min(batchSize, (int) (limit - rowCount));
-                int currentPage = page++;
-                SearchResult<?> result = loadPage(request, entityType, pageSize, currentPage);
+                SearchResult<?> result = loadPage(request, entityType, pageSize, page++);
                 if (result == null || CollectionUtils.isEmpty(result.getResults())) {
                     break;
                 }
@@ -157,21 +138,16 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
                 }
                 queueService.updateProgress(uid, rowCount);
                 logService.info(uid, "Export page processed", Map.of("rowCount", rowCount));
-                if (!hasMorePages(result, currentPage, pageSize)) {
+                if (result.getResults().size() < pageSize) {
                     break;
                 }
             }
             session.finish();
         } catch (IOException exception) {
-            log.error("Export execution failed while writing file for entity {}", request.getEntity(), exception);
-            markExportError(uid, request, tempFile, logService, "Unable to write export file", exception);
+            queueService.markError(uid, exception.getMessage());
+            logService.error(uid, "Unable to write export file", exception, Map.of("entity", request.getEntity()));
+            deleteQuietly(tempFile);
             throw new CoredeuxExportException("Unable to write export file", exception);
-        } catch (Exception exception) {
-            log.error("Export execution failed while processing entity {}", request.getEntity(), exception);
-            markExportError(uid, request, tempFile, logService, "Unable to execute export", exception);
-            throw exception instanceof CoredeuxExportException coredeuxExportException
-                    ? coredeuxExportException
-                    : new CoredeuxExportException("Unable to execute export", exception);
         }
 
         try {
@@ -207,13 +183,6 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
             deleteQuietly(tempFile);
             throw exception;
         }
-    }
-
-    private void markExportError(String uid, ExportRequest request, Path tempFile, CoredeuxExportLogService logService,
-            String message, Exception exception) {
-        queueService.markError(uid, exception.getMessage());
-        logService.error(uid, message, exception, Map.of("entity", request.getEntity()));
-        deleteQuietly(tempFile);
     }
 
     private void validateRequest(ExportRequest request) {
@@ -321,21 +290,6 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
         return coredeuxService.loadAll(params, entityType, pageSize, page);
     }
 
-    private boolean hasMorePages(SearchResult<?> result, int currentPage, int pageSize) {
-        PaginationData pagination = result.getPagination();
-        if (pagination != null) {
-            Long totalPages = pagination.getTotalPages();
-            if (totalPages != null && totalPages >= 0) {
-                return currentPage < totalPages;
-            }
-            Long resultSize = pagination.getResultSize();
-            if (resultSize != null && resultSize < pageSize) {
-                return false;
-            }
-        }
-        return result.getResults().size() >= pageSize;
-    }
-
     private List<String> createRow(Object entity, Class<?> entityType, List<ExportFieldPath> fieldPaths,
             ExportOptions options, ExportRequest request) {
         List<String> row = new ArrayList<>();
@@ -358,20 +312,8 @@ public class DefaultCoredeuxExportService implements CoredeuxExportService, Core
         return ExportFormat.XLSX.equals(format) ? excelWriter : textWriter;
     }
 
-    /**
-     * Creates the export file used during execution.
-     *
-     * <p>
-     * Subclasses can override this hook to store the file in a custom location
-     * or to attach additional resource tracking around the generated path.
-     * </p>
-     */
-    public Path createTempFile(ExportWriter writer) {
+    private Path createTempFile(ExportWriter writer) {
         try {
-            if (tempDirectory != null) {
-                Files.createDirectories(tempDirectory);
-                return Files.createTempFile(tempDirectory, "coredeux-export-", writer.extension());
-            }
             return Files.createTempFile("coredeux-export-", writer.extension());
         } catch (IOException exception) {
             throw new CoredeuxExportException("Unable to create temporary export file", exception);

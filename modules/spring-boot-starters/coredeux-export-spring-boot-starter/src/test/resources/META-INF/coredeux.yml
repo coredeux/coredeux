@@ -1,0 +1,13 @@
+coredeux:
+  export:
+    log:
+      default-service: consoleCoredeuxExportLogService
+    queue:
+      base-directory: target/coredeux-export-test/queue
+    storage:
+      default-service: defaultCoredeuxExportStorageService
+      filesystem:
+        base-directory: target/coredeux-export-test/storage
+    worker:
+      enabled: false
+      max-parallel: 3

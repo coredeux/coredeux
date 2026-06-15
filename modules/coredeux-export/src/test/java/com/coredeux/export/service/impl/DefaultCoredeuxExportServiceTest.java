@@ -63,7 +63,6 @@ class DefaultCoredeuxExportServiceTest {
     private FakeCoredeuxService coredeuxService;
     private InMemoryQueueService queueService;
     private InMemoryLogService logService;
-    private CoredeuxExportLogServiceResolver logResolver;
     private DefaultCoredeuxExportService exportService;
     private DefaultCoredeuxExportWorker worker;
 
@@ -91,7 +90,7 @@ class DefaultCoredeuxExportServiceTest {
 
         CoredeuxExportStorageServiceResolver storageResolver = new DefaultCoredeuxExportStorageServiceResolver(
                 storageServices, "defaultCoredeuxExportStorageService");
-        logResolver = new DefaultCoredeuxExportLogServiceResolver(Map.of(
+        CoredeuxExportLogServiceResolver logResolver = new DefaultCoredeuxExportLogServiceResolver(Map.of(
                 "defaultCoredeuxExportLogService", new com.coredeux.export.log.impl.FileCoredeuxExportLogService(),
                 "consoleCoredeuxExportLogService", new com.coredeux.export.log.impl.ConsoleCoredeuxExportLogService()),
                 "defaultCoredeuxExportLogService");
@@ -140,23 +139,6 @@ class DefaultCoredeuxExportServiceTest {
     }
 
     @Test
-    void executeExportMarksJobErrorWhenLoadAllThrows() {
-        coredeuxService.loadAllFailure = new IllegalStateException("boom");
-
-        ExportJob job = queueService.enqueue(baseRequest());
-        queueService.claimNext(1);
-
-        CoredeuxExportException exception = assertThrows(CoredeuxExportException.class,
-                () -> exportService.execute(job.getUid(), job.getRequest()));
-
-        assertTrue(exception.getMessage().contains("Unable to execute export"));
-        assertEquals(ExportStatus.ERROR, exportService.getExport(job.getUid()).getStatus());
-        assertEquals("boom", exportService.getExport(job.getUid()).getErrorMessage());
-        assertTrue(exportService.getExport(job.getUid()).getLogs().stream()
-                .anyMatch(log -> "Unable to execute export".equals(log.getMessage())));
-    }
-
-    @Test
     void executeExportUsesQueryWithParams() {
         coredeuxService.results = List.of(sampleCustomer());
         Map<String, Object> params = new LinkedHashMap<>();
@@ -174,36 +156,6 @@ class DefaultCoredeuxExportServiceTest {
 
         assertEquals("select c from Customer c where c.active = :active", coredeuxService.lastQuery);
         assertEquals(params, coredeuxService.lastQueryParams);
-    }
-
-    @Test
-    void executeExportCreatesTemporaryFileInConfiguredDirectory() throws Exception {
-        coredeuxService.results = List.of(sampleCustomer());
-        Path tempDirectory = Files.createTempDirectory("coredeux-export-temp");
-        RecordingTextExportWriter textWriter = new RecordingTextExportWriter();
-        DefaultCoredeuxExportService configuredExportService = new DefaultCoredeuxExportService(coredeuxService,
-                new DefaultCoredeuxReflectionHelperService(),
-                new InMemoryEntityDefinitionRegistry(List.of(CoredeuxEntityDefinition.builder()
-                        .fullClassName(Customer.class.getName()).identifier("id").build())),
-                new ExportFieldPathParser(), new ExportValueResolver(new DefaultCoredeuxReflectionHelperService(),
-                        new ExportValueFormatter(), new DefaultCoredeuxValueHandlerService(
-                                InMemoryCoredeuxComponentRegistry.builder()
-                                        .component("defaultCoredeuxExportValueHandler",
-                                                new com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler())
-                                        .build())),
-                new DefaultCoredeuxExportStorageServiceResolver(Map.of("defaultCoredeuxExportStorageService",
-                        new DefaultCoredeuxFileSystemExportStorageService(testBaseDirectory())),
-                        "defaultCoredeuxExportStorageService"),
-                logResolver, queueService, textWriter, new ExcelExportWriter(), ExportFormat.TEXT,
-                tempDirectory.toString());
-
-        ExportJob job = queueService.enqueue(baseRequest());
-        queueService.claimNext(1);
-        configuredExportService.execute(job.getUid(), job.getRequest());
-
-        assertNotNull(textWriter.targetFile);
-        assertEquals(tempDirectory.toAbsolutePath().normalize(),
-                textWriter.targetFile.toAbsolutePath().normalize().getParent());
     }
 
     @Test
@@ -256,22 +208,6 @@ class DefaultCoredeuxExportServiceTest {
 
         assertEquals(2, response.getRowCount());
         assertEquals(2, coredeuxService.loadAllCalls);
-    }
-
-    @Test
-    void executeExportStopsAtPaginationBoundaryWhenPagesDoNotAdvance() {
-        coredeuxService.results = List.of(sampleCustomer());
-        coredeuxService.alwaysReturnFirstPage = true;
-        ExportRequest request = baseRequest();
-        request.setOptions(ExportOptions.builder().batchSize(1).build());
-
-        ExportJob job = queueService.enqueue(request);
-        queueService.claimNext(1);
-        ExportResponse response = exportService.execute(job.getUid(), job.getRequest());
-
-        assertEquals(ExportStatus.COMPLETED, response.getStatus());
-        assertEquals(1, response.getRowCount());
-        assertEquals(1, coredeuxService.loadAllCalls);
     }
 
     @Test
@@ -334,30 +270,6 @@ class DefaultCoredeuxExportServiceTest {
         assertTrue(response.getRowCount() >= 1);
     }
 
-    @Test
-    void workerMarksJobErrorWhenExecutionThrows() throws Exception {
-        InMemoryQueueService localQueue = new InMemoryQueueService();
-        InMemoryLogService localLog = new InMemoryLogService();
-        DefaultCoredeuxExportWorker failingWorker = new DefaultCoredeuxExportWorker(localQueue,
-                new FailingExecutionService(new IllegalStateException("worker boom")),
-                new DefaultCoredeuxExportLogServiceResolver(Map.of(
-                        "defaultCoredeuxExportLogService", localLog)),
-                1, true);
-        try {
-            ExportJob job = localQueue.enqueue(baseRequest());
-
-            failingWorker.processPendingExports();
-            awaitStatus(localQueue, job.getUid(), ExportStatus.ERROR);
-
-            ExportJob errored = localQueue.findByUid(job.getUid()).orElseThrow();
-            assertEquals("worker boom", errored.getErrorMessage());
-            assertTrue(awaitLogMessage(localLog, job.getUid(), "Export worker execution failed").stream()
-                    .anyMatch(log -> "Export worker execution failed".equals(log.getMessage())));
-        } finally {
-            failingWorker.shutdown();
-        }
-    }
-
     private void awaitCompletion(String uid) throws InterruptedException {
         for (int attempt = 0; attempt < 50; attempt++) {
             ExportResponse response = exportService.getExport(uid);
@@ -367,29 +279,6 @@ class DefaultCoredeuxExportServiceTest {
             Thread.sleep(100);
         }
         throw new AssertionError("Timed out waiting for export completion");
-    }
-
-    private void awaitStatus(InMemoryQueueService queue, String uid, ExportStatus expected) throws InterruptedException {
-        for (int attempt = 0; attempt < 50; attempt++) {
-            ExportJob job = queue.findByUid(uid).orElseThrow();
-            if (expected.equals(job.getStatus())) {
-                return;
-            }
-            Thread.sleep(100);
-        }
-        throw new AssertionError("Timed out waiting for export status " + expected);
-    }
-
-    private List<ExportLogEntry> awaitLogMessage(InMemoryLogService logService, String uid, String message)
-            throws InterruptedException {
-        for (int attempt = 0; attempt < 50; attempt++) {
-            List<ExportLogEntry> entries = logService.findByUid(uid);
-            if (entries.stream().anyMatch(log -> message.equals(log.getMessage()))) {
-                return entries;
-            }
-            Thread.sleep(100);
-        }
-        return logService.findByUid(uid);
     }
 
     private ExportRequest baseRequest() {
@@ -436,9 +325,6 @@ class DefaultCoredeuxExportServiceTest {
         String lastQuery;
         Map<String, Object> lastQueryParams;
         int loadAllCalls;
-        RuntimeException loadAllFailure;
-        RuntimeException queryFailure;
-        boolean alwaysReturnFirstPage;
 
         @Override
         public <T> T load(String id, Class<T> type) {
@@ -449,9 +335,6 @@ class DefaultCoredeuxExportServiceTest {
         @SuppressWarnings("unchecked")
         public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
                 int currentPage) {
-            if (queryFailure != null) {
-                throw queryFailure;
-            }
             lastQuery = query;
             lastQueryParams = params;
             return resultPage(pageSize, currentPage);
@@ -460,23 +343,19 @@ class DefaultCoredeuxExportServiceTest {
         @Override
         @SuppressWarnings("unchecked")
         public <T> SearchResult<T> loadAll(List<SearchParams> params, Class<T> type, int pageSize, int currentPage) {
-            if (loadAllFailure != null) {
-                throw loadAllFailure;
-            }
             loadAllCalls++;
             lastSearchParams = params;
             return resultPage(pageSize, currentPage);
         }
 
         private <T> SearchResult<T> resultPage(int pageSize, int currentPage) {
-            int requestedPage = alwaysReturnFirstPage ? 1 : currentPage;
-            int from = Math.max(requestedPage - 1, 0) * pageSize;
+            int from = Math.max(currentPage - 1, 0) * pageSize;
             int to = Math.min(from + pageSize, results.size());
             List<T> page = from >= results.size() ? List.of() : (List<T>) results.subList(from, to);
             return SearchResult.<T>builder()
                     .results(page)
                     .pagination(PaginationData.builder()
-                            .currentPage((long) requestedPage)
+                            .currentPage((long) currentPage)
                             .pageSize((long) pageSize)
                             .totalResults((long) results.size())
                             .totalPages((long) Math.ceil(results.size() / (double) pageSize))
@@ -600,22 +479,22 @@ class DefaultCoredeuxExportServiceTest {
         private final Map<String, List<ExportLogEntry>> logs = new LinkedHashMap<>();
 
         @Override
-        public synchronized void info(String uid, String message, Map<String, Object> metadata) {
+        public void info(String uid, String message, Map<String, Object> metadata) {
             append(uid, "INFO", message, null, metadata);
         }
 
         @Override
-        public synchronized void warn(String uid, String message, Map<String, Object> metadata) {
+        public void warn(String uid, String message, Map<String, Object> metadata) {
             append(uid, "WARN", message, null, metadata);
         }
 
         @Override
-        public synchronized void error(String uid, String message, Throwable error, Map<String, Object> metadata) {
+        public void error(String uid, String message, Throwable error, Map<String, Object> metadata) {
             append(uid, "ERROR", message, error, metadata);
         }
 
         @Override
-        public synchronized List<ExportLogEntry> findByUid(String uid) {
+        public List<ExportLogEntry> findByUid(String uid) {
             return logs.getOrDefault(uid, List.of());
         }
 
@@ -661,17 +540,6 @@ class DefaultCoredeuxExportServiceTest {
             } catch (IOException exception) {
                 throw new IllegalStateException(exception);
             }
-        }
-    }
-
-    static class RecordingTextExportWriter extends TextExportWriter {
-
-        Path targetFile;
-
-        @Override
-        public com.coredeux.export.writer.ExportWriteSession open(Path targetFile, ExportOptions options) {
-            this.targetFile = targetFile;
-            return super.open(targetFile, options);
         }
     }
 
@@ -769,20 +637,6 @@ class DefaultCoredeuxExportServiceTest {
             assertEquals("profile:legacySignupDate", context.getFieldPath());
             assertTrue(context.getResolvedValue() instanceof java.util.Date);
             return ((java.util.Date) context.getResolvedValue()).toInstant().toString().substring(0, 10);
-        }
-    }
-
-    static class FailingExecutionService implements CoredeuxExportExecutionService {
-
-        private final RuntimeException failure;
-
-        FailingExecutionService(RuntimeException failure) {
-            this.failure = failure;
-        }
-
-        @Override
-        public ExportResponse execute(String uid, ExportRequest request) {
-            throw failure;
         }
     }
 }
