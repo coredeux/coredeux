@@ -25,6 +25,7 @@ core YAML still acts as a native fallback source.
 Important configuration keys:
 
 - `coredeux.export.default-format`
+- `coredeux.export.directory`
 - `coredeux.export.log.default-service`
 - `coredeux.export.log.base-directory`
 - `coredeux.export.queue.base-directory`
@@ -42,6 +43,7 @@ Important configuration keys:
 coredeux:
   export:
     default-format: TEXT
+    directory: ${COREDEUX_EXPORT_DIRECTORY:${java.io.tmpdir}/coredeux-export}
     log:
       default-service: defaultCoredeuxExportLogService
     storage:
@@ -93,6 +95,7 @@ contains:
 coredeux:
   export:
     default-format: TEXT
+    directory: ${java.io.tmpdir}/coredeux-export
     log:
       default-service: defaultCoredeuxExportLogService
     storage:
@@ -123,6 +126,8 @@ That is the native rule in practice:
 
 - the YAML chooses the bean name
 - the host application decides how to construct the bean
+- the export directory is optional and falls back to the JVM temp folder when
+  it is not configured
 
 ## Queue, Log, Storage
 

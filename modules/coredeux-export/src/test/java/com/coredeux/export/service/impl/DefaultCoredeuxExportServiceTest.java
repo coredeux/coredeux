@@ -177,6 +177,36 @@ class DefaultCoredeuxExportServiceTest {
     }
 
     @Test
+    void executeExportCreatesTemporaryFileInConfiguredDirectory() throws Exception {
+        coredeuxService.results = List.of(sampleCustomer());
+        Path tempDirectory = Files.createTempDirectory("coredeux-export-temp");
+        RecordingTextExportWriter textWriter = new RecordingTextExportWriter();
+        DefaultCoredeuxExportService configuredExportService = new DefaultCoredeuxExportService(coredeuxService,
+                new DefaultCoredeuxReflectionHelperService(),
+                new InMemoryEntityDefinitionRegistry(List.of(CoredeuxEntityDefinition.builder()
+                        .fullClassName(Customer.class.getName()).identifier("id").build())),
+                new ExportFieldPathParser(), new ExportValueResolver(new DefaultCoredeuxReflectionHelperService(),
+                        new ExportValueFormatter(), new DefaultCoredeuxValueHandlerService(
+                                InMemoryCoredeuxComponentRegistry.builder()
+                                        .component("defaultCoredeuxExportValueHandler",
+                                                new com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler())
+                                        .build())),
+                new DefaultCoredeuxExportStorageServiceResolver(Map.of("defaultCoredeuxExportStorageService",
+                        new DefaultCoredeuxFileSystemExportStorageService(testBaseDirectory())),
+                        "defaultCoredeuxExportStorageService"),
+                logResolver, queueService, textWriter, new ExcelExportWriter(), ExportFormat.TEXT,
+                tempDirectory.toString());
+
+        ExportJob job = queueService.enqueue(baseRequest());
+        queueService.claimNext(1);
+        configuredExportService.execute(job.getUid(), job.getRequest());
+
+        assertNotNull(textWriter.targetFile);
+        assertEquals(tempDirectory.toAbsolutePath().normalize(),
+                textWriter.targetFile.toAbsolutePath().normalize().getParent());
+    }
+
+    @Test
     void executeExportUsesSelfContainedQueryWithoutParams() {
         coredeuxService.results = List.of(sampleCustomer());
 
@@ -226,6 +256,22 @@ class DefaultCoredeuxExportServiceTest {
 
         assertEquals(2, response.getRowCount());
         assertEquals(2, coredeuxService.loadAllCalls);
+    }
+
+    @Test
+    void executeExportStopsAtPaginationBoundaryWhenPagesDoNotAdvance() {
+        coredeuxService.results = List.of(sampleCustomer());
+        coredeuxService.alwaysReturnFirstPage = true;
+        ExportRequest request = baseRequest();
+        request.setOptions(ExportOptions.builder().batchSize(1).build());
+
+        ExportJob job = queueService.enqueue(request);
+        queueService.claimNext(1);
+        ExportResponse response = exportService.execute(job.getUid(), job.getRequest());
+
+        assertEquals(ExportStatus.COMPLETED, response.getStatus());
+        assertEquals(1, response.getRowCount());
+        assertEquals(1, coredeuxService.loadAllCalls);
     }
 
     @Test
@@ -392,6 +438,7 @@ class DefaultCoredeuxExportServiceTest {
         int loadAllCalls;
         RuntimeException loadAllFailure;
         RuntimeException queryFailure;
+        boolean alwaysReturnFirstPage;
 
         @Override
         public <T> T load(String id, Class<T> type) {
@@ -422,13 +469,14 @@ class DefaultCoredeuxExportServiceTest {
         }
 
         private <T> SearchResult<T> resultPage(int pageSize, int currentPage) {
-            int from = Math.max(currentPage - 1, 0) * pageSize;
+            int requestedPage = alwaysReturnFirstPage ? 1 : currentPage;
+            int from = Math.max(requestedPage - 1, 0) * pageSize;
             int to = Math.min(from + pageSize, results.size());
             List<T> page = from >= results.size() ? List.of() : (List<T>) results.subList(from, to);
             return SearchResult.<T>builder()
                     .results(page)
                     .pagination(PaginationData.builder()
-                            .currentPage((long) currentPage)
+                            .currentPage((long) requestedPage)
                             .pageSize((long) pageSize)
                             .totalResults((long) results.size())
                             .totalPages((long) Math.ceil(results.size() / (double) pageSize))
@@ -613,6 +661,17 @@ class DefaultCoredeuxExportServiceTest {
             } catch (IOException exception) {
                 throw new IllegalStateException(exception);
             }
+        }
+    }
+
+    static class RecordingTextExportWriter extends TextExportWriter {
+
+        Path targetFile;
+
+        @Override
+        public com.coredeux.export.writer.ExportWriteSession open(Path targetFile, ExportOptions options) {
+            this.targetFile = targetFile;
+            return super.open(targetFile, options);
         }
     }
 

@@ -23,6 +23,7 @@ coredeux:
     default-parser: text
   export:
     default-format: TEXT
+    directory: ${java.io.tmpdir}/coredeux-export
     log:
       default-service: defaultCoredeuxExportLogService
     storage:

@@ -36,6 +36,14 @@ import com.coredeux.export.writer.TextExportWriter;
 class CoredeuxExportAutoConfigurationTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+            .withPropertyValues(
+                    "coredeux.export.directory=target/coredeux-export-test/temp",
+                    "coredeux.export.log.default-service=consoleCoredeuxExportLogService",
+                    "coredeux.export.queue.base-directory=target/coredeux-export-test/queue",
+                    "coredeux.export.storage.default-service=defaultCoredeuxExportStorageService",
+                    "coredeux.export.storage.filesystem.base-directory=target/coredeux-export-test/storage",
+                    "coredeux.export.worker.enabled=false",
+                    "coredeux.export.worker.max-parallel=3")
             .withConfiguration(AutoConfigurations.of(CoredeuxAutoConfiguration.class,
                     CoredeuxRequestContextAutoConfiguration.class, CoredeuxExportAutoConfiguration.class))
             .withBean(CoredeuxService.class, this::sampleCoredeuxService)
@@ -57,12 +65,14 @@ class CoredeuxExportAutoConfigurationTest {
     }
 
     @Test
-    void readsExportDefaultsFromCoredeuxYaml() {
+    void readsExportDefaultsFromSpringProperties() {
         contextRunner.run(context -> {
             DefaultCoredeuxExportWorker worker = context.getBean(DefaultCoredeuxExportWorker.class);
             assertFalse((Boolean) ReflectionTestUtils.getField(worker, "enabled"));
             assertEquals(3, ReflectionTestUtils.getField(worker, "maxParallel"));
-            assertEquals(ExportFormat.TEXT, context.getBean(CoredeuxExportProperties.class).defaultFormat());
+            CoredeuxExportProperties properties = context.getBean(CoredeuxExportProperties.class);
+            assertEquals(ExportFormat.TEXT, properties.defaultFormat());
+            assertEquals("target/coredeux-export-test/temp", properties.exportDirectory());
 
             FileCoredeuxExportQueueService queueService = context.getBean(FileCoredeuxExportQueueService.class);
             assertEquals("target/coredeux-export-test/queue/export-queue.json",

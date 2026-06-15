@@ -53,6 +53,10 @@ public final class CoredeuxExportProperties {
         }
     }
 
+    public String exportDirectory() {
+        return string("directory", null);
+    }
+
     private String environmentValue(String propertyName) {
         if (environment == null || propertyName == null || propertyName.isBlank()) {
             return null;

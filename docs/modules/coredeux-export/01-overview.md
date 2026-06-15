@@ -21,6 +21,10 @@ The export service always works with one of two output formats:
 - `TEXT`
 - `XLSX`
 
+When the service writes the export file, it uses the configured
+`coredeux.export.directory` if one is present. If that property is not
+set, Coredeux falls back to the JVM temp directory.
+
 The output is then handed to a storage service. In the current codebase:
 
 - the native demo uses filesystem storage

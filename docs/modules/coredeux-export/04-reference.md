@@ -96,6 +96,7 @@ agree on the same wiring contract.
 ### Spring and Native Shared Keys
 
 - `coredeux.export.default-format`
+- `coredeux.export.directory`
 - `coredeux.export.log.default-service`
 - `coredeux.export.log.base-directory`
 - `coredeux.export.queue.base-directory`
@@ -126,6 +127,8 @@ The current code defaults to:
 - `textSeparator = "|"`
 - `collectionSeparator = ", "`
 - `fileName = coredeux-export.txt` or `coredeux-export.xlsx`
+- files under the configured export directory, or the JVM temp directory when
+  `coredeux.export.directory` is omitted
 - queue base directory under the JVM temp folder
 - log base directory under the JVM temp folder
 - filesystem storage under the JVM temp folder

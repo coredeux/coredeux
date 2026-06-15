@@ -316,7 +316,7 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
                 handlerResolver);
         return new DefaultCoredeuxExportService(coredeuxService, reflectionHelperService, registry,
                 new ExportFieldPathParser(), valueResolver, storageResolver, logResolver, queueService,
-                new TextExportWriter(), new ExcelExportWriter(), defaultFormat);
+                new TextExportWriter(), new ExcelExportWriter(), defaultFormat, exportDirectory(coredeuxProperties));
     }
 
     private static DefaultCoredeuxExportWorker exportWorker(CoredeuxProperties coredeuxProperties,
@@ -370,6 +370,14 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
             return configured.trim();
         }
         return Path.of(System.getProperty("java.io.tmpdir"), "coredeux-native-export").toString();
+    }
+
+    private static String exportDirectory(CoredeuxProperties coredeuxProperties) {
+        String configured = coredeuxProperties.string("export.directory");
+        if (configured != null && !configured.isBlank()) {
+            return configured.trim();
+        }
+        return null;
     }
 
     private static String exportQueueDirectory(CoredeuxProperties coredeuxProperties) {
