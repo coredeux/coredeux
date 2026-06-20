@@ -26,7 +26,8 @@ plain SQL, JDBC template-style inputs, and data sources.
 
 - table name: `@Table(name = "...")`, or the entity simple name if omitted
 - column name: `@Column(name = "...")`, or the field name if omitted
-- identifier: `@Id`, or a field named `id`
+- identifier: the effective identifier resolved by Coredeux from the entity
+  definition or its storage fallback
 
 The adapter is best suited to flat relational entities with bean-style getters
 and setters. If you need richer relational behavior, use JPA instead.

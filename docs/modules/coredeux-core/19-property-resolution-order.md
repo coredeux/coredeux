@@ -13,7 +13,20 @@ The short version is:
 3. Coredeux hard defaults come last
 
 That is the same rule for both entity-definition location and import-related
-settings.
+settings, and the same idea also applies to the global Coredeux fallback data
+access service.
+
+## Identifier Resolution
+
+Coredeux also resolves entity identifiers in a fixed order:
+
+1. `identifier` from the entity definition itself
+2. `identifier` from the entity's `storage` block
+3. `coredeux.identifier` from the Spring `Environment`
+4. no inferred fallback
+
+That means the framework does not guess identifiers from field names such as
+`id`, `identifier`, or `uid`.
 
 ## The Two Property Sources
 
@@ -46,6 +59,15 @@ For entity definitions, the Spring Boot core starter resolves:
 2. `coredeux.entities.config-location` from `CoredeuxProperties`
 3. `classpath:coredeux-entities.yml`
 
+If the resolved location does not exist, Coredeux treats the registry as
+empty and continues startup. The file is optional, but any entity-specific
+behavior must still be declared if you want it to apply.
+
+When Coredeux later resolves an entity type that is not present in the
+registry, it synthesizes a default entity definition from the Java class and
+the global fallback properties instead of failing with an "unknown entity"
+error.
+
 That means this Spring Boot setting works as the explicit override:
 
 ```yaml
@@ -68,6 +90,22 @@ That means this Spring Boot setting works as the explicit override:
 coredeux:
   import:
     default-parser: text
+```
+
+### Global Data Access Service
+
+For the fallback data access service, Coredeux resolves:
+
+1. `coredeux.data-access-service` from the Spring `Environment`
+2. `coredeux.data-access-service` from `CoredeuxProperties`
+3. no global fallback
+
+That means this Spring Boot setting works as the default adapter bean name for
+entities that do not declare their own `storage.data-access-service`:
+
+```yaml
+coredeux:
+  data-access-service: postgresCoredeuxJpaDataAccessService
 ```
 
 ## Why This Exists

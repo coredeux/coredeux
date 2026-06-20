@@ -11,6 +11,10 @@ for native Java applications. Spring apps keep using `application.properties`
 or `application.yml`, and the starter can merge those values into the same
 property shape before wiring the framework.
 
+The starter also understands a global fallback data access service through
+`coredeux.data-access-service`. If an entity definition omits
+`storage.data-access-service`, Coredeux uses that fallback bean name instead.
+
 The starter currently wires:
 
 - entity definition loading from `coredeux.entities.config-location`
@@ -26,6 +30,12 @@ Default entity definition location:
 
 ```properties
 coredeux.entities.config-location=classpath:coredeux-entities.yml
+```
+
+Global fallback data access service:
+
+```properties
+coredeux.data-access-service=postgresCoredeuxJpaDataAccessService
 ```
 
 Import now has its own Spring Boot starter module so the core starter stays

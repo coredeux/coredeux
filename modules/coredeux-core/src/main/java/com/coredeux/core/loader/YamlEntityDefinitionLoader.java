@@ -71,12 +71,13 @@ public class YamlEntityDefinitionLoader implements EntityDefinitionLoader {
     private CoredeuxEntityDefinition toEntityDefinition(Map<String, Object> entityMap) {
         String fullClassName = requiredString(entityMap, "full-class-name");
         String name = optionalString(entityMap, "name");
+        Map<String, Object> storageMap = optionalMap(entityMap.get("storage"), "storage");
 
         return CoredeuxEntityDefinition.builder()
                 .fullClassName(fullClassName)
                 .name(name == null || name.isBlank() ? fullClassName : name)
-                .identifier(requiredString(entityMap, "identifier"))
-                .storage(toStorageDefinition(requiredMap(entityMap.get("storage"), "storage", "storage.data-access-service")))
+                .identifier(optionalString(entityMap, "identifier"))
+                .storage(storageMap == null ? null : toStorageDefinition(storageMap))
                 .modules(asEntityModules(entityMap.get(MODULES_KEY)))
                 .build();
     }
@@ -84,7 +85,8 @@ public class YamlEntityDefinitionLoader implements EntityDefinitionLoader {
     private CoredeuxStorageDefinition toStorageDefinition(Map<String, Object> storageMap) {
         return CoredeuxStorageDefinition.builder()
                 .store(optionalString(storageMap, "store"))
-                .dataAccessService(requiredString(storageMap, "data-access-service"))
+                .identifier(optionalString(storageMap, "identifier"))
+                .dataAccessService(optionalString(storageMap, "data-access-service"))
                 .build();
     }
 
@@ -146,6 +148,13 @@ public class YamlEntityDefinitionLoader implements EntityDefinitionLoader {
     private Map<String, Object> requiredMap(Object value, String fieldName, String missingField) {
         if (value == null) {
             throw new CoredeuxValidationException("Missing required field: " + missingField);
+        }
+        return asMap(value, fieldName);
+    }
+
+    private Map<String, Object> optionalMap(Object value, String fieldName) {
+        if (value == null) {
+            return null;
         }
         return asMap(value, fieldName);
     }

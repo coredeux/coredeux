@@ -2,6 +2,7 @@ package com.coredeux.core.registry;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 import com.coredeux.core.loader.EntityDefinitionLoader;
@@ -61,5 +62,14 @@ public final class EntityDefinitionRegistries {
         Objects.requireNonNull(inputStream, "inputStream must not be null");
         Objects.requireNonNull(loader, "loader must not be null");
         return new InMemoryEntityDefinitionRegistry(loader.load(inputStream).getEntities());
+    }
+
+    /**
+     * Builds an empty registry.
+     *
+     * @return an empty entity definition registry
+     */
+    public static EntityDefinitionRegistry empty() {
+        return new InMemoryEntityDefinitionRegistry(List.of());
     }
 }

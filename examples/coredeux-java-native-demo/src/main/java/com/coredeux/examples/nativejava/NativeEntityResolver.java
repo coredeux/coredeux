@@ -5,25 +5,25 @@ import java.lang.reflect.Field;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
-import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 
 final class NativeEntityResolver {
 
-    private final EntityDefinitionRegistry entityDefinitionRegistry;
     private final CoredeuxReflectionHelperService reflectionHelperService;
+    private final CoredeuxEntityDefinitionResolver entityDefinitionResolver;
 
-    NativeEntityResolver(EntityDefinitionRegistry entityDefinitionRegistry,
-            CoredeuxReflectionHelperService reflectionHelperService) {
-        this.entityDefinitionRegistry = entityDefinitionRegistry;
+    NativeEntityResolver(CoredeuxReflectionHelperService reflectionHelperService,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver) {
         this.reflectionHelperService = reflectionHelperService;
+        this.entityDefinitionResolver = entityDefinitionResolver;
     }
 
     CoredeuxEntityDefinition resolveDefinition(String entityName) {
         if (entityName == null || entityName.isBlank()) {
             throw new CoredeuxValidationException("Entity name must not be blank");
         }
-        return entityDefinitionRegistry.findByFullClassName(entityName.trim())
-                .orElseThrow(() -> new CoredeuxValidationException("Unknown entity: " + entityName));
+        Class<?> entityType = reflectionHelperService.getClass(entityName.trim());
+        return entityDefinitionResolver.resolve(entityType);
     }
 
     Class<?> resolveType(String entityName) {
@@ -31,7 +31,7 @@ final class NativeEntityResolver {
     }
 
     Object getIdentifierValue(Object entity, CoredeuxEntityDefinition definition) {
-        return reflectionHelperService.getFieldValue(definition.getIdentifier(), entity);
+        return reflectionHelperService.getFieldValue(resolveIdentifierFieldName(entity.getClass(), definition), entity);
     }
 
     void applyIdentifier(Object entity, CoredeuxEntityDefinition definition, Object identifierValue) {
@@ -53,6 +53,14 @@ final class NativeEntityResolver {
     }
 
     private Field getIdentifierField(Class<?> entityType, CoredeuxEntityDefinition definition) {
-        return reflectionHelperService.getDeclaredField(definition.getIdentifier(), entityType);
+        return reflectionHelperService.getDeclaredField(resolveIdentifierFieldName(entityType, definition), entityType);
+    }
+
+    private String resolveIdentifierFieldName(Class<?> entityType, CoredeuxEntityDefinition definition) {
+        CoredeuxEntityDefinition effectiveDefinition = entityDefinitionResolver.resolve(entityType);
+        if (definition != null && definition.getIdentifier() != null && !definition.getIdentifier().isBlank()) {
+            return definition.getIdentifier();
+        }
+        return effectiveDefinition.getIdentifier();
     }
 }

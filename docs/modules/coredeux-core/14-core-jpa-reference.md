@@ -339,7 +339,8 @@ Column name resolution:
 
 - uses reflection to find the field in the class hierarchy
 - uses `@Column(name = "...")` when present
-- otherwise uses the Java field name
+- otherwise relies on the effective identifier resolved by Coredeux from the
+  entity definition or its storage fallback
 
 ### JSONB text expression styles
 

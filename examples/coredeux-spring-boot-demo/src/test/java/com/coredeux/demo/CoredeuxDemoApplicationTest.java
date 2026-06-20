@@ -18,7 +18,9 @@ class CoredeuxDemoApplicationTest {
                         + "com.coredeux.spring.boot.autoconfigure.CoredeuxExportAutoConfiguration"
         };
         String previousBootstrapEnabled = System.getProperty("coredeux.demo.bootstrap.enabled");
+        String previousDrlBootstrapEnabled = System.getProperty("coredeux.demo.drl.bootstrap.enabled");
         System.setProperty("coredeux.demo.bootstrap.enabled", "false");
+        System.setProperty("coredeux.demo.drl.bootstrap.enabled", "false");
         try {
             assertDoesNotThrow(() -> CoredeuxDemoApplication.main(args));
         } finally {
@@ -26,6 +28,11 @@ class CoredeuxDemoApplicationTest {
                 System.clearProperty("coredeux.demo.bootstrap.enabled");
             } else {
                 System.setProperty("coredeux.demo.bootstrap.enabled", previousBootstrapEnabled);
+            }
+            if (previousDrlBootstrapEnabled == null) {
+                System.clearProperty("coredeux.demo.drl.bootstrap.enabled");
+            } else {
+                System.setProperty("coredeux.demo.drl.bootstrap.enabled", previousDrlBootstrapEnabled);
             }
         }
     }

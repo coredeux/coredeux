@@ -156,10 +156,12 @@ class DefinitionModelCoverageTest {
                 .build();
         CoredeuxStorageDefinition storageDefinition = CoredeuxStorageDefinition.builder()
                 .store("mongo")
+                .identifier("documentId")
                 .dataAccessService("mongoDataAccess")
                 .build();
         CoredeuxStorageDefinition sameStorage = CoredeuxStorageDefinition.builder()
                 .store("mongo")
+                .identifier("documentId")
                 .dataAccessService("mongoDataAccess")
                 .build();
         CoredeuxYamlConfiguration yamlConfiguration = CoredeuxYamlConfiguration.builder()
@@ -185,6 +187,7 @@ class DefinitionModelCoverageTest {
         assertNotNull(auditDefinition.toString());
 
         assertEquals("mongo", storageDefinition.getStore());
+        assertEquals("documentId", storageDefinition.getIdentifier());
         assertEquals("mongoDataAccess", storageDefinition.getDataAccessService());
         assertEquals(storageDefinition, sameStorage);
         assertEquals(storageDefinition.hashCode(), sameStorage.hashCode());

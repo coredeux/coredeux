@@ -20,6 +20,8 @@ spring:
       port: ${COREDEUX_DEMO_REDIS_PORT:6379}
 
 coredeux:
+  data-access-service: postgresCoredeuxJpaDataAccessService
+  identifier: pk
   demo:
     entity-definitions:
       bootstrap-location: classpath:coredeux-entities.yml

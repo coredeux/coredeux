@@ -15,6 +15,8 @@ import org.postgresql.ds.PGSimpleDataSource;
 
 import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.config.CoredeuxPropertiesLoader;
+import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
+import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
 import com.coredeux.core.elasticsearch.service.impl.DefaultCoredeuxElasticsearchDataAccessService;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
@@ -29,7 +31,9 @@ import com.coredeux.core.redis.service.impl.DefaultCoredeuxRedisDataAccessServic
 import com.coredeux.core.registry.EntityDefinitionRegistries;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.EntityDefinitionBackedDataAccessResolver;
+import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.service.CoredeuxModuleService;
 import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.core.service.impl.DefaultCoredeuxModuleService;
@@ -43,7 +47,6 @@ import com.coredeux.demo.workflow.DemoCustomerApprovalWorkflow;
 import com.coredeux.demo.workflow.WorkflowsModuleHandler;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.drl.service.impl.DefaultDRLService;
-import com.coredeux.export.handler.ExportValueHandlerResolver;
 import com.coredeux.export.handler.impl.DefaultCoredeuxExportValueHandler;
 import com.coredeux.export.log.CoredeuxExportLogServiceResolver;
 import com.coredeux.export.log.impl.DefaultCoredeuxExportLogServiceResolver;
@@ -63,7 +66,6 @@ import com.coredeux.export.storage.impl.DefaultCoredeuxFileSystemExportStorageSe
 import com.coredeux.export.worker.DefaultCoredeuxExportWorker;
 import com.coredeux.export.writer.ExcelExportWriter;
 import com.coredeux.export.writer.TextExportWriter;
-import com.coredeux.impex.handler.ImportValueHandlerResolver;
 import com.coredeux.impex.handler.impl.DefaultCoredeuxImportValueHandler;
 import com.coredeux.impex.handler.impl.JsonMapImportHandler;
 import com.coredeux.impex.service.CoredeuxImportService;
@@ -99,6 +101,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
     private final DefaultCoredeuxExportWorker coredeuxExportWorker;
     private final Thread exportWorkerSchedulerThread;
     private final CoredeuxReflectionHelperService reflectionHelperService;
+    private final CoredeuxEntityDefinitionResolver entityDefinitionResolver;
+    private final CoredeuxValueHandlerService coredeuxValueHandlerService;
 
     private CoredeuxNativeRuntime(CoredeuxProperties coredeuxProperties,
             EntityDefinitionRegistry entityDefinitionRegistry,
@@ -111,7 +115,9 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
             DRLService drlService,
             DefaultCoredeuxExportWorker coredeuxExportWorker,
             Thread exportWorkerSchedulerThread,
-            CoredeuxReflectionHelperService reflectionHelperService) {
+            CoredeuxReflectionHelperService reflectionHelperService,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver,
+            CoredeuxValueHandlerService coredeuxValueHandlerService) {
         this.coredeuxProperties = coredeuxProperties;
         this.entityDefinitionRegistry = entityDefinitionRegistry;
         this.customerDataAccessService = customerDataAccessService;
@@ -124,6 +130,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
         this.coredeuxExportWorker = coredeuxExportWorker;
         this.exportWorkerSchedulerThread = exportWorkerSchedulerThread;
         this.reflectionHelperService = reflectionHelperService;
+        this.entityDefinitionResolver = entityDefinitionResolver;
+        this.coredeuxValueHandlerService = coredeuxValueHandlerService;
     }
 
     public static CoredeuxNativeRuntime create() {
@@ -135,10 +143,14 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
             entityConfigLocation = "classpath:coredeux-entities.yml";
         }
 
-        try (InputStream inputStream = openStream(entityConfigLocation)) {
-            registry = EntityDefinitionRegistries.fromYaml(inputStream);
-        } catch (IOException exception) {
-            throw new IllegalStateException("Unable to load Coredeux entity definitions", exception);
+        if (resourceExists(entityConfigLocation)) {
+            try (InputStream inputStream = openStream(entityConfigLocation)) {
+                registry = EntityDefinitionRegistries.fromYaml(inputStream);
+            } catch (IOException exception) {
+                throw new IllegalStateException("Unable to load Coredeux entity definitions", exception);
+            }
+        } else {
+            registry = EntityDefinitionRegistries.empty();
         }
 
         Map<String, String> postgresProperties = postgresProperties(coredeuxProperties);
@@ -185,6 +197,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
         DRLService drlService = new DefaultDRLService(drlRuleSourceService, components);
 
         CoredeuxReflectionHelperService reflectionHelperService = new DefaultCoredeuxReflectionHelperService();
+        CoredeuxEntityDefinitionResolver entityDefinitionResolver =
+                new DefaultCoredeuxEntityDefinitionResolver(registry, coredeuxProperties);
         List<CoredeuxEntityModuleHandler> moduleHandlers = List.of(
                 new ValidatorsModuleHandler(components),
                 new HooksModuleHandler(components),
@@ -196,6 +210,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
                 components,
                 reflectionHelperService,
                 () -> null,
+                coredeuxProperties,
+                entityDefinitionResolver,
                 moduleHandlers);
 
         CoredeuxModuleService moduleService = new DefaultCoredeuxModuleService(registry,
@@ -203,12 +219,36 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
                 components,
                 reflectionHelperService,
                 () -> null,
+                coredeuxProperties,
+                entityDefinitionResolver,
                 moduleHandlers);
 
         CoredeuxService coredeuxService = new DefaultCoredeuxService(strategy);
-        CoredeuxImportService coredeuxImportService = importService(coredeuxService, registry, reflectionHelperService);
+        InMemoryCoredeuxComponentRegistry valueHandlerComponents = InMemoryCoredeuxComponentRegistry.builder()
+                .component("postgresCustomerDataAccess", customerDataAccess)
+                .component("defaultCoredeuxJdbcDataAccessService", jdbcDataAccessService)
+                .component("defaultCoredeuxMongoDataAccessService", mongoDataAccessService)
+                .component("defaultCoredeuxElasticsearchDataAccessService", elasticsearchDataAccessService)
+                .component("defaultCoredeuxRedisDataAccessService", redisDataAccessService)
+                .component("customerEmailValidator", new CustomerEmailValidator())
+                .component("demoLifecycleHook", new DemoLifecycleHook())
+                .component("demoAuditHandler", new DemoAuditHandler())
+                .component("customerApprovalWorkflow", new DemoCustomerApprovalWorkflow())
+                .component("demoGreetingService", new DemoGreetingService())
+                .component("demoUriImportHandler", new com.coredeux.demo.imports.DemoUriImportHandler())
+                .component("legacyDateImportHandler", new com.coredeux.demo.imports.LegacyDateImportHandler())
+                .component("dateFormatExportHandler", new com.coredeux.demo.export.DateFormatExportHandler())
+                .component("exportStorageCleanupHook", new com.coredeux.demo.hooks.ExportStorageCleanupHook(new com.fasterxml.jackson.databind.ObjectMapper()))
+                .component("coredeuxDefaultImportValueHandler", new DefaultCoredeuxImportValueHandler(coredeuxService))
+                .component("jsonMapImportHandler", new JsonMapImportHandler())
+                .component("defaultCoredeuxExportValueHandler", new DefaultCoredeuxExportValueHandler())
+                .build();
+        CoredeuxValueHandlerService coredeuxValueHandlerService =
+                new DefaultCoredeuxValueHandlerService(valueHandlerComponents);
+        CoredeuxImportService coredeuxImportService = importService(coredeuxService, registry,
+                reflectionHelperService, coredeuxValueHandlerService);
         CoredeuxExportExecutionService coredeuxExportExecutionService = exportService(coredeuxProperties,
-                coredeuxService, registry, reflectionHelperService);
+                coredeuxService, registry, reflectionHelperService, coredeuxValueHandlerService);
         CoredeuxExportService coredeuxExportService = (CoredeuxExportService) coredeuxExportExecutionService;
         DefaultCoredeuxExportWorker exportWorker = exportWorker(coredeuxProperties,
                 coredeuxExportExecutionService);
@@ -216,7 +256,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
 
         return new CoredeuxNativeRuntime(coredeuxProperties, registry, customerDataAccess, coredeuxService,
                 moduleService, coredeuxImportService, coredeuxExportService, drlRuleSourceService, drlService, exportWorker,
-                exportWorkerSchedulerThread, reflectionHelperService);
+                exportWorkerSchedulerThread, reflectionHelperService, entityDefinitionResolver,
+                coredeuxValueHandlerService);
     }
 
     public CoredeuxProperties coredeuxProperties() {
@@ -241,6 +282,14 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
 
     public CoredeuxReflectionHelperService reflectionHelperService() {
         return reflectionHelperService;
+    }
+
+    public CoredeuxEntityDefinitionResolver entityDefinitionResolver() {
+        return entityDefinitionResolver;
+    }
+
+    public CoredeuxValueHandlerService coredeuxValueHandlerService() {
+        return coredeuxValueHandlerService;
     }
 
     public CoredeuxImportService coredeuxImportService() {
@@ -288,18 +337,17 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
     }
 
     private static CoredeuxImportService importService(CoredeuxService coredeuxService,
-            EntityDefinitionRegistry registry, CoredeuxReflectionHelperService reflectionHelperService) {
+            EntityDefinitionRegistry registry, CoredeuxReflectionHelperService reflectionHelperService,
+            CoredeuxValueHandlerService coredeuxValueHandlerService) {
         ImportEntityTargetService targetService = new ImportEntityTargetService(reflectionHelperService, registry);
-        ImportValueHandlerResolver valueHandlerResolver = new ImportValueHandlerResolver(Map.of(
-                ImportValueHandlerResolver.DEFAULT_HANDLER, new DefaultCoredeuxImportValueHandler(coredeuxService),
-                "jsonMapImportHandler", new JsonMapImportHandler()));
         return new DefaultCoredeuxImportService(coredeuxService, reflectionHelperService, targetService,
-                valueHandlerResolver);
+                coredeuxValueHandlerService);
     }
 
     private static CoredeuxExportExecutionService exportService(CoredeuxProperties coredeuxProperties,
             CoredeuxService coredeuxService, EntityDefinitionRegistry registry,
-            CoredeuxReflectionHelperService reflectionHelperService) {
+            CoredeuxReflectionHelperService reflectionHelperService,
+            CoredeuxValueHandlerService coredeuxValueHandlerService) {
         String defaultFormatValue = coredeuxProperties.string("export.default-format");
         ExportFormat defaultFormat = exportFormat(defaultFormatValue);
 
@@ -310,10 +358,8 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
                 DefaultCoredeuxExportLogServiceResolver.DEFAULT_LOG_SERVICE,
                 new FileCoredeuxExportLogService(exportLogDirectory(coredeuxProperties))));
         CoredeuxExportQueueService queueService = new FileCoredeuxExportQueueService(exportQueueDirectory(coredeuxProperties));
-        ExportValueHandlerResolver handlerResolver = new ExportValueHandlerResolver(Map.of(
-                ExportValueHandlerResolver.DEFAULT_HANDLER, new DefaultCoredeuxExportValueHandler()));
         ExportValueResolver valueResolver = new ExportValueResolver(reflectionHelperService, new ExportValueFormatter(),
-                handlerResolver);
+                coredeuxValueHandlerService);
         return new DefaultCoredeuxExportService(coredeuxService, reflectionHelperService, registry,
                 new ExportFieldPathParser(), valueResolver, storageResolver, logResolver, queueService,
                 new TextExportWriter(), new ExcelExportWriter(), defaultFormat);
@@ -504,5 +550,26 @@ public final class CoredeuxNativeRuntime implements AutoCloseable {
         }
 
         return Files.newInputStream(Path.of(normalized));
+    }
+
+    private static boolean resourceExists(String location) {
+        String normalized = location == null ? "" : location.trim();
+        if (normalized.isBlank()) {
+            return false;
+        }
+
+        if (normalized.startsWith("classpath:")) {
+            String resourceName = normalized.substring("classpath:".length());
+            if (resourceName.startsWith("/")) {
+                resourceName = resourceName.substring(1);
+            }
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            if (classLoader == null) {
+                classLoader = CoredeuxNativeRuntime.class.getClassLoader();
+            }
+            return classLoader.getResource(resourceName) != null;
+        }
+
+        return Files.exists(Path.of(normalized));
     }
 }

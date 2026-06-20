@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import com.coredeux.core.testsupport.TestComponentRegistry;
 
 import com.coredeux.core.context.OperationContext;
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.definition.CoredeuxStorageDefinition;
@@ -25,9 +26,12 @@ import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
+import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
+import com.coredeux.core.snapshot.impl.DefaultCoredeuxEntitySnapshotService;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
 import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
 
@@ -62,15 +66,17 @@ class AbstractCoredeuxStrategyCoverageTest {
     }
 
     @Test
-    void shouldFailWhenDefinitionIsMissing() {
+    void shouldCreateDefaultDefinitionWhenDefinitionIsMissing() {
         ExposedStrategy strategy = new ExposedStrategy(emptyRegistry(), new FixedResolver(),
                 new TestComponentRegistry(), new DefaultCoredeuxReflectionHelperService(),
                 () -> null, List.of());
 
-        CoredeuxValidationException exception = assertThrows(CoredeuxValidationException.class,
-                () -> strategy.exposedGetDefinition(SampleEntity.class));
+        CoredeuxEntityDefinition definition = strategy.exposedGetDefinition(SampleEntity.class);
 
-        assertTrue(exception.getMessage().contains("No entity definition configured"));
+        assertEquals(SampleEntity.class.getName(), definition.getFullClassName());
+        assertEquals("SampleEntity", definition.getName());
+        assertNull(definition.getIdentifier());
+        assertNull(definition.getStorage());
     }
 
     @Test
@@ -205,7 +211,9 @@ class AbstractCoredeuxStrategyCoverageTest {
                 CoredeuxRequestContextResolver requestContextResolver,
                 List<CoredeuxEntityModuleHandler> moduleHandlers) {
             super(entityDefinitionRegistry, entityDataAccessResolver, applicationContext, reflectionHelperService,
-                    requestContextResolver, moduleHandlers);
+                    requestContextResolver, new CoredeuxProperties(), new DefaultCoredeuxEntitySnapshotService(),
+                    new DefaultCoredeuxEntityDefinitionResolver(entityDefinitionRegistry, new CoredeuxProperties()),
+                    moduleHandlers);
         }
 
         private <T> CoredeuxEntityDefinition exposedGetDefinition(Class<T> entityType) {
@@ -254,6 +262,7 @@ class AbstractCoredeuxStrategyCoverageTest {
         private <T> T exposedRequireExistingEntity(Class<T> type, Object identifier, String operation) {
             return requireExistingEntity(type, identifier, operation);
         }
+
     }
 
     private record FixedResolver() implements EntityDataAccessResolver {

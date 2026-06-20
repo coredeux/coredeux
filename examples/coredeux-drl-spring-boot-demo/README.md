@@ -41,8 +41,10 @@ container, then runs the packaged Spring Boot jar. It exposes the app on `8080`
 and the debugger on `5005`. By default the compose file starts the JVM with a
 JDWP agent so you can attach an IDE debugger straight away. The stack also
 includes PostgreSQL and Redis, so the registry bootstrapping and cache
-endpoints work without any extra setup. If you want a different debug mode,
-override `JAVA_TOOL_OPTIONS` when you start compose.
+endpoints work without any extra setup. If the bootstrap YAML file is missing,
+the demo now keeps running with an empty entity-definition registry and the
+global Coredeux fallback settings from Spring Boot properties. If you want a
+different debug mode, override `JAVA_TOOL_OPTIONS` when you start compose.
 
 PowerShell:
 
@@ -79,8 +81,20 @@ mvn -pl examples/coredeux-drl-spring-boot-demo -am spring-boot:run "-Dspring-boo
 
 The DRL runtime source texts are under `src/main/java/com/coredeux/demo/drl`,
 with the generated runtime rules stored in the database. The entity-definition
-registry is seeded from `src/main/resources/coredeux-entities.yml`, stored in
-the `entity_definition_registry` table, and mirrored in Redis for fast reuse.
+registry is normally seeded from `src/main/resources/coredeux-entities.yml`,
+stored in the `entity_definition_registry` table, and mirrored in Redis for
+fast reuse. That file is optional now: if it is absent, the demo starts with an
+empty registry and uses the global Coredeux defaults.
+
+The same entity-definition resolver rules apply here too, so the demo resolves
+metadata in this order:
+
+1. entity-level `identifier`
+2. storage-level `identifier`
+3. global `coredeux.identifier`
+
+That keeps the registry and the runtime aligned even when a definition omits a
+per-entity identifier.
 Use `PUT /api/drl/entity-definitions/cache?sourceLocation=postman` to update
 the stored registry directly from Postman with a raw YAML text body and
 `Content-Type: text/plain`.

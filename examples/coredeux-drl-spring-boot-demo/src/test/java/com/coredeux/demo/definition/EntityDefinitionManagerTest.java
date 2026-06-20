@@ -105,7 +105,7 @@ class EntityDefinitionManagerTest {
         when(repository.findByCode(REGISTRY_CODE)).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        EntityDefinitionRegistryRecord saved = manager.updateEntityDefinitionFromFile();
+        EntityDefinitionRegistryRecord saved = manager.updateEntityDefinitionFromFile().orElseThrow();
 
         assertEquals(REGISTRY_CODE, saved.getCode());
         assertEquals(BOOTSTRAP_LOCATION, saved.getSourceLocation());
@@ -116,15 +116,40 @@ class EntityDefinitionManagerTest {
     }
 
     @Test
-    void refreshCacheFallsBackToBootstrapWhenNoStoredRecordExists() {
-        EntityDefinitionRegistryRecord saved = record(REGISTRY_CODE, BOOTSTRAP_LOCATION, YAML);
+    void skipsBootstrapUpdateWhenBootstrapResourceIsMissing() {
+        Resource resource = org.mockito.Mockito.mock(Resource.class);
+        when(resource.exists()).thenReturn(false);
+        when(resourceLoader.getResource(BOOTSTRAP_LOCATION)).thenReturn(resource);
+
+        assertEquals(Optional.empty(), manager.updateEntityDefinitionFromFile());
+    }
+
+    @Test
+    void refreshCacheUsesAnEmptyRegistryWhenNoStoredRecordExistsAndNoBootstrapResourceIsAvailable() {
         EntityDefinitionManager spy = org.mockito.Mockito.spy(manager);
         doReturn(Optional.empty()).when(spy).findRecord();
-        doReturn(saved).when(spy).updateEntityDefinitionFromFile();
 
         spy.refreshCache();
 
-        verify(spy).updateEntityDefinitionFromFile();
+        assertEquals(0, spy.currentRegistry().getAll().size());
+    }
+
+    @Test
+    void currentRegistryUsesAnEmptyRegistryWhenBootstrapResourceIsMissing() {
+        Resource resource = org.mockito.Mockito.mock(Resource.class);
+        when(resource.exists()).thenReturn(false);
+        when(resourceLoader.getResource(BOOTSTRAP_LOCATION)).thenReturn(resource);
+        when(repository.findByCode(REGISTRY_CODE)).thenReturn(Optional.empty());
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(REDIS_KEY)).thenReturn(null);
+
+        EntityDefinitionRegistry registry = manager.currentRegistry();
+
+        assertNotNull(registry);
+        assertEquals(0, registry.getAll().size());
+        verify(repository).findByCode(REGISTRY_CODE);
+        verify(valueOperations).get(REDIS_KEY);
+        verify(redisTemplate).delete(REDIS_KEY);
     }
 
     @Test

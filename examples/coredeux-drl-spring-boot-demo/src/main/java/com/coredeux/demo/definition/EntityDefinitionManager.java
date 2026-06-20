@@ -15,6 +15,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.loader.EntityDefinitionLoader;
@@ -25,6 +27,8 @@ import com.coredeux.demo.domain.EntityDefinitionRegistryRecord;
 
 @Component
 public class EntityDefinitionManager {
+
+    private static final Logger log = LoggerFactory.getLogger(EntityDefinitionManager.class);
 
 	private final EntityDefinitionRegistryRecordRepository repository;
     private final DemoEntityDefinitionProperties properties;
@@ -45,8 +49,8 @@ public class EntityDefinitionManager {
     
 
     @Transactional
-    public EntityDefinitionRegistryRecord updateEntityDefinitionFromFile() {
-        return updateDefinition(loadBootstrapYaml(), properties.getBootstrapLocation());
+    public Optional<EntityDefinitionRegistryRecord> updateEntityDefinitionFromFile() {
+        return loadBootstrapYaml().map(yaml -> updateDefinition(yaml, properties.getBootstrapLocation()));
     }
 
     @Transactional(readOnly = true)
@@ -67,7 +71,7 @@ public class EntityDefinitionManager {
                 .map(EntityDefinitionRegistryRecord::getYaml)
                 .orElse(null);
         if (yaml == null) {
-            updateEntityDefinitionFromFile();
+            initializeEmptyRegistryIfNeeded();
             return;
         }
         refreshCache(yaml);
@@ -107,13 +111,18 @@ public class EntityDefinitionManager {
             if (yaml == null) {
                 yaml = findRecord().map(EntityDefinitionRegistryRecord::getYaml).orElse(null);
                 if (yaml == null) {
-                    updateEntityDefinitionFromFile();
-                    return currentRegistry();
+                    Optional<String> bootstrapYaml = loadBootstrapYaml();
+                    if (bootstrapYaml.isEmpty()) {
+                        return initializeEmptyRegistryIfNeeded();
+                    }
+                    yaml = bootstrapYaml.get();
+                    redisTemplate.opsForValue().set(properties.getRedisKey(), yaml);
+                } else {
+                    redisTemplate.opsForValue().set(properties.getRedisKey(), yaml);
                 }
-                redisTemplate.opsForValue().set(properties.getRedisKey(), yaml);
             }
             if (yaml == null || yaml.isBlank()) {
-                throw new CoredeuxValidationException("No entity definition registry is available");
+                return initializeEmptyRegistryIfNeeded();
             }
             current = registryFromYaml(yaml);
             snapshot.set(current);
@@ -134,20 +143,38 @@ public class EntityDefinitionManager {
         }
     }
 
-    private String loadBootstrapYaml() {
+    private Optional<String> loadBootstrapYaml() {
         Resource resource = resourceLoader.getResource(properties.getBootstrapLocation());
         if (!resource.exists()) {
-            throw new CoredeuxValidationException(
-                    "Entity definition bootstrap resource not found: " + properties.getBootstrapLocation());
+            log.info("Entity definition bootstrap resource not found, using an empty registry instead: {}",
+                    properties.getBootstrapLocation());
+            return Optional.empty();
         }
         try (InputStream inputStream = resource.getInputStream()) {
             String yaml = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
             definitionLoader.load(new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)));
-            return yaml;
+            return Optional.of(yaml);
         } catch (IOException exception) {
             throw new UncheckedIOException(
                     "Unable to read entity definition bootstrap resource: " + properties.getBootstrapLocation(),
                     exception);
+        }
+    }
+
+    private EntityDefinitionRegistry initializeEmptyRegistryIfNeeded() {
+        EntityDefinitionRegistry current = snapshot.get();
+        if (current != null) {
+            return current;
+        }
+        synchronized (snapshot) {
+            current = snapshot.get();
+            if (current != null) {
+                return current;
+            }
+            redisTemplate.delete(properties.getRedisKey());
+            current = EntityDefinitionRegistries.empty();
+            snapshot.set(current);
+            return current;
         }
     }
 

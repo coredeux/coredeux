@@ -58,6 +58,10 @@ examples/coredeux-drl-spring-boot-demo/src/main/java/com/coredeux/demo/DemoEntit
 
 That runner loads entity definitions from the bootstrap YAML file when the
 property `coredeux.demo.entity-definitions.bootstrap-enabled` is `true`.
+If the file is missing, the demo keeps running with an empty entity-definition
+registry and the global Coredeux fallback settings from Spring Boot
+properties.
+
 In `application.yml`, that property is enabled by default.
 
 The bootstrap file is:
@@ -142,6 +146,8 @@ The `Customer` entry declares:
   - `customerAudit.drl`
 
 The handler order in YAML is the order the runtime uses.
+If this file is removed, the demo still starts and uses an empty registry until
+you create or load definitions through the cache endpoint.
 
 ## The Data Model
 
@@ -220,7 +226,12 @@ The current lookup order is:
 1. in-memory snapshot
 2. Redis cache
 3. database registry record
-4. bootstrap file if nothing else is available
+4. bootstrap file if it is present
+5. empty registry
+
+That means the bootstrap YAML is optional. When it is missing, the demo keeps
+running and falls back to the global Coredeux defaults from Spring Boot
+properties.
 
 The registry implementation that other code uses is:
 

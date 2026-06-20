@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.context.EntityLifecycleContext;
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
@@ -16,8 +17,10 @@ import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
+import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
 import com.coredeux.core.snapshot.CoredeuxEntitySnapshotService;
@@ -37,38 +40,35 @@ public abstract class AbstractCoredeuxStrategy {
     private final CoredeuxReflectionHelperService reflectionHelperService;
     private final CoredeuxRequestContextResolver requestContextResolver;
     private final CoredeuxEntitySnapshotService entitySnapshotService;
+    private final CoredeuxProperties coredeuxProperties;
+    private final CoredeuxEntityDefinitionResolver entityDefinitionResolver;
     private final Map<String, CoredeuxEntityModuleHandler> moduleHandlers;
 
     protected AbstractCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
             EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
-            List<CoredeuxEntityModuleHandler> moduleHandlers) {
-        this(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry, reflectionHelperService,
-                requestContextResolver, new DefaultCoredeuxEntitySnapshotService(), moduleHandlers);
-    }
-
-    protected AbstractCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
-            EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
-            CoredeuxReflectionHelperService reflectionHelperService,
-            CoredeuxRequestContextResolver requestContextResolver,
+            CoredeuxProperties coredeuxProperties,
             CoredeuxEntitySnapshotService entitySnapshotService,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         this.entityDefinitionRegistry = entityDefinitionRegistry;
         this.entityDataAccessResolver = entityDataAccessResolver;
         this.componentRegistry = componentRegistry;
         this.reflectionHelperService = reflectionHelperService;
         this.requestContextResolver = requestContextResolver;
+        this.coredeuxProperties = coredeuxProperties == null ? new CoredeuxProperties() : coredeuxProperties;
         this.entitySnapshotService = entitySnapshotService == null
                 ? new DefaultCoredeuxEntitySnapshotService()
                 : entitySnapshotService;
+        this.entityDefinitionResolver = entityDefinitionResolver == null
+                ? new DefaultCoredeuxEntityDefinitionResolver(entityDefinitionRegistry, this.coredeuxProperties)
+                : entityDefinitionResolver;
         this.moduleHandlers = toModuleHandlerMap(moduleHandlers);
     }
 
     protected <T> CoredeuxEntityDefinition getDefinition(Class<T> entityType) {
-        return entityDefinitionRegistry.findByEntityType(entityType)
-                .orElseThrow(() -> new CoredeuxValidationException(
-                        "No entity definition configured for class: " + entityType.getName()));
+        return entityDefinitionResolver.resolve(entityType);
     }
 
     @SuppressWarnings("unchecked")
@@ -78,7 +78,7 @@ public abstract class AbstractCoredeuxStrategy {
 
     protected <T> CoredeuxDataAccessService getDataAccessService(Class<T> entityType) {
         CoredeuxEntityDefinition definition = getDefinition(entityType);
-        String beanName = entityDataAccessResolver.resolveDataAccessService(definition);
+        String beanName = resolveDataAccessService(definition);
         try {
             return componentRegistry.getComponent(beanName, CoredeuxDataAccessService.class);
         } catch (Exception exception) {
@@ -90,7 +90,12 @@ public abstract class AbstractCoredeuxStrategy {
     }
 
     protected String resolveDataAccessService(CoredeuxEntityDefinition definition) {
-        return entityDataAccessResolver.resolveDataAccessService(definition);
+        String beanName = entityDataAccessResolver.resolveDataAccessService(definition);
+        if (beanName != null && !beanName.isBlank()) {
+            return beanName;
+        }
+        throw new CoredeuxValidationException(
+                "No data access service configured for entity class: " + definition.getFullClassName());
     }
 
     protected CoredeuxComponentRegistry getComponentRegistry() {
@@ -138,12 +143,16 @@ public abstract class AbstractCoredeuxStrategy {
     }
 
     protected <T> Object extractIdentifier(T entity, CoredeuxEntityDefinition definition) {
-        if (entity == null || definition == null || definition.getIdentifier() == null
-                || definition.getIdentifier().isBlank()) {
+        if (entity == null || definition == null) {
             return null;
         }
 
-        Object value = reflectionHelperService.getFieldValue(definition.getIdentifier(), entity);
+        String identifierField = definition.getIdentifier();
+        if (identifierField == null || identifierField.isBlank()) {
+            return null;
+        }
+
+        Object value = reflectionHelperService.getFieldValue(identifierField, entity);
         if (value instanceof String stringValue && stringValue.isBlank()) {
             return null;
         }
@@ -153,12 +162,14 @@ public abstract class AbstractCoredeuxStrategy {
     protected <T> Object requireIdentifier(T entity, CoredeuxEntityDefinition definition, String operationLabel) {
         Object identifier = extractIdentifier(entity, definition);
         if (identifier == null) {
+            String identifierField = definition.getIdentifier();
             throw new CoredeuxValidationException(
-                    "Missing identifier '" + definition.getIdentifier() + "' for " + operationLabel + " on class: "
-                            + definition.getFullClassName());
+                    "Missing identifier '" + (identifierField == null ? "id" : identifierField) + "' for "
+                            + operationLabel + " on class: " + definition.getFullClassName());
         }
         return identifier;
     }
+
 
     protected <T> T loadExistingEntity(Class<T> entityType, Object identifier) {
         if (identifier == null) {
@@ -214,4 +225,5 @@ public abstract class AbstractCoredeuxStrategy {
         }
         return Map.copyOf(handlerMap);
     }
+
 }

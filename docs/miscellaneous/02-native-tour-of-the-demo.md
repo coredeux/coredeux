@@ -59,7 +59,7 @@ The important parts are:
 - `src/main/resources/META-INF/persistence.xml`
   - JPA persistence bootstrap
 - `src/main/resources/coredeux-entities.yml`
-  - managed entity definitions
+  - managed entity definitions and entity-specific overrides when present
 - `src/main/resources/coredeux-postgres-entities.yml`
   - PostgreSQL-specific entity definitions
 - `src/main/resources/samples`
@@ -96,6 +96,8 @@ That file tells Coredeux things like:
 - what the default import parser should be
 - what the default export format should be
 - how export storage and export workers should behave
+- what global fallback data access service to use when an entity does not
+  declare its own storage adapter
 
 This is the first important pattern in the native demo: framework settings live
 outside the host code, just like JPA uses `persistence.xml`.
@@ -144,6 +146,10 @@ The native demo still shows the framework modules working around the lifecycle:
 
 The modules are the same idea you see in the Spring Boot demo. The host layer
 is different, but the Coredeux behavior is the same.
+
+If an entity does not need a custom storage, validator, hook, or audit
+override, the runtime can still use the global `coredeux.data-access-service`
+value from `META-INF/coredeux.yml`.
 
 ### 5. The data and sample layer
 

@@ -5,17 +5,18 @@ import java.util.Map;
 import java.util.Set;
 
 import com.coredeux.core.context.OperationContext;
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
-import com.coredeux.core.snapshot.CoredeuxEntitySnapshotService;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
 import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
 import com.coredeux.core.strategy.CoredeuxStrategy;
@@ -29,20 +30,12 @@ public class DefaultCoredeuxStrategy extends AbstractCoredeuxStrategy implements
     public DefaultCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
             EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
-            CoredeuxRequestContextResolver requestContextResolver,
+            CoredeuxRequestContextResolver requestContextResolver, CoredeuxProperties coredeuxProperties,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         super(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry, reflectionHelperService,
-                requestContextResolver, moduleHandlers);
-    }
-
-    public DefaultCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
-            EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
-            CoredeuxReflectionHelperService reflectionHelperService,
-            CoredeuxRequestContextResolver requestContextResolver,
-            CoredeuxEntitySnapshotService entitySnapshotService,
-            List<CoredeuxEntityModuleHandler> moduleHandlers) {
-        super(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry, reflectionHelperService,
-                requestContextResolver, entitySnapshotService, moduleHandlers);
+                requestContextResolver, coredeuxProperties, new com.coredeux.core.snapshot.impl.DefaultCoredeuxEntitySnapshotService(),
+                entityDefinitionResolver, moduleHandlers);
     }
 
     @Override

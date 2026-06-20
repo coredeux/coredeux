@@ -123,10 +123,8 @@ Values are resolved through `{{param}}` placeholders before the JSON is parsed.
 
 ## Identifier Handling
 
-The adapter resolves an identifier field using either:
-
-- Spring Data `@Id`
-- a field named `id`
+The adapter uses the effective identifier resolved by Coredeux from the entity
+definition or its storage fallback.
 
 When an entity is saved without an identifier, Redis generates one:
 

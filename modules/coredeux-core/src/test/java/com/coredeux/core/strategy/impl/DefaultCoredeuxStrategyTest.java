@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import com.coredeux.core.context.EntityLifecycleContext;
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.context.RequestContext;
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.definition.CoredeuxStorageDefinition;
@@ -29,7 +30,9 @@ import com.coredeux.core.module.impl.HooksModuleHandler;
 import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.EntityDefinitionBackedDataAccessResolver;
+import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
@@ -338,12 +341,66 @@ class DefaultCoredeuxStrategyTest {
         assertTrue(exception.getMessage().contains("DELETE"));
     }
 
+    @Test
+    void shouldUseGlobalFallbackWhenEntityDefinitionIsMissing() {
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
+        registerBeans(applicationContext, dataAccessService, new RecordingValidator(), new RecordingHook());
+
+        DefaultCoredeuxStrategy strategy = new DefaultCoredeuxStrategy(new InMemoryEntityDefinitionRegistry(List.of()),
+                new EntityDefinitionBackedDataAccessResolver(), applicationContext,
+                new DefaultCoredeuxReflectionHelperService(), () -> null,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")),
+                definitionResolver(new InMemoryEntityDefinitionRegistry(List.of())),
+                moduleHandlers(applicationContext));
+
+        SampleEntity entity = new SampleEntity("42", "fallback");
+        String id = strategy.save(entity);
+
+        assertEquals("saved-id", id);
+        assertTrue(dataAccessService.saveInvoked);
+        assertEquals(entity, dataAccessService.savedEntity);
+    }
+
+    @Test
+    void shouldFallbackToGlobalDataAccessServiceWhenEntityStorageOmitsService() {
+        TestComponentRegistry applicationContext = new TestComponentRegistry();
+        RecordingDataAccessService dataAccessService = new RecordingDataAccessService();
+        registerBeans(applicationContext, dataAccessService, new RecordingValidator(), new RecordingHook());
+
+        CoredeuxEntityDefinition definition = CoredeuxEntityDefinition.builder()
+                .fullClassName(SampleEntity.class.getName())
+                .name("sample")
+                .identifier("id")
+                .storage(CoredeuxStorageDefinition.builder().build())
+                .modules(List.of())
+                .build();
+        DefaultCoredeuxStrategy strategy = new DefaultCoredeuxStrategy(new InMemoryEntityDefinitionRegistry(List.of(definition)),
+                new EntityDefinitionBackedDataAccessResolver(), applicationContext,
+                new DefaultCoredeuxReflectionHelperService(), () -> null,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")),
+                definitionResolver(new InMemoryEntityDefinitionRegistry(List.of(definition))),
+                moduleHandlers(applicationContext));
+
+        strategy.save(new SampleEntity("77", "fallback-service"));
+
+        assertTrue(dataAccessService.saveInvoked);
+    }
+
     private DefaultCoredeuxStrategy strategy(TestComponentRegistry applicationContext,
             CoredeuxModuleDefinition... modules) {
-        return new DefaultCoredeuxStrategy(registryWithModules(modules),
+        EntityDefinitionRegistry registry = registryWithModules(modules);
+        return new DefaultCoredeuxStrategy(registry,
                 new EntityDefinitionBackedDataAccessResolver(), applicationContext,
                 new DefaultCoredeuxReflectionHelperService(), () -> requestContext,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")),
+                definitionResolver(registry),
                 moduleHandlers(applicationContext));
+    }
+
+    private CoredeuxEntityDefinitionResolver definitionResolver(EntityDefinitionRegistry registry) {
+        return new DefaultCoredeuxEntityDefinitionResolver(registry,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")));
     }
 
     private void registerBeans(TestComponentRegistry applicationContext, RecordingDataAccessService dataAccessService,
@@ -402,6 +459,7 @@ class DefaultCoredeuxStrategyTest {
 
         private final Map<String, SampleEntity> existingEntities = new HashMap<>();
         private boolean saveInvoked;
+        private SampleEntity savedEntity;
         private String persistedIdentifier = "saved-id";
         private int updateInvocationCount;
         private int removeInvocationCount;
@@ -419,6 +477,7 @@ class DefaultCoredeuxStrategyTest {
         @Override
         public <T> String save(T entity) {
             saveInvoked = true;
+            savedEntity = (SampleEntity) entity;
             return persistedIdentifier;
         }
 

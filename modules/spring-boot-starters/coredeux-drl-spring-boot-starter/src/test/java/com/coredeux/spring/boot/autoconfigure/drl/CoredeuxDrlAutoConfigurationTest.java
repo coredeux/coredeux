@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -22,11 +24,15 @@ import com.coredeux.core.module.impl.HooksModuleHandler;
 import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.registry.EntityDefinitionRegistries;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
+import com.coredeux.core.search.SearchParams;
+import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxModuleService;
 import com.coredeux.core.service.CoredeuxService;
+import com.coredeux.core.service.CoredeuxDataAccessService;
 import com.coredeux.core.strategy.CoredeuxStrategy;
 import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.drl.config.DrlRuntimeBootstrap;
@@ -99,6 +105,26 @@ class CoredeuxDrlAutoConfigurationTest {
                     SampleEntity loaded = coredeuxService.load("1", SampleEntity.class);
 
                     assertEquals("drl-loaded", loaded.getId());
+                    assertInstanceOf(DefaultDRLCoredeuxStrategy.class, context.getBean(CoredeuxStrategy.class));
+                });
+    }
+
+    @Test
+    void fallsBackToGlobalDataAccessServiceWhenEntityDefinitionRegistryIsEmpty() {
+        contextRunner
+                .withBean(EntityDefinitionRegistry.class, EntityDefinitionRegistries::empty)
+                .withPropertyValues(
+                        "coredeux.data-access-service=postgresCoredeuxJpaDataAccessService",
+                        "coredeux.identifier=id")
+                .withUserConfiguration(RecordingDataAccessConfiguration.class)
+                .run(context -> {
+                    CoredeuxService coredeuxService = context.getBean(CoredeuxService.class);
+                    RecordingDataAccessService dataAccessService = context.getBean(RecordingDataAccessService.class);
+
+                    String savedId = coredeuxService.save(new SampleEntity());
+
+                    assertEquals("stub-1", savedId);
+                    assertTrue(dataAccessService.saveCalled.get());
                     assertInstanceOf(DefaultDRLCoredeuxStrategy.class, context.getBean(CoredeuxStrategy.class));
                 });
     }
@@ -235,6 +261,55 @@ class CoredeuxDrlAutoConfigurationTest {
         @Bean
         SampleService sampleService() {
             return new SampleService();
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class RecordingDataAccessConfiguration {
+
+        @Bean(name = "postgresCoredeuxJpaDataAccessService")
+        RecordingDataAccessService postgresCoredeuxJpaDataAccessService() {
+            return new RecordingDataAccessService();
+        }
+    }
+
+    static class RecordingDataAccessService implements CoredeuxDataAccessService {
+
+        private final AtomicBoolean saveCalled = new AtomicBoolean(false);
+        private final AtomicReference<String> savedId = new AtomicReference<>("stub-1");
+
+        @Override
+        public <T> T load(String id, Class<T> type) {
+            return null;
+        }
+
+        @Override
+        public <T> String save(T entity) {
+            saveCalled.set(true);
+            return savedId.get();
+        }
+
+        @Override
+        public <T> void update(T entity) {
+        }
+
+        @Override
+        public <T> void remove(T entity) {
+        }
+
+        @Override
+        public <T> SearchResult<T> loadAll(List<SearchParams> params, Class<T> type, int pageSize, int currentPage) {
+            return SearchResult.<T>builder()
+                    .results(List.of())
+                    .build();
+        }
+
+        @Override
+        public <T> SearchResult<T> query(String query, Map<String, Object> params, Class<T> type, int pageSize,
+                int currentPage) {
+            return SearchResult.<T>builder()
+                    .results(List.of())
+                    .build();
         }
     }
 }

@@ -7,6 +7,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import com.coredeux.core.context.OperationContext;
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxStrategyException;
@@ -14,6 +15,7 @@ import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchParams;
@@ -38,10 +40,11 @@ public class DefaultDRLCoredeuxStrategy extends DefaultCoredeuxStrategy implemen
     public DefaultDRLCoredeuxStrategy(EntityDefinitionRegistry entityDefinitionRegistry,
             EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
-            CoredeuxRequestContextResolver requestContextResolver,
+            CoredeuxRequestContextResolver requestContextResolver, CoredeuxProperties coredeuxProperties,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         super(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry, reflectionHelperService,
-                requestContextResolver, moduleHandlers);
+                requestContextResolver, coredeuxProperties, entityDefinitionResolver, moduleHandlers);
     }
 
     @Override

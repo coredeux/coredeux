@@ -2,6 +2,8 @@ package com.coredeux.core.loader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,9 +31,10 @@ class YamlEntityDefinitionLoaderTest {
 
         assertEquals(2, configuration.getEntities().size());
         assertEquals("com.example.customer.Customer", configuration.getEntities().get(0).getFullClassName());
+        assertEquals("id", configuration.getEntities().get(0).getIdentifier());
         assertEquals("postgresCustomerDataAccess",
                 configuration.getEntities().get(0).getStorage().getDataAccessService());
-        assertEquals("id", configuration.getEntities().get(0).getIdentifier());
+        assertEquals("id", configuration.getEntities().get(0).getStorage().getIdentifier());
         assertEquals(2, configuration.getEntities().get(0).getValidators().size());
         assertEquals(2, configuration.getEntities().get(0).getAttributes().size());
         assertTrue(configuration.getEntities().get(0).getAudit().isEnabled());
@@ -39,6 +42,7 @@ class YamlEntityDefinitionLoaderTest {
         assertEquals(4, configuration.getEntities().get(0).getModules().size());
 
         assertEquals("mongo", configuration.getEntities().get(1).getStorage().getStore());
+        assertEquals("documentId", configuration.getEntities().get(1).getStorage().getIdentifier());
         assertFalse(configuration.getEntities().get(1).getAudit().isEnabled());
         assertEquals(1, configuration.getEntities().get(1).getHooks().size());
     }
@@ -67,7 +71,24 @@ class YamlEntityDefinitionLoaderTest {
     }
 
     @Test
-    void shouldFailWhenRequiredStorageFieldIsMissing() {
+    void shouldAllowStorageToBeOmittedWhenEntityUsesTheGlobalFallback() {
+        String yaml = """
+                coredeux:
+                  entities:
+                    - full-class-name: com.example.customer.Customer
+                      identifier: id
+                """;
+
+        CoredeuxYamlConfiguration configuration = loader.load(inputStream(yaml));
+
+        assertEquals(1, configuration.getEntities().size());
+        assertEquals("com.example.customer.Customer", configuration.getEntities().get(0).getFullClassName());
+        assertEquals("id", configuration.getEntities().get(0).getIdentifier());
+        assertNull(configuration.getEntities().get(0).getStorage());
+    }
+
+    @Test
+    void shouldAllowStorageToOmitDataAccessServiceWhenFallbackIsConfiguredElsewhere() {
         String yaml = """
                 coredeux:
                   entities:
@@ -77,32 +98,15 @@ class YamlEntityDefinitionLoaderTest {
                         store: postgres
                 """;
 
-        CoredeuxValidationException exception = assertThrows(CoredeuxValidationException.class,
-                () -> loader.load(inputStream(yaml)));
-
-        assertTrue(exception.getMessage().contains("data-access-service"));
-    }
-
-    @Test
-    void shouldLoadEntityDefinitionWhenOptionalFieldsAreMissing() {
-        String yaml = """
-                coredeux:
-                  entities:
-                    - full-class-name: com.example.customer.Customer
-                      identifier: id
-                      storage:
-                        data-access-service: postgresCustomerDataAccess
-                """;
-
         CoredeuxYamlConfiguration configuration = loader.load(inputStream(yaml));
 
         assertEquals(1, configuration.getEntities().size());
         assertEquals("com.example.customer.Customer", configuration.getEntities().get(0).getFullClassName());
         assertEquals("com.example.customer.Customer", configuration.getEntities().get(0).getName());
-        assertEquals("postgresCustomerDataAccess",
-                configuration.getEntities().get(0).getStorage().getDataAccessService());
+        assertNotNull(configuration.getEntities().get(0).getStorage());
+        assertNull(configuration.getEntities().get(0).getStorage().getDataAccessService());
         assertEquals("id", configuration.getEntities().get(0).getIdentifier());
-        assertEquals(null, configuration.getEntities().get(0).getStorage().getStore());
+        assertEquals("postgres", configuration.getEntities().get(0).getStorage().getStore());
         assertTrue(configuration.getEntities().get(0).getValidators().isEmpty());
         assertTrue(configuration.getEntities().get(0).getHooks().isEmpty());
         assertTrue(configuration.getEntities().get(0).getAttributes().isEmpty());
@@ -126,19 +130,21 @@ class YamlEntityDefinitionLoaderTest {
     }
 
     @Test
-    void shouldFailWhenIdentifierIsMissing() {
+    void shouldAllowIdentifierToBeOmittedWhenStorageProvidesTheDefault() {
         String yaml = """
                 coredeux:
                   entities:
                     - full-class-name: com.example.customer.Customer
                       storage:
+                        identifier: id
                         data-access-service: postgresCustomerDataAccess
                 """;
 
-        CoredeuxValidationException exception = assertThrows(CoredeuxValidationException.class,
-                () -> loader.load(inputStream(yaml)));
+        CoredeuxYamlConfiguration configuration = loader.load(inputStream(yaml));
 
-        assertTrue(exception.getMessage().contains("identifier"));
+        assertEquals(1, configuration.getEntities().size());
+        assertNull(configuration.getEntities().get(0).getIdentifier());
+        assertEquals("id", configuration.getEntities().get(0).getStorage().getIdentifier());
     }
 
     @Test
@@ -149,6 +155,7 @@ class YamlEntityDefinitionLoaderTest {
                     - full-class-name: com.example.customer.Customer
                       identifier: id
                       storage:
+                        identifier: id
                         data-access-service: postgresCustomerDataAccess
                       modules:
                         - name: workflow
@@ -179,6 +186,7 @@ class YamlEntityDefinitionLoaderTest {
                     - full-class-name: com.example.customer.Customer
                       identifier: id
                       storage:
+                        identifier: id
                         data-access-service: postgresCustomerDataAccess
                       modules:
                         - name: workflow
@@ -208,6 +216,7 @@ class YamlEntityDefinitionLoaderTest {
                     - full-class-name: com.example.customer.Customer
                       identifier: id
                       storage:
+                        identifier: id
                         data-access-service: postgresCustomerDataAccess
                       modules:
                         - enabled: true
@@ -229,6 +238,7 @@ class YamlEntityDefinitionLoaderTest {
                     - full-class-name: com.example.customer.Customer
                       identifier: id
                       storage:
+                        identifier: id
                         data-access-service: postgresCustomerDataAccess
                       modules:
                         - name: validators
@@ -288,6 +298,7 @@ class YamlEntityDefinitionLoaderTest {
                     - full-class-name: com.example.Customer
                       identifier: id
                       storage:
+                        identifier: id
                         data-access-service: customerDataAccess
                       modules:
                         name: hooks
@@ -307,6 +318,7 @@ class YamlEntityDefinitionLoaderTest {
                     - full-class-name: com.example.Customer
                       identifier: id
                       storage:
+                        identifier: id
                         data-access-service: customerDataAccess
                       modules:
                         - name: hooks
@@ -327,6 +339,7 @@ class YamlEntityDefinitionLoaderTest {
                     - full-class-name: com.example.Customer
                       identifier: id
                       storage:
+                        identifier: id
                         data-access-service: customerDataAccess
                       modules:
                         - name: attributes
@@ -348,6 +361,7 @@ class YamlEntityDefinitionLoaderTest {
                     - full-class-name: com.example.Customer
                       identifier: id
                       storage:
+                        identifier: id
                         data-access-service: customerDataAccess
                       modules:
                         - name: attributes
@@ -374,6 +388,7 @@ class YamlEntityDefinitionLoaderTest {
                       identifier: id
                       storage:
                         store: postgres
+                        identifier: id
                         data-access-service: postgresCustomerDataAccess
                       modules:
                         - name: validators
@@ -406,6 +421,7 @@ class YamlEntityDefinitionLoaderTest {
                       identifier: id
                       storage:
                         store: mongo
+                        identifier: documentId
                         data-access-service: mongoAuditDataAccess
                       modules:
                         - name: audit

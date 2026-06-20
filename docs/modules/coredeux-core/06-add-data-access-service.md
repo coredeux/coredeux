@@ -10,6 +10,12 @@ store and load it.
 This page helps you decide whether you can use one of the built-in services or
 whether your application needs a custom adapter.
 
+If an entity omits `storage.data-access-service`, Coredeux falls back to the
+global `coredeux.data-access-service` value from `application.yml` or
+`META-INF/coredeux.yml`. The same entity-level definition can also supply a
+storage-level `identifier`, which is used only when the entity itself does not
+declare one.
+
 ## The Basic Decision
 
 Start with two questions:
@@ -234,6 +240,16 @@ No matter where the service comes from, Coredeux only needs three things:
 - a stable bean name
 - an implementation of `CoredeuxDataAccessService`
 - a matching `storage.data-access-service` entry in the entity YAML
+
+If the entity YAML does not include that entry, the global fallback bean name
+is used instead.
+
+Identifier resolution is separate from service resolution:
+
+- entity `identifier` wins first
+- storage `identifier` is the default for that entity definition
+- `coredeux.identifier` can supply a global fallback
+- Coredeux does not infer an identifier from field names
 
 The framework uses that link to route CRUD and query work to the right backend.
 
