@@ -77,7 +77,7 @@ public class YamlEntityDefinitionLoader implements EntityDefinitionLoader {
                 .fullClassName(fullClassName)
                 .name(name == null || name.isBlank() ? fullClassName : name)
                 .identifier(optionalString(entityMap, "identifier"))
-                .storage(storageMap == null ? null : toStorageDefinition(storageMap))
+                .storage(storageMap.isEmpty() ? null : toStorageDefinition(storageMap))
                 .modules(asEntityModules(entityMap.get(MODULES_KEY)))
                 .build();
     }
@@ -154,7 +154,7 @@ public class YamlEntityDefinitionLoader implements EntityDefinitionLoader {
 
     private Map<String, Object> optionalMap(Object value, String fieldName) {
         if (value == null) {
-            return null;
+            return Map.of();
         }
         return asMap(value, fieldName);
     }

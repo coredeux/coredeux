@@ -291,10 +291,12 @@ class CoredeuxDrlAutoConfigurationTest {
 
         @Override
         public <T> void update(T entity) {
+            // Intentionally empty: this test double only needs to satisfy the contract.
         }
 
         @Override
         public <T> void remove(T entity) {
+            // Intentionally empty: this test double only needs to satisfy the contract.
         }
 
         @Override

@@ -26,7 +26,6 @@ import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
-import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.search.SearchResult;
