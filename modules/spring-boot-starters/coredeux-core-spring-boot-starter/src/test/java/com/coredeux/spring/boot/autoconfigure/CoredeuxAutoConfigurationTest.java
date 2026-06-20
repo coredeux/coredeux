@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
+import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.service.CoredeuxService;
 
 class CoredeuxAutoConfigurationTest {
@@ -22,5 +23,15 @@ class CoredeuxAutoConfigurationTest {
                 .hasSingleBean(CoredeuxComponentRegistry.class)
                 .hasSingleBean(CoredeuxValueHandlerService.class)
                 .hasSingleBean(CoredeuxService.class));
+    }
+
+    @Test
+    void fallsBackToAnEmptyRegistryWhenEntityDefinitionsAreMissing() {
+        contextRunner
+                .withPropertyValues("coredeux.entities.config-location=classpath:missing-coredeux-entities.yml",
+                        "coredeux.data-access-service=customerDataAccess")
+                .run(context -> assertThat(context)
+                        .hasSingleBean(EntityDefinitionRegistry.class)
+                        .hasSingleBean(CoredeuxService.class));
     }
 }

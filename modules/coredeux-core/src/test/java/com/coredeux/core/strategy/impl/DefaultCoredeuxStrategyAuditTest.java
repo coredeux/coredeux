@@ -18,6 +18,7 @@ import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.definition.CoredeuxStorageDefinition;
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.module.impl.AuditModuleHandler;
@@ -25,7 +26,9 @@ import com.coredeux.core.module.impl.HooksModuleHandler;
 import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.EntityDefinitionBackedDataAccessResolver;
+import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
@@ -43,9 +46,12 @@ class DefaultCoredeuxStrategyAuditTest {
         applicationContext.registerSingleton("customerDataAccess", dataAccessService);
         applicationContext.registerSingleton("defaultAuditHandler", auditHandler);
 
-        DefaultCoredeuxStrategy strategy = new DefaultCoredeuxStrategy(registryWithAuditModule(),
+        EntityDefinitionRegistry registry = registryWithAuditModule();
+        DefaultCoredeuxStrategy strategy = new DefaultCoredeuxStrategy(registry,
                 new EntityDefinitionBackedDataAccessResolver(), applicationContext,
                 new DefaultCoredeuxReflectionHelperService(), () -> null,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")),
+                definitionResolver(registry),
                 moduleHandlers(applicationContext));
 
         strategy.save(new SampleEntity("1", "new-save"));
@@ -73,9 +79,12 @@ class DefaultCoredeuxStrategyAuditTest {
         applicationContext.registerSingleton("customerDataAccess", dataAccessService);
         applicationContext.registerSingleton("defaultAuditHandler", auditHandler);
 
-        DefaultCoredeuxStrategy strategy = new DefaultCoredeuxStrategy(registryWithAuditModule(),
+        EntityDefinitionRegistry registry = registryWithAuditModule();
+        DefaultCoredeuxStrategy strategy = new DefaultCoredeuxStrategy(registry,
                 new EntityDefinitionBackedDataAccessResolver(), applicationContext,
                 new DefaultCoredeuxReflectionHelperService(), () -> null,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")),
+                definitionResolver(registry),
                 moduleHandlers(applicationContext));
 
         strategy.update(new SampleEntity("1", "new-update"));
@@ -104,6 +113,11 @@ class DefaultCoredeuxStrategyAuditTest {
     private List<CoredeuxEntityModuleHandler> moduleHandlers(TestComponentRegistry applicationContext) {
         return List.of(new ValidatorsModuleHandler(applicationContext), new HooksModuleHandler(applicationContext),
                 new AuditModuleHandler(applicationContext));
+    }
+
+    private CoredeuxEntityDefinitionResolver definitionResolver(EntityDefinitionRegistry registry) {
+        return new DefaultCoredeuxEntityDefinitionResolver(registry,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")));
     }
 
     private static final class SampleEntity {

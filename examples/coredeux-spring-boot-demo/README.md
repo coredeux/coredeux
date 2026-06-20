@@ -37,6 +37,20 @@ This class provides the named JPA data-access bean used by the demo entities:
 Spring Boot creates the bean, and the Coredeux entity definitions refer to that
 bean name in `coredeux-entities.yml`.
 
+Entity metadata is resolved through `CoredeuxEntityDefinitionResolver`, which
+uses this precedence:
+
+1. entity-level `identifier`
+2. storage-level `identifier`
+3. global `coredeux.identifier`
+
+That means the demo no longer guesses identifiers from field names such as
+`id`, `identifier`, or `uid`.
+
+For data access routing, if an entity does not declare its own
+`storage.data-access-service`, Coredeux falls back to the global
+`coredeux.data-access-service` value in `application.yml`.
+
 ### `com.coredeux.demo.bootstrap.DemoDataRunner`
 
 This class seeds the sample data when the app starts.
@@ -238,6 +252,13 @@ This is the Coredeux entity-definition file. It maps each entity to:
 
 It is the key file that shows how Coredeux turns business entities into a
 governed runtime model.
+
+If you only need the global fallback data-access-service, you can keep the
+entity-specific YAML minimal or omit it for entities that do not need custom
+storage or module overrides.
+
+If an entity entry omits `identifier`, the runtime can still resolve it from
+the storage-level `identifier` or the global `coredeux.identifier` value.
 
 ## How the demo boots
 

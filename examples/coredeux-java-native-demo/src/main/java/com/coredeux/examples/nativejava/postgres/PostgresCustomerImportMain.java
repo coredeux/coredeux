@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
@@ -12,10 +11,6 @@ import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.examples.nativejava.CoredeuxNativeRuntime;
 import com.coredeux.demo.domain.Customer;
-import com.coredeux.impex.handler.CoredeuxImportValueHandler;
-import com.coredeux.impex.handler.ImportValueHandlerResolver;
-import com.coredeux.impex.handler.impl.DefaultCoredeuxImportValueHandler;
-import com.coredeux.impex.handler.impl.JsonMapImportHandler;
 import com.coredeux.impex.model.ImportLog;
 import com.coredeux.impex.model.ImportRequest;
 import com.coredeux.impex.model.ImportResponse;
@@ -61,15 +56,8 @@ public class PostgresCustomerImportMain {
         CoredeuxReflectionHelperService reflectionHelperService = new DefaultCoredeuxReflectionHelperService();
         ImportEntityTargetService targetService = new ImportEntityTargetService(reflectionHelperService,
                 runtime.entityDefinitionRegistry());
-        ImportValueHandlerResolver valueHandlerResolver = new ImportValueHandlerResolver(Map.of(
-                ImportValueHandlerResolver.DEFAULT_HANDLER, defaultValueHandler(runtime),
-                "jsonMapImportHandler", new JsonMapImportHandler()));
         return new DefaultCoredeuxImportService(runtime.coredeuxService(), reflectionHelperService, targetService,
-                valueHandlerResolver);
-    }
-
-    private static CoredeuxImportValueHandler defaultValueHandler(CoredeuxNativeRuntime runtime) {
-        return new DefaultCoredeuxImportValueHandler(runtime.coredeuxService());
+                runtime.coredeuxValueHandlerService());
     }
 
     private static String readSampleImportFile() throws IOException {

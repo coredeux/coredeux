@@ -395,9 +395,10 @@ Validation rules enforced today:
 
 - YAML document must not be empty
 - `full-class-name` is required
-- `identifier` is required
-- `storage` is required
-- `storage.data-access-service` is required
+- `identifier` is optional
+- `storage` is optional
+- `storage.identifier` is optional
+- `storage.data-access-service` falls back to `coredeux.data-access-service`
 - module `name` is required
 
 Registry files:
@@ -411,6 +412,16 @@ Registry behavior:
 - lookups are by `fullClassName`
 - duplicate entity definitions are rejected
 - the registry is immutable after construction in the common in-memory path
+
+Important distinction:
+
+- `EntityDefinitionRegistry` is the raw configuration store
+- `CoredeuxEntityDefinitionResolver` is the runtime view that applies
+  `identifier`, `storage.identifier`, and global fallback values
+
+That means code that needs the effective entity metadata should prefer the
+resolver, not the registry. The two APIs look similar on purpose, but they are
+not interchangeable.
 
 Spring Boot auto-configuration:
 
@@ -437,10 +448,33 @@ The resolver reads:
 
 and returns the bean name the strategy should use.
 
-If the bean name is missing, the core raises `CoredeuxValidationException`.
+If the entity definition does not provide a bean name, the strategy can fall
+back to the global `coredeux.data-access-service` setting before it gives up.
+The strict resolver still raises `CoredeuxValidationException` when nothing is
+available.
 
 This means the strategy does not guess which adapter to use. The YAML makes
 that decision explicit.
+
+## Entity Definition Resolution
+
+Files:
+
+- [CoredeuxEntityDefinitionResolver.java](../../../modules/coredeux-core/src/main/java/com/coredeux/core/resolver/CoredeuxEntityDefinitionResolver.java)
+- [DefaultCoredeuxEntityDefinitionResolver.java](../../../modules/coredeux-core/src/main/java/com/coredeux/core/resolver/impl/DefaultCoredeuxEntityDefinitionResolver.java)
+
+The resolver now resolves the effective identifier and storage metadata for an
+entity without guessing field names.
+
+Identifier precedence:
+
+1. entity-level `identifier`
+2. storage-level `identifier`
+3. environment-level `coredeux.identifier`
+4. no inferred fallback
+
+That is the contract used by the strategy layer and any other service that
+needs the effective entity definition.
 
 ## Runtime Context Model
 

@@ -24,6 +24,7 @@ spring:
     uris: http://${COREDEUX_DEMO_ELASTICSEARCH_HOST:localhost}:${COREDEUX_DEMO_ELASTICSEARCH_PORT:9200}
 
 coredeux:
+  data-access-service: postgresCoredeuxJpaDataAccessService
   entities:
     config-location: classpath:coredeux-entities.yml
   import:

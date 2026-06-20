@@ -11,9 +11,15 @@ Coredeux CRUD and core module behavior.
 
 Create the entity class in your application or feature module.
 
-The framework needs a stable identifier field that matches the configured
-`identifier` value in YAML. With JPA, the identifier can still use normal JPA
-annotations; Coredeux only needs to know which field represents identity.
+The framework needs a stable identifier source for the entity. You can define
+it at the entity level with `identifier`, or at the storage level with
+`storage.identifier` when several entities share the same backend contract.
+If neither is present, Coredeux can fall back to the environment-level
+`coredeux.identifier` value. Coredeux does not infer the identifier from field
+names.
+
+With JPA, the identifier can still use normal JPA annotations; Coredeux only
+needs the explicit YAML contract.
 
 ## 2. Choose A Data Access Service
 
@@ -34,17 +40,22 @@ and you want Mongo-backed search comparators and query semantics.
 ## 3. Add The YAML Definition
 
 Add the entity to `coredeux-entities.yml`, or to the resource configured
-through `coredeux.entities.config-location`.
+through `coredeux.entities.config-location` if you need entity-specific
+overrides or modules. If the entity can use the global fallback data access
+service, it can also run without an explicit entity entry.
 
 ```yaml
 coredeux:
   entities:
     - full-class-name: com.example.customer.Customer
       name: customer
-      identifier: id
       storage:
+        identifier: id
         data-access-service: defaultCoredeuxJpaDataAccessService
 ```
+
+If you omit `storage.data-access-service`, Coredeux uses the global
+`coredeux.data-access-service` setting.
 
 At this stage, `CoredeuxService` can load, list, save, update, and remove the
 entity if the data access service can persist it.

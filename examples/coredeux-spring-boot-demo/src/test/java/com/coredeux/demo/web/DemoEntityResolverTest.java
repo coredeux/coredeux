@@ -8,21 +8,24 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.Test;
 
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
+import com.coredeux.core.definition.CoredeuxStorageDefinition;
+import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
-import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 
 class DemoEntityResolverTest {
 
-    private final EntityDefinitionRegistry registry = mock(EntityDefinitionRegistry.class);
     private final DefaultCoredeuxReflectionHelperService reflectionHelperService = new DefaultCoredeuxReflectionHelperService();
-    private final DemoEntityResolver resolver = new DemoEntityResolver(registry, reflectionHelperService);
+    private final CoredeuxEntityDefinitionResolver entityDefinitionResolver = mock(CoredeuxEntityDefinitionResolver.class);
+    private final DemoEntityResolver resolver = new DemoEntityResolver(reflectionHelperService,
+            entityDefinitionResolver);
 
     @Test
     void shouldResolveDefinitionAndType() {
         CoredeuxEntityDefinition definition = mock(CoredeuxEntityDefinition.class);
         when(definition.getFullClassName()).thenReturn("java.lang.String");
-        when(registry.findByFullClassName("java.lang.String")).thenReturn(java.util.Optional.of(definition));
+        when(entityDefinitionResolver.resolve(String.class)).thenReturn(definition);
 
         assertEquals(definition, resolver.resolveDefinition("java.lang.String"));
         assertEquals(String.class, resolver.resolveType("java.lang.String"));
@@ -31,7 +34,15 @@ class DemoEntityResolverTest {
     @Test
     void shouldHandleIdentifierLookupAndAssignment() {
         CoredeuxEntityDefinition definition = mock(CoredeuxEntityDefinition.class);
-        when(definition.getIdentifier()).thenReturn("id");
+        when(definition.getIdentifier()).thenReturn(null);
+        when(definition.getFullClassName()).thenReturn(SampleEntity.class.getName());
+        CoredeuxEntityDefinition effectiveDefinition = CoredeuxEntityDefinition.builder()
+                .fullClassName(SampleEntity.class.getName())
+                .name("sample")
+                .identifier("id")
+                .storage(CoredeuxStorageDefinition.builder().dataAccessService("sampleDataAccess").build())
+                .build();
+        when(entityDefinitionResolver.resolve(SampleEntity.class)).thenReturn(effectiveDefinition);
         SampleEntity entity = new SampleEntity();
         entity.id = "abc";
 
@@ -47,8 +58,7 @@ class DemoEntityResolverTest {
 
         CoredeuxEntityDefinition definition = mock(CoredeuxEntityDefinition.class);
         when(definition.getIdentifier()).thenReturn("id");
-        when(registry.findByFullClassName("missing")).thenReturn(java.util.Optional.empty());
-        assertThrows(CoredeuxValidationException.class, () -> resolver.resolveDefinition("missing"));
+        assertThrows(CoredeuxStrategyException.class, () -> resolver.resolveDefinition("missing"));
         assertThrows(CoredeuxValidationException.class, () -> resolver.applyIdentifier(new Object(), definition, "1"));
         assertThrows(CoredeuxValidationException.class,
                 () -> resolver.resolveIdentifierType(Object.class, definition));

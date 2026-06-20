@@ -15,6 +15,7 @@ import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.definition.CoredeuxStorageDefinition;
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
@@ -23,6 +24,8 @@ import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
 import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
+import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
@@ -118,8 +121,8 @@ class DefaultDRLCoredeuxStrategyTest {
         EntityDefinitionRegistry definitionRegistry = new InMemoryEntityDefinitionRegistry(
                 List.of(entityDefinition("customerDataAccess.drl")));
         DefaultDRLCoredeuxStrategy strategy = new DefaultDRLCoredeuxStrategy(definitionRegistry, new FixedResolver(),
-                registry, new DefaultCoredeuxReflectionHelperService(), () -> null,
-                List.of(new RecordingModuleHandler("hooks")));
+                registry, new DefaultCoredeuxReflectionHelperService(), () -> null, new CoredeuxProperties(),
+                definitionResolver(definitionRegistry), List.of(new RecordingModuleHandler("hooks")));
 
         Set<String> comparators = strategy.supportedComparators(SampleEntity.class);
 
@@ -150,7 +153,8 @@ class DefaultDRLCoredeuxStrategyTest {
         List<CoredeuxEntityModuleHandler> moduleHandlers = new ArrayList<>();
         moduleHandlers.addAll(List.of(handlers));
         return new DefaultDRLCoredeuxStrategy(definitionRegistry, new FixedResolver(), registry,
-                new DefaultCoredeuxReflectionHelperService(), () -> null, moduleHandlers);
+                new DefaultCoredeuxReflectionHelperService(), () -> null, new CoredeuxProperties(),
+                definitionResolver(definitionRegistry), moduleHandlers);
     }
 
     private DefaultDRLCoredeuxStrategy strategyWithoutDrlService(String dataAccessService) {
@@ -159,7 +163,12 @@ class DefaultDRLCoredeuxStrategyTest {
                 .build();
         EntityDefinitionRegistry definitionRegistry = new InMemoryEntityDefinitionRegistry(List.of(entityDefinition(dataAccessService)));
         return new DefaultDRLCoredeuxStrategy(definitionRegistry, new FixedResolver(), registry,
-                new DefaultCoredeuxReflectionHelperService(), () -> null, List.of(new RecordingModuleHandler("hooks")));
+                new DefaultCoredeuxReflectionHelperService(), () -> null, new CoredeuxProperties(),
+                definitionResolver(definitionRegistry), List.of(new RecordingModuleHandler("hooks")));
+    }
+
+    private CoredeuxEntityDefinitionResolver definitionResolver(EntityDefinitionRegistry definitionRegistry) {
+        return new DefaultCoredeuxEntityDefinitionResolver(definitionRegistry, new CoredeuxProperties());
     }
 
     private CoredeuxEntityDefinition entityDefinition(String dataAccessService) {

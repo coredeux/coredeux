@@ -18,6 +18,7 @@ import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
 import com.coredeux.core.definition.CoredeuxStorageDefinition;
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.exceptions.CoredeuxDataAccessException;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.helper.impl.DefaultCoredeuxReflectionHelperService;
@@ -27,7 +28,9 @@ import com.coredeux.core.module.impl.HooksModuleHandler;
 import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.EntityDefinitionBackedDataAccessResolver;
+import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
@@ -185,10 +188,18 @@ class DefaultCoredeuxModuleServiceTest {
 
     private CoredeuxModuleService moduleService(TestComponentRegistry applicationContext,
             CoredeuxModuleDefinition... modules) {
-        return new DefaultCoredeuxModuleService(registryWithModules(modules),
+        EntityDefinitionRegistry registry = registryWithModules(modules);
+        return new DefaultCoredeuxModuleService(registry,
                 new EntityDefinitionBackedDataAccessResolver(), applicationContext,
                 new DefaultCoredeuxReflectionHelperService(), () -> null,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")),
+                definitionResolver(registry),
                 moduleHandlers(applicationContext));
+    }
+
+    private CoredeuxEntityDefinitionResolver definitionResolver(EntityDefinitionRegistry registry) {
+        return new DefaultCoredeuxEntityDefinitionResolver(registry,
+                new CoredeuxProperties(Map.of("data-access-service", "customerDataAccess")));
     }
 
     private void registerBeans(TestComponentRegistry applicationContext, RecordingDataAccessService dataAccessService,

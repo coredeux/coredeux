@@ -85,7 +85,7 @@ public final class CoredeuxNativeDemoServer implements AutoCloseable {
         server.setExecutor(executorService);
 
         CoredeuxNativeDemoServer demoServer = new CoredeuxNativeDemoServer(runtime, server, executorService,
-                new NativeEntityResolver(runtime.entityDefinitionRegistry(), runtime.reflectionHelperService()),
+                new NativeEntityResolver(runtime.reflectionHelperService(), runtime.entityDefinitionResolver()),
                 ExportJsonSupport.objectMapper());
         demoServer.registerRoutes();
         server.start();

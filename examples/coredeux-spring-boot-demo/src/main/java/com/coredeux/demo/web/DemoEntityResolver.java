@@ -6,27 +6,26 @@ import org.springframework.stereotype.Component;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
-import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 
 @Component
 public class DemoEntityResolver {
 
-    private final EntityDefinitionRegistry entityDefinitionRegistry;
     private final CoredeuxReflectionHelperService reflectionHelperService;
+    private final CoredeuxEntityDefinitionResolver entityDefinitionResolver;
 
-    public DemoEntityResolver(EntityDefinitionRegistry entityDefinitionRegistry,
-            CoredeuxReflectionHelperService reflectionHelperService) {
-        this.entityDefinitionRegistry = entityDefinitionRegistry;
+    public DemoEntityResolver(CoredeuxReflectionHelperService reflectionHelperService,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver) {
         this.reflectionHelperService = reflectionHelperService;
+        this.entityDefinitionResolver = entityDefinitionResolver;
     }
 
     public CoredeuxEntityDefinition resolveDefinition(String entityName) {
         if (entityName == null || entityName.isBlank()) {
             throw new CoredeuxValidationException("Entity name must not be blank");
         }
-
-        return entityDefinitionRegistry.findByFullClassName(entityName.trim())
-                .orElseThrow(() -> new CoredeuxValidationException("Unknown entity: " + entityName));
+        Class<?> entityType = reflectionHelperService.getClass(entityName.trim());
+        return entityDefinitionResolver.resolve(entityType);
     }
 
     public Class<?> resolveType(String entityName) {
@@ -34,7 +33,7 @@ public class DemoEntityResolver {
     }
 
     public Object getIdentifierValue(Object entity, CoredeuxEntityDefinition definition) {
-        return reflectionHelperService.getFieldValue(definition.getIdentifier(), entity);
+        return reflectionHelperService.getFieldValue(resolveIdentifierFieldName(entity.getClass(), definition), entity);
     }
 
     public void applyIdentifier(Object entity, CoredeuxEntityDefinition definition, Object identifierValue) {
@@ -56,6 +55,14 @@ public class DemoEntityResolver {
     }
 
     private Field getIdentifierField(Class<?> entityType, CoredeuxEntityDefinition definition) {
-        return reflectionHelperService.getDeclaredField(definition.getIdentifier(), entityType);
+        return reflectionHelperService.getDeclaredField(resolveIdentifierFieldName(entityType, definition), entityType);
+    }
+
+    private String resolveIdentifierFieldName(Class<?> entityType, CoredeuxEntityDefinition definition) {
+        CoredeuxEntityDefinition effectiveDefinition = entityDefinitionResolver.resolve(entityType);
+        if (definition != null && definition.getIdentifier() != null && !definition.getIdentifier().isBlank()) {
+            return definition.getIdentifier();
+        }
+        return effectiveDefinition.getIdentifier();
     }
 }

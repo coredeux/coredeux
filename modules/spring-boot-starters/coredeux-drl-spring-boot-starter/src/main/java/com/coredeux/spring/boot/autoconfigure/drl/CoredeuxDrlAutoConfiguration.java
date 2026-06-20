@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
+import com.coredeux.core.config.CoredeuxProperties;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.helper.CoredeuxReflectionHelperService;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
@@ -18,6 +19,7 @@ import com.coredeux.core.module.impl.HooksModuleHandler;
 import com.coredeux.core.module.impl.ValidatorsModuleHandler;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.strategy.CoredeuxStrategy;
 import com.coredeux.drl.core.handler.service.DefaultDRLCoredeuxValueHandlerService;
@@ -88,9 +90,12 @@ public class CoredeuxDrlAutoConfiguration {
             EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
+            CoredeuxProperties coredeuxProperties,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         return new DefaultDRLCoredeuxStrategy(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry,
-                reflectionHelperService, requestContextResolver, moduleHandlers);
+                reflectionHelperService, requestContextResolver, coredeuxProperties, entityDefinitionResolver,
+                moduleHandlers);
     }
 
     private String firstNonBlank(String... values) {

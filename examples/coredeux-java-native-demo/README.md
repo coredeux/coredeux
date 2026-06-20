@@ -58,13 +58,22 @@ the demo boot sequence in one place.
 
 1. loads `META-INF/coredeux.yml` through `CoredeuxPropertiesLoader`
 2. reads `entities.config-location`
-3. loads the entity definitions from `coredeux-entities.yml`
-4. creates the Postgres JPA entity manager factory
-5. creates the JDBC, MongoDB, Elasticsearch, and Redis data access services
-6. registers all handlers and modules in `InMemoryCoredeuxComponentRegistry`
-7. builds the Coredeux strategy and module service
-8. creates the import and export services
-9. starts the export worker scheduler when enabled
+3. loads the entity definitions from `coredeux-entities.yml` when present
+4. resolves entity metadata through `CoredeuxEntityDefinitionResolver`
+   using the order `entity.identifier -> storage.identifier ->
+   coredeux.identifier`
+5. creates the Postgres JPA entity manager factory
+6. creates the JDBC, MongoDB, Elasticsearch, and Redis data access services
+7. registers all handlers and modules in `InMemoryCoredeuxComponentRegistry`
+8. builds the Coredeux strategy and module service
+9. creates the import and export services
+10. starts the export worker scheduler when enabled
+
+If the entity definition file is missing, the runtime falls back to the global
+`coredeux.data-access-service` setting from `META-INF/coredeux.yml`.
+If an entity definition exists but omits `identifier`, the resolver still uses
+the storage-level `identifier` when present, otherwise it uses the global
+`coredeux.identifier` value.
 
 The runtime also exposes the important objects used by the server:
 
@@ -244,11 +253,24 @@ This is the runtime configuration file for the native demo. It provides:
 - import defaults
 - export defaults
 - export worker settings
+- the global fallback data-access-service bean name
 
 ### `src/main/resources/coredeux-entities.yml`
 
-This is the single entity-definition source used by the native demo. It maps
-each demo entity to the right storage service and module configuration.
+This is the entity-definition source used by the native demo when the demo
+needs entity-specific storage or module overrides. If an entity does not need
+an override, the runtime can still use the global fallback data-access-service
+from `META-INF/coredeux.yml`.
+
+The native demo also shows the identifier precedence used by
+`CoredeuxEntityDefinitionResolver`:
+
+1. entity-level `identifier`
+2. storage-level `identifier`
+3. global `coredeux.identifier`
+
+Coredeux does not guess the identifier field from names such as `id`,
+`identifier`, or `uid`.
 
 ### `src/main/resources/META-INF/persistence.xml`
 
@@ -260,7 +282,7 @@ the demo. It lists only the classes that Hibernate should manage.
 The runtime boot sequence is:
 
 1. load `META-INF/coredeux.yml`
-2. load `coredeux-entities.yml`
+2. load `coredeux-entities.yml` when it is present
 3. create the JPA entity manager factory
 4. create the JDBC, MongoDB, Elasticsearch, and Redis adapters
 5. register validators, hooks, audit handlers, workflows, import handlers, and export handlers

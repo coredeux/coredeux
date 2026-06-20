@@ -47,7 +47,8 @@ public class EntityDefinitionCacheController {
 
 	@PostMapping("/bootstrap")
 	public Map<String, Object> bootstrap() {
-		return Map.of("bootstrapped", true, "cached", manager.updateEntityDefinitionFromFile().getCode() != null);
+		boolean bootstrapped = manager.updateEntityDefinitionFromFile().isPresent();
+		return Map.of("bootstrapped", bootstrapped, "cached", manager.isCached());
 	}
 
 	@PutMapping

@@ -1,4 +1,5 @@
 coredeux:
+  data-access-service: postgresCoredeuxJpaDataAccessService
   entities:
     config-location: classpath:coredeux-entities.yml
   demo:

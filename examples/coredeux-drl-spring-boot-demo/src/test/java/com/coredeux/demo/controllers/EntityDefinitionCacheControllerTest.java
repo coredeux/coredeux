@@ -33,7 +33,7 @@ class EntityDefinitionCacheControllerTest {
 
         when(manager.isCached()).thenReturn(true);
         when(manager.findRecord()).thenReturn(Optional.of(record));
-        when(manager.updateEntityDefinitionFromFile()).thenReturn(record);
+        when(manager.updateEntityDefinitionFromFile()).thenReturn(Optional.of(record));
         when(manager.updateDefinition("yaml", "postman")).thenReturn(record);
         when(manager.getCachedYML()).thenReturn(record.getYaml());
 

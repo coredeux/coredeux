@@ -9,6 +9,27 @@ Coredeux entities are configured through YAML.
 The YAML tells the framework how to identify the entity, which persistence
 implementation to use, and which optional modules are enabled.
 
+Two closely related types show up here:
+
+- `EntityDefinitionRegistry` stores the parsed YAML definitions exactly as they
+  were loaded
+- `CoredeuxEntityDefinitionResolver` returns the effective runtime definition
+  for an entity, applying the Coredeux fallback rules when YAML is missing or
+  incomplete
+
+Use the registry when you want the raw configuration view. Use the resolver
+when you want the framework's effective decision for a specific entity type.
+
+If the configured entity-definition file is missing entirely, Coredeux starts
+with an empty registry and uses the global fallback settings from the
+environment. That means the file is optional at startup, but any entity-specific
+hooks, validators, modules, or storage overrides must still be declared if you
+want them to apply.
+
+When an application asks Coredeux for an entity definition and the registry has
+no entry for that class, the framework synthesizes an effective default
+definition from the resolved Java type and the global fallback settings.
+
 ## Root Structure
 
 ```yaml
@@ -62,10 +83,21 @@ If omitted, the loader defaults it to the full class name.
 
 ### identifier
 
-Field name used by the framework to resolve the entity identifier through
-reflection.
+Field name used by the framework to resolve the entity identifier.
 
-This field is mandatory.
+Coredeux resolves identifiers through `CoredeuxEntityDefinitionResolver` in
+this order:
+
+1. the entity-level `identifier`
+2. the storage-level `identifier`
+3. the environment-level `coredeux.identifier` fallback
+4. no inferred fallback
+
+That means the framework does not guess from field names such as `id`,
+`identifier`, or `uid`.
+
+This field is optional at the entity level when either the storage block or
+the environment provides a default.
 
 ### storage
 
@@ -75,10 +107,19 @@ Current required field inside `storage`:
 
 - `data-access-service`
 
+Optional field inside `storage`:
+
+- `identifier`
+
+If `storage` is omitted entirely, the entity can fall back to the global
+`coredeux.data-access-service` setting. If `storage` exists but the
+`data-access-service` key is omitted, the same fallback applies.
+
 Example:
 
 ```yaml
 storage:
+  identifier: pk
   data-access-service: defaultCoredeuxJpaDataAccessService
 ```
 
@@ -144,8 +185,10 @@ where the framework needs them.
 The `storage.data-access-service` field tells the framework which
 `CoredeuxDataAccessService` bean should handle persistence for the entity.
 
+If the field is omitted, Coredeux falls back to `coredeux.data-access-service`.
 That allows different entities to use different adapters inside the same
-application.
+application while still keeping a global default for entities that do not need
+per-entity routing.
 
 Examples:
 
@@ -161,9 +204,11 @@ Examples:
 Current loader rules:
 
 - `full-class-name` is required
-- `identifier` is required
-- `storage.data-access-service` is required
+- `identifier` is optional
 - `name` defaults to `fullClassName` when omitted
+- `storage` is optional
+- `storage.identifier` is optional
+- `storage.data-access-service` falls back to `coredeux.data-access-service`
 - module fields are optional unless required by the specific module handler
 
 ## Design Guidance

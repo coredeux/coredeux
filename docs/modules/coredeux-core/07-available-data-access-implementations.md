@@ -16,6 +16,10 @@ is different.
 The Spring Boot demo points each entity at a concrete data access bean name in
 `coredeux-entities.yml`:
 
+If an entity does not need its own storage override, the runtime can fall back
+to the global `coredeux.data-access-service` value from `application.yml` or
+`META-INF/coredeux.yml`.
+
 ```yaml
 coredeux:
   entities:

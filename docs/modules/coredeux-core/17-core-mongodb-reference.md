@@ -191,10 +191,10 @@ Rules:
 
 ## Identifier Handling
 
-Identifier resolution is reflection-based:
+Identifier resolution uses the effective identifier resolved by Coredeux:
 
-- the adapter looks for an identifier field
-- if no dedicated field exists, it falls back to a field named `id`
+- the adapter receives the identifier from the entity definition or its
+  storage fallback
 - incoming String ids are converted to common identifier types such as
   `String`, `ObjectId`, `UUID`, numeric wrappers, `BigInteger`, and
   `BigDecimal`

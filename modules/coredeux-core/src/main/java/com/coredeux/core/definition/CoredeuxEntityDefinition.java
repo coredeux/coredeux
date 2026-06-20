@@ -14,7 +14,7 @@ import lombok.ToString;
  * behavior.
  */
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @ToString
 @EqualsAndHashCode
 public final class CoredeuxEntityDefinition implements Serializable {

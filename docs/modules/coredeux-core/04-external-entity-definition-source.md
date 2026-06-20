@@ -24,6 +24,26 @@ resource:
 
 - `coredeux.entities.config-location=classpath:coredeux-entities.yml`
 
+The entity-definition file itself is now optional. If it is missing, Coredeux
+can still start as long as a global `coredeux.data-access-service` fallback is
+available for the entities you use. When an entity omits its own
+`identifier`, Coredeux can use the storage-level `identifier` from the same
+definition instead, or the environment-level `coredeux.identifier` fallback
+when neither YAML location defines one.
+
+The practical behavior is:
+
+- missing YAML file -> empty registry
+- empty registry -> entity-specific hooks, validators, modules, and storage
+  overrides are unavailable until definitions are added
+- global `coredeux.data-access-service` -> used as the fallback adapter for
+  entities that do not declare their own storage
+
+When you need the framework's effective answer for a single entity type, use
+`CoredeuxEntityDefinitionResolver` instead of reading the registry directly.
+The registry gives you the stored YAML entry; the resolver applies the fallback
+rules and returns the runtime definition Coredeux will actually use.
+
 That is the right default for:
 
 - local development
@@ -252,8 +272,6 @@ Examples of failures that will still be caught:
 - empty YAML
 - missing `coredeux.entities`
 - missing `full-class-name`
-- missing `identifier`
-- missing `storage.data-access-service`
 - malformed module config
 
 That is a major advantage of reusing the built-in loader instead of parsing the

@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.core.env.Environment;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -28,9 +29,12 @@ import com.coredeux.core.handler.service.CoredeuxValueHandlerService;
 import com.coredeux.core.handler.service.impl.DefaultCoredeuxValueHandlerService;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.EntityDefinitionRegistry;
+import com.coredeux.core.registry.EntityDefinitionRegistries;
 import com.coredeux.core.registry.InMemoryEntityDefinitionRegistry;
+import com.coredeux.core.resolver.CoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.EntityDataAccessResolver;
 import com.coredeux.core.resolver.EntityDefinitionBackedDataAccessResolver;
+import com.coredeux.core.resolver.impl.DefaultCoredeuxEntityDefinitionResolver;
 import com.coredeux.core.resolver.context.CoredeuxRequestContextResolver;
 import com.coredeux.core.service.CoredeuxModuleService;
 import com.coredeux.core.service.CoredeuxService;
@@ -47,8 +51,13 @@ public class CoredeuxAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    CoredeuxProperties coredeuxProperties() {
-        return new CoredeuxPropertiesLoader().load();
+    CoredeuxProperties coredeuxProperties(Environment environment) {
+        CoredeuxProperties bundled = new CoredeuxPropertiesLoader().load();
+        java.util.Map<String, Object> overrides = Binder.get(environment)
+                .bind("coredeux", org.springframework.boot.context.properties.bind.Bindable.mapOf(String.class,
+                        Object.class))
+                .orElseGet(java.util.Map::of);
+        return bundled.withOverrides(overrides);
     }
 
     @Bean
@@ -64,6 +73,9 @@ public class CoredeuxAutoConfiguration {
         String location = firstNonBlank(environment.getProperty("coredeux.entities.config-location"),
                 coredeuxProperties.string("entities.config-location"), "classpath:coredeux-entities.yml");
         Resource resource = resourceLoader.getResource(location);
+        if (!resource.exists()) {
+            return EntityDefinitionRegistries.empty();
+        }
         try (InputStream inputStream = resource.getInputStream()) {
             return new InMemoryEntityDefinitionRegistry(entityDefinitionLoader.load(inputStream).getEntities());
         } catch (IOException exception) {
@@ -104,6 +116,13 @@ public class CoredeuxAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    CoredeuxEntityDefinitionResolver coredeuxEntityDefinitionResolver(EntityDefinitionRegistry entityDefinitionRegistry,
+            CoredeuxProperties coredeuxProperties) {
+        return new DefaultCoredeuxEntityDefinitionResolver(entityDefinitionRegistry, coredeuxProperties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     ValidatorsModuleHandler coredeuxValidatorsModuleHandler(CoredeuxComponentRegistry componentRegistry) {
         return new ValidatorsModuleHandler(componentRegistry);
     }
@@ -126,10 +145,13 @@ public class CoredeuxAutoConfiguration {
             EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
-            CoredeuxEntitySnapshotService entitySnapshotService,
+            CoredeuxProperties coredeuxProperties,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         return new DefaultCoredeuxStrategy(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry,
-                reflectionHelperService, requestContextResolver, entitySnapshotService, moduleHandlers);
+                reflectionHelperService, requestContextResolver, coredeuxProperties,
+                entityDefinitionResolver,
+                moduleHandlers);
     }
 
     @Bean
@@ -138,10 +160,13 @@ public class CoredeuxAutoConfiguration {
             EntityDataAccessResolver entityDataAccessResolver, CoredeuxComponentRegistry componentRegistry,
             CoredeuxReflectionHelperService reflectionHelperService,
             CoredeuxRequestContextResolver requestContextResolver,
-            CoredeuxEntitySnapshotService entitySnapshotService,
+            CoredeuxProperties coredeuxProperties,
+            CoredeuxEntityDefinitionResolver entityDefinitionResolver,
             List<CoredeuxEntityModuleHandler> moduleHandlers) {
         return new DefaultCoredeuxModuleService(entityDefinitionRegistry, entityDataAccessResolver, componentRegistry,
-                reflectionHelperService, requestContextResolver, entitySnapshotService, moduleHandlers);
+                reflectionHelperService, requestContextResolver, coredeuxProperties,
+                entityDefinitionResolver,
+                moduleHandlers);
     }
 
     @Bean

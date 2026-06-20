@@ -73,8 +73,11 @@ your existing database model.
 
 Coredeux import works against entity definitions. For an existing app, that
 usually means mapping one of your current JPA entities into Coredeux metadata.
+If you only need the global fallback data access service, you can keep using
+`coredeux.data-access-service` without defining an entity-specific storage
+entry.
 
- Add below properties in `application.properties` / `application.yaml`:
+Add below properties in `application.properties` / `application.yaml`:
 
 ```yaml
 coredeux:
@@ -84,7 +87,8 @@ coredeux:
     default-parser: text
 ```
 
-Then add `src/main/resources/coredeux-entities.yml`:
+If you want entity-specific storage or module overrides, add
+`src/main/resources/coredeux-entities.yml`:
 
 ```yaml
 coredeux:
@@ -101,9 +105,9 @@ That is the important part for a Postgres-backed app:
 
 If you want to import another entity later, add another block in the same file.
 
- For a Spring Boot app, keep these settings in `application.yml` or
- `application.properties`. If you want, you can also place the same fallback
- values in `src/main/resources/META-INF/coredeux.yml`.
+For a Spring Boot app, keep these settings in `application.yml` or
+`application.properties`. If you want, you can also place the same fallback
+values in `src/main/resources/META-INF/coredeux.yml`.
 
 ## 3. Add A Small Import Service
 
@@ -417,7 +421,7 @@ Use this as the final sanity check:
 2. Add `coredeux-core-jpa-spring-boot-starter`
 3. Add `coredeux-import-spring-boot-starter`
 4. Add the import properties in `application.properties` / `application.yaml`
-5. Add `src/main/resources/coredeux-entities.yml`
+5. Add `src/main/resources/coredeux-entities.yml` if you need per-entity overrides
 6. Add the import service
 7. Add the import controller
 8. Test JSON import
