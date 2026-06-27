@@ -26,6 +26,7 @@ import com.coredeux.core.strategy.CoredeuxStrategy;
 import com.coredeux.core.strategy.impl.DefaultCoredeuxStrategy;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
+import com.coredeux.drl.support.RuleContextExecutionSupport;
 
 /**
  * Default strategy implementation that resolves the configured data access
@@ -227,7 +228,7 @@ public class DefaultDRLCoredeuxStrategy extends DefaultCoredeuxStrategy implemen
 
     private <T> T executeDrl(String ruleId, RuleContext<T> context) {
         drlService().execute(ruleId, context);
-        return context.getOutput();
+        return RuleContextExecutionSupport.outputOrThrow(context, "DRL data-access rule '" + ruleId + "'");
     }
 
     private <T> T executeDrlLoad(String ruleId, Object identifier, Class<T> type) {
@@ -274,6 +275,8 @@ public class DefaultDRLCoredeuxStrategy extends DefaultCoredeuxStrategy implemen
                 .fact(existing);
         String beanName = resolveDataAccessService(definition);
         drlService().execute(beanName, context);
+        RuleContextExecutionSupport.throwIfException(context,
+                "DRL data-access rule 'remove' for class: " + definition.getFullClassName());
     }
 
 }

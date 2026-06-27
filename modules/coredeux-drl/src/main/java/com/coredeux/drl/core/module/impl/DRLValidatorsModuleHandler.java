@@ -16,8 +16,10 @@ import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
 import com.coredeux.core.validation.CoredeuxEntityValidator;
 import com.coredeux.core.validation.ValidationError;
+import com.coredeux.drl.exceptions.CoredeuxDRLException;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
+import com.coredeux.drl.support.RuleContextExecutionSupport;
 
 /**
  * Executes configured validators for write operations.
@@ -95,8 +97,12 @@ public class DRLValidatorsModuleHandler extends ValidatorsModuleHandler implemen
                 .fact(entity);
         try {
             drlService().execute(validatorName, ruleContext);
+            RuleContextExecutionSupport.throwIfException(ruleContext,
+                    "DRL validator '" + validatorName + "' for class: " + definition.getFullClassName());
             List<ValidationError> output = ruleContext.getOutput();
             return output != null ? output : List.of();
+        } catch (CoredeuxDRLException exception) {
+            throw exception;
         } catch (CoredeuxStrategyException exception) {
             throw exception;
         } catch (Exception exception) {
