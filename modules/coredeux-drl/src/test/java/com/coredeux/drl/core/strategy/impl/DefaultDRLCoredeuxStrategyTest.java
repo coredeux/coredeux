@@ -30,6 +30,7 @@ import com.coredeux.core.search.SearchParams;
 import com.coredeux.core.search.SearchResult;
 import com.coredeux.core.service.CoredeuxDataAccessService;
 import com.coredeux.core.strategy.CoredeuxLifecycleOperations;
+import com.coredeux.drl.exceptions.CoredeuxDRLException;
 import com.coredeux.drl.cache.CompiledDRLRule;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
@@ -136,6 +137,26 @@ class DefaultDRLCoredeuxStrategyTest {
         DefaultDRLCoredeuxStrategy strategy = strategyWithoutDrlService("customerDataAccess.drl");
 
         assertThrows(CoredeuxStrategyException.class, () -> strategy.load("1", SampleEntity.class));
+    }
+
+    @Test
+    void surfacesDrlExecutionExceptionsEvenWhenTheRuleContextSetsAnOutput() {
+        RecordingDrlService drlService = new RecordingDrlService();
+        drlService.failWithContextException("load");
+        DefaultDRLCoredeuxStrategy strategy = strategy("customerDataAccess.drl", drlService,
+                new RecordingModuleHandler("hooks"));
+
+        assertThrows(CoredeuxDRLException.class, () -> strategy.load("1", SampleEntity.class));
+    }
+
+    @Test
+    void surfacesDrlExecutionExceptionsFromRemoveOperations() {
+        RecordingDrlService drlService = new RecordingDrlService();
+        drlService.failWithContextException("remove");
+        DefaultDRLCoredeuxStrategy strategy = strategy("customerDataAccess.drl", drlService,
+                new RecordingModuleHandler("hooks"));
+
+        assertThrows(CoredeuxDRLException.class, () -> strategy.remove("1", SampleEntity.class));
     }
 
     private DefaultDRLCoredeuxStrategy strategy(String dataAccessService, DRLService drlService,
@@ -280,9 +301,14 @@ class DefaultDRLCoredeuxStrategyTest {
         private final List<String> invocations = new ArrayList<>();
         private final List<String> lastOperationsSnapshot = new ArrayList<>();
         private final Map<String, Object> fixedOutputs = new HashMap<>();
+        private final List<String> failingMethods = new ArrayList<>();
 
         private void setOutput(String method, Object output) {
             fixedOutputs.put(method, output);
+        }
+
+        private void failWithContextException(String method) {
+            failingMethods.add(method);
         }
 
         @Override
@@ -337,6 +363,12 @@ class DefaultDRLCoredeuxStrategyTest {
             invocations.add(ruleId + ":" + method);
             methodCounts.merge(method, 1, Integer::sum);
             lastOperationsSnapshot.add(method);
+
+            if (failingMethods.contains(method)) {
+                context.setOutput((T) new SampleEntity("boom", "boom"));
+                context.setException(new IllegalStateException("boom"));
+                return;
+            }
 
             if (fixedOutputs.containsKey(method)) {
                 context.setOutput((T) fixedOutputs.get(method));

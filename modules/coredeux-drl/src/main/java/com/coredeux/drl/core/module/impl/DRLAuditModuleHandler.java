@@ -12,8 +12,10 @@ import com.coredeux.core.exceptions.CoredeuxStrategyException;
 import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.module.impl.AuditModuleHandler;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
+import com.coredeux.drl.exceptions.CoredeuxDRLException;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
+import com.coredeux.drl.support.RuleContextExecutionSupport;
 
 /**
  * Executes configured audit handlers for the configured write operations.
@@ -77,6 +79,10 @@ public class DRLAuditModuleHandler extends AuditModuleHandler implements Coredeu
                 .fact(entity);
         try {
             drlService().execute(auditHandlerName, ruleContext);
+            RuleContextExecutionSupport.throwIfException(ruleContext,
+                    "DRL audit handler '" + auditHandlerName + "' for class: " + definition.getFullClassName());
+        } catch (CoredeuxDRLException exception) {
+            throw exception;
         } catch (CoredeuxStrategyException exception) {
             throw exception;
         } catch (Exception exception) {

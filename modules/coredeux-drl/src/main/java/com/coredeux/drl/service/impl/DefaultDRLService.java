@@ -21,6 +21,7 @@ import com.coredeux.drl.config.DrlRuntimeBootstrap;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
+import com.coredeux.drl.support.RuleContextExecutionSupport;
 
 /**
  * Default runtime implementation of {@link DRLService}.
@@ -232,9 +233,7 @@ public class DefaultDRLService implements DRLService {
                 }
             }
             context.setFiredRules(session.fireAllRules());
-            if (context.getException() != null) {
-                throw new IllegalStateException("Rule captured an exception", context.getException());
-            }
+            RuleContextExecutionSupport.throwIfException(context, "DRL execution");
         }
     }
 

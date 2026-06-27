@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
+import com.coredeux.drl.exceptions.CoredeuxDRLException;
 import com.coredeux.drl.cache.DRLCache;
 import com.coredeux.drl.cache.CompiledDRLRule;
 import com.coredeux.drl.model.RuleContext;
@@ -139,7 +140,7 @@ class DefaultDRLServiceCoverageTest {
         DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
 
         RuleContext context = RuleContext.method("fail");
-        assertThrows(IllegalStateException.class, () -> service.executeSource("""
+        assertThrows(CoredeuxDRLException.class, () -> service.executeSource("""
                 package rules.inline;
 
                 import com.coredeux.drl.model.RuleContext;

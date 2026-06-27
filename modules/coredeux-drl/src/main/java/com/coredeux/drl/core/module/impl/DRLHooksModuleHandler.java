@@ -13,8 +13,10 @@ import com.coredeux.core.module.CoredeuxEntityModuleHandler;
 import com.coredeux.core.module.impl.HooksModuleHandler;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
+import com.coredeux.drl.exceptions.CoredeuxDRLException;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
+import com.coredeux.drl.support.RuleContextExecutionSupport;
 
 /**
  * Executes configured lifecycle hook beans for the current strategy phase.
@@ -71,6 +73,10 @@ public class DRLHooksModuleHandler extends HooksModuleHandler implements Coredeu
                 .fact(entity);
         try {
             drlService().execute(hookName, ruleContext);
+            RuleContextExecutionSupport.throwIfException(ruleContext,
+                    "DRL hook '" + hookName + "' for class: " + definition.getFullClassName());
+        } catch (CoredeuxDRLException exception) {
+            throw exception;
         } catch (CoredeuxStrategyException exception) {
             throw exception;
         } catch (Exception exception) {

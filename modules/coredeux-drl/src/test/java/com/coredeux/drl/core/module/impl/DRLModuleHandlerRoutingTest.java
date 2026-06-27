@@ -28,6 +28,7 @@ import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
 import com.coredeux.core.validation.CoredeuxEntityValidator;
 import com.coredeux.core.validation.ValidationError;
+import com.coredeux.drl.exceptions.CoredeuxDRLException;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
 
@@ -167,6 +168,32 @@ class DRLModuleHandlerRoutingTest {
 
         assertThrows(com.coredeux.core.exceptions.CoredeuxStrategyException.class,
                 () -> drlHandler.execute("customer", definition, drlModuleDefinition, CoredeuxHookPhases.BEFORE_SAVE,
+                        context));
+    }
+
+    @Test
+    void validatorsSurfaceContextExceptionsFromDrlExecution() {
+        CoredeuxComponentRegistry componentRegistry = mock(CoredeuxComponentRegistry.class);
+        DRLService drlService = mock(DRLService.class);
+        when(componentRegistry.getComponent(eq("coredeuxDrlService"), eq(DRLService.class))).thenReturn(drlService);
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            RuleContext<List<ValidationError>> context = invocation.getArgument(1, RuleContext.class);
+            context.setException(new IllegalStateException("boom"));
+            return null;
+        }).when(drlService).execute(eq("drlValidator.drl"), any(RuleContext.class));
+
+        DRLValidatorsModuleHandler handler = new DRLValidatorsModuleHandler(componentRegistry);
+        CoredeuxEntityDefinition definition = entityDefinition();
+        CoredeuxModuleDefinition moduleDefinition = CoredeuxModuleDefinition.builder()
+                .name("validators")
+                .enabled(true)
+                .handlers(List.of("drlValidator.drl"))
+                .build();
+        OperationContext context = OperationContext.builder().build();
+
+        assertThrows(CoredeuxDRLException.class,
+                () -> handler.execute("customer", definition, moduleDefinition, CoredeuxHookPhases.BEFORE_SAVE,
                         context));
     }
 
@@ -311,6 +338,33 @@ class DRLModuleHandlerRoutingTest {
     }
 
     @Test
+    void hooksSurfaceContextExceptionsFromDrlExecution() {
+        CoredeuxComponentRegistry componentRegistry = mock(CoredeuxComponentRegistry.class);
+        DRLService drlService = mock(DRLService.class);
+
+        when(componentRegistry.getComponent(eq("coredeuxDrlService"), eq(DRLService.class))).thenReturn(drlService);
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            RuleContext<Void> context = invocation.getArgument(1, RuleContext.class);
+            context.setException(new IllegalStateException("boom"));
+            return null;
+        }).when(drlService).execute(eq("drlHook.drl"), any(RuleContext.class));
+
+        DRLHooksModuleHandler handler = new DRLHooksModuleHandler(componentRegistry);
+        CoredeuxEntityDefinition definition = entityDefinition();
+        CoredeuxModuleDefinition moduleDefinition = CoredeuxModuleDefinition.builder()
+                .name("hooks")
+                .enabled(true)
+                .handlers(List.of("drlHook.drl"))
+                .build();
+        OperationContext context = OperationContext.builder().build();
+
+        assertThrows(CoredeuxDRLException.class,
+                () -> handler.execute("customer", definition, moduleDefinition, CoredeuxHookPhases.BEFORE_SAVE,
+                        context));
+    }
+
+    @Test
     void auditSplitJavaAndDrlHandlers() {
         CoredeuxComponentRegistry componentRegistry = mock(CoredeuxComponentRegistry.class);
         DRLService drlService = mock(DRLService.class);
@@ -424,6 +478,37 @@ class DRLModuleHandlerRoutingTest {
 
         assertThrows(com.coredeux.core.exceptions.CoredeuxStrategyException.class,
                 () -> drlHandler.execute("customer", definition, drlModuleDefinition, CoredeuxHookPhases.AFTER_SAVE,
+                        context));
+    }
+
+    @Test
+    void auditSurfaceContextExceptionsFromDrlExecution() {
+        CoredeuxComponentRegistry componentRegistry = mock(CoredeuxComponentRegistry.class);
+        DRLService drlService = mock(DRLService.class);
+        @SuppressWarnings("unchecked")
+        CoredeuxEntityAuditHandler<Object> auditHandler = mock(CoredeuxEntityAuditHandler.class);
+
+        when(componentRegistry.getComponent(eq("coredeuxDrlService"), eq(DRLService.class))).thenReturn(drlService);
+        when(componentRegistry.getComponent(eq("javaAudit"), eq(CoredeuxEntityAuditHandler.class))).thenReturn(auditHandler);
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            RuleContext<Void> context = invocation.getArgument(1, RuleContext.class);
+            context.setException(new IllegalStateException("boom"));
+            return null;
+        }).when(drlService).execute(eq("drlAudit.drl"), any(RuleContext.class));
+
+        DRLAuditModuleHandler handler = new DRLAuditModuleHandler(componentRegistry);
+        CoredeuxEntityDefinition definition = entityDefinition();
+        CoredeuxModuleDefinition moduleDefinition = CoredeuxModuleDefinition.builder()
+                .name("audit")
+                .enabled(true)
+                .handlers(List.of("drlAudit.drl"))
+                .config(Map.of("operations", List.of("ALL")))
+                .build();
+        OperationContext context = OperationContext.builder().build();
+
+        assertThrows(CoredeuxDRLException.class,
+                () -> handler.execute("customer", definition, moduleDefinition, CoredeuxHookPhases.AFTER_SAVE,
                         context));
     }
 
