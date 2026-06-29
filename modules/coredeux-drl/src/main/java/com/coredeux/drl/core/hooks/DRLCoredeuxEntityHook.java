@@ -16,54 +16,62 @@ public interface DRLCoredeuxEntityHook<T> {
      *
      * @param $context the rule execution context for the load phase
      */
-	void onLoad(RuleContext<T> $context);
+	default void onLoad(RuleContext<T> $context){
+    }
 
     /**
      * Invoked before the entity is saved.
      *
      * @param $context the rule execution context for the before-save phase
      */
-	void beforeSave(RuleContext<T> $context);
+	default void beforeSave(RuleContext<T> $context) {
+	}
 
     /**
      * Invoked after the entity is saved.
      *
      * @param $context the rule execution context for the after-save phase
      */
-	void afterSave(RuleContext<T> $context);
+	default void afterSave(RuleContext<T> $context) {
+	}
 
     /**
      * Invoked before the entity is updated.
      *
      * @param $context the rule execution context for the before-update phase
      */
-	void beforeUpdate(RuleContext<T> $context);
+	default void beforeUpdate(RuleContext<T> $context) {
+	}
 
     /**
      * Invoked after the entity is updated.
      *
      * @param $context the rule execution context for the after-update phase
      */
-	void afterUpdate(RuleContext<T> $context);
+	default void afterUpdate(RuleContext<T> $context) {
+	}
 
     /**
      * Invoked before the entity is deleted.
      *
      * @param $context the rule execution context for the before-delete phase
      */
-	void beforeDelete(RuleContext<T> $context);
+	default void beforeDelete(RuleContext<T> $context) {
+	}
 
     /**
      * Invoked before the entity is refreshed.
      *
      * @param $context the rule execution context for the before-refresh phase
      */
-	void beforeRefresh(RuleContext<T> $context);
+	default void beforeRefresh(RuleContext<T> $context) {
+	}
 
     /**
      * Invoked after the entity is refreshed.
      *
      * @param $context the rule execution context for the after-refresh phase
      */
-	void afterRefresh(RuleContext<T> $context);
+	default void afterRefresh(RuleContext<T> $context) {
+	}
 }
