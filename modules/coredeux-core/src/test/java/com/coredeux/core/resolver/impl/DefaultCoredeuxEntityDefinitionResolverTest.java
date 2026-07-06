@@ -2,6 +2,7 @@ package com.coredeux.core.resolver.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.Collection;
 import java.util.List;
@@ -71,6 +72,29 @@ class DefaultCoredeuxEntityDefinitionResolverTest {
         assertEquals("explicitDataAccess", definition.getStorage().getDataAccessService());
         assertEquals("entityId", definition.getIdentifier());
         assertEquals(0, definition.getModules().size());
+    }
+
+    @Test
+    void shouldKeepDefinitionInstanceWhenNormalizedStorageAlreadyMatchesByValue() {
+        CoredeuxStorageDefinition storage = CoredeuxStorageDefinition.builder()
+                .identifier("storageId")
+                .dataAccessService("explicitDataAccess")
+                .build();
+        CoredeuxEntityDefinition configured = CoredeuxEntityDefinition.builder()
+                .fullClassName(SampleEntity.class.getName())
+                .name("sample")
+                .identifier("entityId")
+                .storage(storage)
+                .modules(List.of())
+                .build();
+
+        DefaultCoredeuxEntityDefinitionResolver resolver = new DefaultCoredeuxEntityDefinitionResolver(
+                new SimpleRegistry(List.of(configured)),
+                new CoredeuxProperties(java.util.Map.of("data-access-service", "explicitDataAccess")));
+
+        CoredeuxEntityDefinition definition = resolver.resolve(SampleEntity.class);
+
+        assertSame(configured, definition);
     }
 
     @Test
