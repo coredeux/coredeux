@@ -37,17 +37,26 @@ public class DefaultCoredeuxEntityDefinitionResolver implements CoredeuxEntityDe
 				.identifier(effectiveIdentifier(null)).storage(storage).modules(List.of()).build();
 	}
 
-	private CoredeuxEntityDefinition normalizeDefinition(CoredeuxEntityDefinition definition) {
-		String identifier = effectiveIdentifier(definition);
-		CoredeuxStorageDefinition storage = effectiveStorage(definition.getStorage());
+    private CoredeuxEntityDefinition normalizeDefinition(CoredeuxEntityDefinition definition) {
+        String identifier = effectiveIdentifier(definition);
+        CoredeuxStorageDefinition storage = effectiveStorage(definition.getStorage());
 
-		if (Objects.equals(definition.getIdentifier(), identifier)
-				&& Objects.equals(storage, definition.getStorage())) {
-			return definition;
-		}
+        if (Objects.equals(definition.getIdentifier(), identifier)
+                && sameStorage(storage, definition.getStorage())) {
+            return definition;
+        }
 
-		return definition.toBuilder().identifier(identifier).storage(storage).build();
-	}
+        return definition.toBuilder().identifier(identifier).storage(storage).build();
+    }
+
+    private boolean sameStorage(CoredeuxStorageDefinition left, CoredeuxStorageDefinition right) {
+        if (left == null || right == null) {
+            return false;
+        }
+        return Objects.equals(left.getStore(), right.getStore())
+                && Objects.equals(left.getIdentifier(), right.getIdentifier())
+                && Objects.equals(left.getDataAccessService(), right.getDataAccessService());
+    }
 
 	private CoredeuxStorageDefinition effectiveStorage(CoredeuxStorageDefinition storage) {
 		String fallback = globalDataAccessService();
