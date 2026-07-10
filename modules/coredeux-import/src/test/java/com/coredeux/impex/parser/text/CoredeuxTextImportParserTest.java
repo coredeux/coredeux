@@ -173,6 +173,24 @@ class CoredeuxTextImportParserTest {
     }
 
     @Test
+    void shouldUnescapeQuotedCellQuotes() {
+        ImportRequest request = parser.parse("""
+                UPSERT com.example.Rule | code | drl
+                                        | update-drl | "rule \\\"update-drl\\\"
+                when
+                    $context : RuleContext(method == 'update-drl')
+                then
+                    String drlCode = data.getRequest().get(\\\"code\\\") == null ? null : String.valueOf(data.getRequest().get(\\\"code\\\"));
+                end"
+                """);
+
+        String drl = (String) request.getStatements().get(0).getRows().get(0).getValues().get("drl");
+        assertTrue(drl.contains("rule \"update-drl\""));
+        assertTrue(drl.contains("data.getRequest().get(\"code\")"));
+        assertFalse(drl.contains("\\\""));
+    }
+
+    @Test
     void shouldCarryUnknownHeaderMetadataOnColumn() {
         ImportRequest request = parser.parse("""
                 CREATE com.example.Product | sku(source=legacy,format=upper)

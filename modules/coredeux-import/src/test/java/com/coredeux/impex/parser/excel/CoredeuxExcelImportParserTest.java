@@ -147,6 +147,28 @@ class CoredeuxExcelImportParserTest {
     }
 
     @Test
+    void shouldPreserveQuotesInsideMultilineWorkbookCells() throws IOException {
+        String drl = """
+                import java.lang.*;
+
+                rule "update-drl"
+                when
+                    $context : RuleContext(method == 'update-drl')
+                then
+                    String drlCode = data.getRequest().get("code") == null ? null : String.valueOf(data.getRequest().get("code"));
+                end
+                """;
+        ImportRequest request = parser.parse(workbook(workbook -> {
+            Sheet sheet = workbook.createSheet("Rules");
+            strings(sheet.createRow(0), "UPSERT com.example.Rule", "code", "drl");
+            strings(sheet.createRow(1), "", "update-drl", drl);
+        }));
+
+        ImportStatement statement = request.getStatements().get(0);
+        assertEquals(drl, statement.getRows().get(0).getValues().get("drl"));
+    }
+
+    @Test
     void shouldParseFirstSheetWhenSheetNameIsNotProvided() throws IOException {
         ImportRequest request = parser.parse(workbook(workbook -> {
             Sheet products = workbook.createSheet("Products");

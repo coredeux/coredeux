@@ -825,9 +825,36 @@ public class CoredeuxTextImportParser implements CoredeuxImportParser<String> {
     private String unquote(String value) {
         if (value.length() >= 2 && ((value.startsWith("\"") && value.endsWith("\""))
                 || (value.startsWith("'") && value.endsWith("'")))) {
-            return value.substring(1, value.length() - 1);
+            return unescapeQuoted(value.substring(1, value.length() - 1), value.charAt(0));
         }
         return value;
+    }
+
+    /**
+     * Removes parser-only quote escapes from quoted cell and option values. Other
+     * backslashes are left intact because they may be part of the imported value.
+     */
+    private String unescapeQuoted(String value, char quote) {
+        StringBuilder unescaped = new StringBuilder(value.length());
+        boolean escaping = false;
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (escaping) {
+                if (character != quote) {
+                    unescaped.append('\\');
+                }
+                unescaped.append(character);
+                escaping = false;
+            } else if (character == '\\') {
+                escaping = true;
+            } else {
+                unescaped.append(character);
+            }
+        }
+        if (escaping) {
+            unescaped.append('\\');
+        }
+        return unescaped.toString();
     }
 
     /**
