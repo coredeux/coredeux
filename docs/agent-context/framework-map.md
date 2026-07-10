@@ -21,6 +21,3 @@
 - `docs/modules/`: module-specific contracts and usage.
 - `docs/overview/`: architecture and concepts.
 - `examples/`: executable reference applications.
-
-Cabin4j Agent Suite builds on these contracts but remains a separate framework.
-

@@ -1,7 +1,8 @@
 # Coredeux Agent Guide
 
 Coredeux is the foundational framework. Keep its guidance generic and
-independent of Cabin4j products and application implementations.
+independent of downstream frameworks, products, and application
+implementations.
 
 ## Read First
 
@@ -22,10 +23,8 @@ independent of Cabin4j products and application implementations.
 
 ## Knowledge Boundary
 
-Cabin4j Agent Suite is a framework consumer and extension layer. Cabin4j
-Cortex is an application implementation. Their requirements may reveal useful
-Coredeux improvements, but neither repository defines Coredeux behavior.
+Downstream frameworks, products, and applications may reveal useful Coredeux
+improvements, but they do not define Coredeux behavior.
 
 Promote a lesson into Coredeux guidance only when it is generalized, owned by
 Coredeux, and supported by an adopted contract or implementation.
-

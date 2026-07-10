@@ -11,9 +11,8 @@ reveal framework behavior.
 Exclude application-specific models, one-off diagnostics, local environment
 state, and unadopted product assumptions.
 
-Consumer lessons must be recorded in the consumer first. Promote them here
-only after confirming that Coredeux owns the generalized capability.
+Downstream lessons must be recorded in the downstream project first. Promote
+them here only after confirming that Coredeux owns the generalized capability.
 
 Update `docs/agent-context/` as part of framework-significant changes without
 requiring a separate documentation request.
-
