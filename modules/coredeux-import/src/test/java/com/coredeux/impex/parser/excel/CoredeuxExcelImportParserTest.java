@@ -12,6 +12,7 @@ import java.io.InputStream;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -47,6 +48,30 @@ class CoredeuxExcelImportParserTest {
         assertEquals("&p1", statement.getRows().get(0).getKey());
         assertEquals("base", statement.getRows().get(0).getMetadata().get("batch"));
         assertEquals("red\\,blue", statement.getRows().get(0).getValues().get("tags"));
+    }
+
+    @Test
+    void shouldIgnoreTrailingStyledBlankCellsAfterWorkbookMacros() throws IOException {
+        ImportRequest request = parser.parse(workbook(workbook -> {
+            Sheet sheet = workbook.createSheet("DevTools");
+            Row row0 = sheet.createRow(0);
+            strings(row0, "&GlobalProperties=com.cabin4j.suite.platform.entity.GlobalProperties");
+            styledBlanks(row0, workbook, 1, 25);
+            Row row1 = sheet.createRow(1);
+            strings(row1, "&PrincipalGroup=com.cabin4j.suite.platform.entity.PrincipalGroup");
+            styledBlanks(row1, workbook, 1, 25);
+            Row row2 = sheet.createRow(2);
+            strings(row2, "CREATE com.example.Sample", "code", "name");
+            Row row3 = sheet.createRow(3);
+            strings(row3, "", "S-1", "Demo");
+        }));
+
+        assertEquals("com.cabin4j.suite.platform.entity.GlobalProperties",
+                request.getMacros().get("&GlobalProperties").getValue());
+        assertEquals("com.cabin4j.suite.platform.entity.PrincipalGroup",
+                request.getMacros().get("&PrincipalGroup").getValue());
+        assertEquals("com.example.Sample", request.getStatements().get(0).getEntity());
+        assertEquals("S-1", request.getStatements().get(0).getRows().get(0).getValues().get("code"));
     }
 
     @Test
@@ -240,6 +265,14 @@ class CoredeuxExcelImportParserTest {
         for (int index = 0; index < values.length; index++) {
             Cell cell = row.createCell(index, CellType.STRING);
             cell.setCellValue(values[index]);
+        }
+    }
+
+    private void styledBlanks(Row row, Workbook workbook, int fromInclusive, int toInclusive) {
+        CellStyle style = workbook.createCellStyle();
+        for (int index = fromInclusive; index <= toInclusive; index++) {
+            Cell cell = row.createCell(index, CellType.BLANK);
+            cell.setCellStyle(style);
         }
     }
 
