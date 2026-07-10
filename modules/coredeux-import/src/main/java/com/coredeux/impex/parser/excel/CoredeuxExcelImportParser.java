@@ -119,6 +119,12 @@ public class CoredeuxExcelImportParser implements CoredeuxImportParser<InputStre
         if (lastCellIndex < 0) {
             return "";
         }
+        if (!hasRowValue(row, lastCellIndex)) {
+            return "";
+        }
+        if (lastCellIndex == 0 && isCommentCell(row, 0)) {
+            return row.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL).getStringCellValue();
+        }
         for (int cellIndex = 0; cellIndex <= lastCellIndex; cellIndex++) {
             cells.add(toPipeCell(sheet, row, cellIndex));
         }
@@ -141,7 +147,23 @@ public class CoredeuxExcelImportParser implements CoredeuxImportParser<InputStre
         }
         return -1;
     }
-    
+
+    private boolean hasRowValue(Row row, int lastCellIndex) {
+        for (int cellIndex = 0; cellIndex <= lastCellIndex; cellIndex++) {
+            Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+            if (cell != null && cell.getCellType() != CellType.BLANK
+                    && (cell.getCellType() != CellType.STRING || !cell.getStringCellValue().isBlank())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isCommentCell(Row row, int cellIndex) {
+        Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        return cell != null && cell.getCellType() == CellType.STRING && cell.getStringCellValue().trim().startsWith("#");
+    }
+
     /**
      * Reads a single Excel cell as text and escapes parser-level separators.
      */

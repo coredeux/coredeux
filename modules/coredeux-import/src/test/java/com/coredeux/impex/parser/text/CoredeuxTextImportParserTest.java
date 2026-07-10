@@ -44,6 +44,39 @@ class CoredeuxTextImportParserTest {
     }
 
     @Test
+    void shouldIgnorePipeOnlyLinesAndComments() {
+        ImportRequest request = parser.parse("""
+                &Product=com.example.Product
+                |
+                 |   |   
+                # setup comment
+
+                UPSERT &Product | sku | name | description
+                              | P-1 | One  | 
+                 | |
+                              | P-2 | Two  | Second
+                """);
+
+        ImportStatement statement = request.getStatements().get(0);
+        assertEquals(2, statement.getRows().size());
+        assertEquals("P-1", statement.getRows().get(0).getValues().get("sku"));
+        assertNull(statement.getRows().get(0).getValues().get("description"));
+        assertEquals("P-2", statement.getRows().get(1).getValues().get("sku"));
+    }
+
+    @Test
+    void shouldKeepErrorLineNumbersAlignedAfterIgnoredPipeOnlyLines() {
+        CoredeuxImportParserException exception = assertThrows(CoredeuxImportParserException.class,
+                () -> parser.parse("""
+                        &Product=com.example.Product
+                        | |
+                        not an import row
+                        """));
+
+        assertTrue(exception.getMessage().contains("Line 3: Row encountered before any import statement"));
+    }
+
+    @Test
     void shouldParseLookupAndQueryMetadata() {
         ImportRequest request = parser.parse("""
                 MODIFY com.example.Product(query="sku = :sku") | sku(queryParam=sku) | name(handler=trimHandler)

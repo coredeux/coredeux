@@ -44,7 +44,7 @@ public class CoredeuxTextImportParser implements CoredeuxImportParser<String> {
             int index = sourceLine.lineIndex();
             String line = sourceLine.text();
             String trimmed = line.trim();
-            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+            if (trimmed.isEmpty() || trimmed.startsWith("#") || isPipeOnlyLine(line)) {
                 continue;
             }
             java.util.regex.Matcher optionsMatcher = OPTIONS_PATTERN.matcher(trimmed);
@@ -76,6 +76,25 @@ public class CoredeuxTextImportParser implements CoredeuxImportParser<String> {
             validateStatementShape(request.getStatements().get(index), index);
         }
         return request;
+    }
+
+    /**
+     * Treats separator-only rows as empty rows while preserving real rows that
+     * contain at least one value.
+     */
+    private boolean isPipeOnlyLine(String line) {
+        boolean hasPipe = false;
+        for (int index = 0; index < line.length(); index++) {
+            char character = line.charAt(index);
+            if (character == '|') {
+                hasPipe = true;
+                continue;
+            }
+            if (!Character.isWhitespace(character)) {
+                return false;
+            }
+        }
+        return hasPipe;
     }
 
     /**
