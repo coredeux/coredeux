@@ -115,13 +115,31 @@ public class CoredeuxExcelImportParser implements CoredeuxImportParser<InputStre
             return "";
         }
         List<String> cells = new ArrayList<>();
-        for (int cellIndex = 0; cellIndex < row.getLastCellNum(); cellIndex++) {
+        int lastCellIndex = lastNonBlankCellIndex(row);
+        if (lastCellIndex < 0) {
+            return "";
+        }
+        for (int cellIndex = 0; cellIndex <= lastCellIndex; cellIndex++) {
             cells.add(toPipeCell(sheet, row, cellIndex));
         }
         if (cells.stream().allMatch(String::isEmpty)) {
             return "";
         }
         return String.join(" | ", cells);
+    }
+
+    /**
+     * Finds the last non-blank cell in a row so styled empty cells at the end do
+     * not leak into the parser as trailing separators.
+     */
+    private int lastNonBlankCellIndex(Row row) {
+        for (int cellIndex = row.getLastCellNum() - 1; cellIndex >= 0; cellIndex--) {
+            Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+            if (cell != null && cell.getCellType() != CellType.BLANK) {
+                return cellIndex;
+            }
+        }
+        return -1;
     }
 
     /**
