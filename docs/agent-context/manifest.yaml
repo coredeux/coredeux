@@ -2,11 +2,6 @@ schema-version: 1
 kind: agent-framework-context
 name: coredeux
 scope: foundational-framework
-consumers:
-  - name: cabin4j-agent-suite
-    relationship: framework-built-on-coredeux
-  - name: cabin4j-cortex
-    relationship: indirect-application-consumer
 authoritative-paths:
   modules: modules
   spring-boot-starters: modules/spring-boot-starters
@@ -18,6 +13,5 @@ guidance:
   invariants: docs/agent-context/invariants.md
 maintenance:
   automatic-on-framework-change: true
-  include-consumer-specific-assumptions: false
-  promote-consumer-lessons-only-after-generalization: true
-
+  include-extension-specific-assumptions: false
+  promote-extension-lessons-only-after-generalization: true

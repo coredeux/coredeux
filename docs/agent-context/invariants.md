@@ -13,4 +13,3 @@
 - Import/export formats must be parsed structurally and validated explicitly.
 - Contract changes require focused tests and updates to affected implementations
   and documentation.
-
