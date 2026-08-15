@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -13,6 +14,7 @@ import com.coredeux.core.jdbc.service.impl.DefaultCoredeuxJdbcDataAccessService;
 @AutoConfiguration(afterName = "org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration")
 @ConditionalOnClass(NamedParameterJdbcTemplate.class)
 @ConditionalOnBean(NamedParameterJdbcTemplate.class)
+@ConditionalOnProperty(prefix = "coredeux.jdbc", name = "enabled", havingValue = "true")
 public class CoredeuxJdbcAutoConfiguration {
 
     @Bean(name = "defaultCoredeuxJdbcDataAccessService")

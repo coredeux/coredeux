@@ -57,8 +57,24 @@ name, and the host application decides how that bean is created.
 
 For Spring Boot applications, you normally do not write that registry code
 yourself. The matching starter creates the bean and puts it into the Spring
-context automatically. You only add explicit `@Bean` registration when you are
-overriding the default adapter or supplying a custom implementation.
+context automatically when the matching starter is enabled. You only add
+explicit `@Bean` registration when you are overriding the default adapter or
+supplying a custom implementation.
+
+Adding a Spring Boot starter dependency only makes that adapter available for
+auto-configuration. The adapter bean is opt-in by property:
+
+| Adapter | Enable property |
+| --- | --- |
+| JPA | `coredeux.jpa.enabled=true` |
+| JDBC | `coredeux.jdbc.enabled=true` |
+| MongoDB | `coredeux.mongodb.enabled=true` |
+| Elasticsearch | `coredeux.elasticsearch.enabled=true` |
+| Redis | `coredeux.redis.enabled=true` |
+
+If an entity or the global `coredeux.data-access-service` fallback names one of
+these starter beans, the corresponding property must be enabled and the backing
+database/client must be configured.
 
 ## SQL Implementations
 
@@ -75,7 +91,8 @@ The matching Spring Boot starters live under `modules/spring-boot-starters`:
 - `coredeux-core-jpa-spring-boot-starter`
 - `coredeux-core-jdbc-spring-boot-starter`
 
-These starters register the SQL adapters for Spring applications.
+These starters register the SQL adapters for Spring applications when their
+enable property is set.
 
 That means a Spring Boot app normally only needs the bean name in YAML. The
 starter creates the bean, so you do not manually build the adapter registry the
@@ -112,7 +129,8 @@ The matching Spring Boot starters live under `modules/spring-boot-starters`:
 - `coredeux-core-elasticsearch-spring-boot-starter`
 - `coredeux-core-redis-spring-boot-starter`
 
-These starters register the NoSQL adapters for Spring applications.
+These starters register the NoSQL adapters for Spring applications when their
+enable property is set.
 
 Just like the SQL side, Spring Boot apps get the bean through auto-configuration
 and only need custom `@Bean` methods when they are replacing the starter

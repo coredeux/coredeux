@@ -9,6 +9,8 @@ import java.lang.reflect.Method;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
@@ -21,6 +23,27 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 class CoredeuxRedisAutoConfigurationTest {
+
+    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(CoredeuxRedisAutoConfiguration.class))
+            .withBean(LettuceConnectionFactory.class, () -> mock(LettuceConnectionFactory.class))
+            .withBean("coredeuxRedisClient", RedisClient.class, () -> mock(RedisClient.class))
+            .withBean("coredeuxRedisConnection", StatefulRedisConnection.class,
+                    () -> mock(StatefulRedisConnection.class));
+
+    @Test
+    void registersRedisServiceWhenEnabled() {
+        contextRunner.withPropertyValues("coredeux.redis.enabled=true")
+                .run(context -> assertThat(context).hasSingleBean(DefaultCoredeuxRedisDataAccessService.class));
+    }
+
+    @Test
+    void doesNotRegisterRedisServiceWhenNotEnabled() {
+        contextRunner.run(context -> {
+            assertThat(context).doesNotHaveBean(DefaultCoredeuxRedisDataAccessService.class);
+            assertThat(context).doesNotHaveBean("defaultCoredeuxRedisDataAccessService");
+        });
+    }
 
     @Test
     void buildsRedisUriWithUsernameAndPassword() throws Exception {

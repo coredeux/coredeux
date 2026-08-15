@@ -22,7 +22,7 @@ class CoredeuxJpaAutoConfigurationTest {
 
     @Test
     void registersJpaServices() {
-        contextRunner.run(context -> {
+        contextRunner.withPropertyValues("coredeux.jpa.enabled=true").run(context -> {
             assertThat(context).hasBean("defaultCoredeuxJpaDataAccessService");
             assertThat(context).hasBean("postgresCoredeuxJpaDataAccessService");
             assertThat(context.getBean("defaultCoredeuxJpaDataAccessService",
@@ -33,12 +33,21 @@ class CoredeuxJpaAutoConfigurationTest {
     }
 
     @Test
+    void doesNotRegisterJpaServicesWhenNotEnabled() {
+        contextRunner.run(context -> {
+            assertThat(context).doesNotHaveBean(DefaultCoredeuxJpaDataAccessService.class);
+            assertThat(context).doesNotHaveBean(PostgresCoredeuxJpaDataAccessService.class);
+        });
+    }
+
+    @Test
     void backsOffWhenJpaServicesAlreadyExist() {
         DefaultCoredeuxJpaDataAccessService customDefault = new DefaultCoredeuxJpaDataAccessService();
         PostgresCoredeuxJpaDataAccessService customPostgres = new PostgresCoredeuxJpaDataAccessService();
 
-        contextRunner.withBean("defaultCoredeuxJpaDataAccessService", DefaultCoredeuxJpaDataAccessService.class,
-                () -> customDefault)
+        contextRunner.withPropertyValues("coredeux.jpa.enabled=true")
+                .withBean("defaultCoredeuxJpaDataAccessService", DefaultCoredeuxJpaDataAccessService.class,
+                        () -> customDefault)
                 .withBean("postgresCoredeuxJpaDataAccessService", PostgresCoredeuxJpaDataAccessService.class,
                         () -> customPostgres)
                 .run(context -> {

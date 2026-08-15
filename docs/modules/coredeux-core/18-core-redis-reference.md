@@ -59,6 +59,31 @@ storage:
   data-access-service: defaultCoredeuxRedisDataAccessService
 ```
 
+## Spring Boot Opt-In
+
+Adding the Redis Spring Boot starter dependency only makes the adapter
+available for auto-configuration. Enable it explicitly:
+
+```yaml
+coredeux:
+  redis:
+    enabled: true
+```
+
+The starter creates `defaultCoredeuxRedisDataAccessService` only when
+`coredeux.redis.enabled=true` and a `LettuceConnectionFactory` bean is already
+available. If an entity uses this data-access-service bean, Redis must be
+configured and running.
+
+You can still configure the key prefix independently:
+
+```yaml
+coredeux:
+  redis:
+    enabled: true
+    default-key-prefix: demo
+```
+
 ## What It Supports
 
 The adapter provides:

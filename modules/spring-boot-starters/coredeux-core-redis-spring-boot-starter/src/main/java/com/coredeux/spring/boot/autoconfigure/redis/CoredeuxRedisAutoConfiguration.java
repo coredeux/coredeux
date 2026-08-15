@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
@@ -21,6 +22,7 @@ import com.coredeux.core.redis.service.impl.DefaultCoredeuxRedisDataAccessServic
 @AutoConfiguration(afterName = "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration")
 @ConditionalOnClass({ LettuceConnectionFactory.class, RedisClient.class, StatefulRedisConnection.class })
 @ConditionalOnBean(LettuceConnectionFactory.class)
+@ConditionalOnProperty(prefix = "coredeux.redis", name = "enabled", havingValue = "true")
 public class CoredeuxRedisAutoConfiguration {
 
     @Bean(name = "coredeuxRedisClient", destroyMethod = "shutdown")

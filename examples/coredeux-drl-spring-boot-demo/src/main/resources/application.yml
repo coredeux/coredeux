@@ -22,6 +22,10 @@ spring:
 coredeux:
   data-access-service: postgresCoredeuxJpaDataAccessService
   identifier: pk
+  jpa:
+    enabled: true
+  redis:
+    enabled: true
   demo:
     entity-definitions:
       bootstrap-location: classpath:coredeux-entities.yml

@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 
@@ -13,6 +14,7 @@ import com.coredeux.core.elasticsearch.service.impl.DefaultCoredeuxElasticsearch
 @AutoConfiguration(afterName = "org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration")
 @ConditionalOnClass(ElasticsearchOperations.class)
 @ConditionalOnBean(ElasticsearchOperations.class)
+@ConditionalOnProperty(prefix = "coredeux.elasticsearch", name = "enabled", havingValue = "true")
 public class CoredeuxElasticsearchAutoConfiguration {
 
     @Bean(name = "defaultCoredeuxElasticsearchDataAccessService")

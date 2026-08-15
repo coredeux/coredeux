@@ -25,6 +25,16 @@ spring:
 
 coredeux:
   data-access-service: postgresCoredeuxJpaDataAccessService
+  jpa:
+    enabled: true
+  jdbc:
+    enabled: true
+  mongodb:
+    enabled: true
+  elasticsearch:
+    enabled: true
+  redis:
+    enabled: true
   entities:
     config-location: classpath:coredeux-entities.yml
   import:
