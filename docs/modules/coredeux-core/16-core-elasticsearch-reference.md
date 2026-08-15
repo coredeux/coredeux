@@ -56,6 +56,32 @@ storage:
   data-access-service: defaultCoredeuxElasticsearchDataAccessService
 ```
 
+## Spring Boot Opt-In
+
+Adding the Elasticsearch Spring Boot starter dependency only makes the adapter
+available for auto-configuration. Enable it explicitly:
+
+```yaml
+coredeux:
+  elasticsearch:
+    enabled: true
+```
+
+The starter creates `defaultCoredeuxElasticsearchDataAccessService` only when
+`coredeux.elasticsearch.enabled=true` and an `ElasticsearchOperations` bean is
+already available.
+
+If an entity uses `defaultCoredeuxElasticsearchDataAccessService`,
+Elasticsearch must be configured and running. You can still configure the
+default index prefix independently:
+
+```yaml
+coredeux:
+  elasticsearch:
+    enabled: true
+    default-index-prefix: coredeux
+```
+
 ## Elasticsearch Adapter Responsibilities
 
 This adapter provides:
@@ -208,6 +234,7 @@ You can also set a prefix with:
 ```yaml
 coredeux:
   elasticsearch:
+    enabled: true
     default-index-prefix: coredeux
 ```
 

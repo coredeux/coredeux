@@ -52,6 +52,22 @@ storage:
   data-access-service: defaultCoredeuxMongoDataAccessService
 ```
 
+## Spring Boot Opt-In
+
+Adding the MongoDB Spring Boot starter dependency only makes the adapter
+available for auto-configuration. Enable it explicitly:
+
+```yaml
+coredeux:
+  mongodb:
+    enabled: true
+```
+
+The starter creates `defaultCoredeuxMongoDataAccessService` only when
+`coredeux.mongodb.enabled=true` and a `MongoTemplate` bean is already
+available. If an entity uses this data-access-service bean, MongoDB must be
+configured and running.
+
 ## MongoDB Adapter Responsibilities
 
 This adapter provides:

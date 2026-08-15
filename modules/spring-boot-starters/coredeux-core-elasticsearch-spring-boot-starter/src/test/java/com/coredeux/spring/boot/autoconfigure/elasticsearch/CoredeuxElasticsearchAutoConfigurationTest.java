@@ -18,8 +18,15 @@ class CoredeuxElasticsearchAutoConfigurationTest {
 
     @Test
     void registersElasticsearchService() {
-        contextRunner.withPropertyValues("coredeux.elasticsearch.default-index-prefix=demo")
+        contextRunner.withPropertyValues("coredeux.elasticsearch.enabled=true",
+                "coredeux.elasticsearch.default-index-prefix=demo")
                 .run(context -> assertThat(context).hasSingleBean(DefaultCoredeuxElasticsearchDataAccessService.class));
+    }
+
+    @Test
+    void doesNotRegisterElasticsearchServiceWhenNotEnabled() {
+        contextRunner.run(context ->
+                assertThat(context).doesNotHaveBean(DefaultCoredeuxElasticsearchDataAccessService.class));
     }
 
     @Test
@@ -27,8 +34,9 @@ class CoredeuxElasticsearchAutoConfigurationTest {
         DefaultCoredeuxElasticsearchDataAccessService customService =
                 new DefaultCoredeuxElasticsearchDataAccessService(mock(ElasticsearchOperations.class), "custom");
 
-        contextRunner.withBean("defaultCoredeuxElasticsearchDataAccessService",
-                DefaultCoredeuxElasticsearchDataAccessService.class, () -> customService)
+        contextRunner.withPropertyValues("coredeux.elasticsearch.enabled=true")
+                .withBean("defaultCoredeuxElasticsearchDataAccessService",
+                        DefaultCoredeuxElasticsearchDataAccessService.class, () -> customService)
                 .run(context -> assertThat(context.getBean(DefaultCoredeuxElasticsearchDataAccessService.class))
                         .isSameAs(customService));
     }

@@ -66,6 +66,30 @@ matching column names or by aliasing the columns to the bean property names.
 
 `defaultCoredeuxJdbcDataAccessService`
 
+## Spring Boot Opt-In
+
+Adding the JDBC Spring Boot starter dependency only makes the adapter available
+for auto-configuration. Enable it explicitly:
+
+```yaml
+coredeux:
+  jdbc:
+    enabled: true
+```
+
+The starter creates `defaultCoredeuxJdbcDataAccessService` only when
+`coredeux.jdbc.enabled=true` and a `NamedParameterJdbcTemplate` bean is already
+available.
+
+You can still configure the default schema separately:
+
+```yaml
+coredeux:
+  jdbc:
+    enabled: true
+    default-schema: demo
+```
+
 ## Next Step
 
 Use this adapter when you want plain SQL with the Coredeux lifecycle and module

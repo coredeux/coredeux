@@ -66,6 +66,23 @@ storage:
   data-access-service: postgresCoredeuxJpaDataAccessService
 ```
 
+## Spring Boot Opt-In
+
+Adding the JPA Spring Boot starter dependency is not enough to create these
+beans. Enable the starter explicitly:
+
+```yaml
+coredeux:
+  jpa:
+    enabled: true
+```
+
+When `coredeux.jpa.enabled=true`, the starter creates the JPA data-access
+beans only if an `EntityManagerFactory` is already available. If an entity or
+the global `coredeux.data-access-service` fallback uses
+`defaultCoredeuxJpaDataAccessService` or `postgresCoredeuxJpaDataAccessService`,
+the JPA datasource must be configured and reachable.
+
 ## Generic JPA Adapter
 
 Class:

@@ -18,7 +18,8 @@ class CoredeuxJdbcAutoConfigurationTest {
 
     @Test
     void registersJdbcServiceAndHonorsDefaultSchemaProperty() {
-        contextRunner.withPropertyValues("coredeux.jdbc.default-schema=demo")
+        contextRunner.withPropertyValues("coredeux.jdbc.enabled=true",
+                "coredeux.jdbc.default-schema=demo")
                 .run(context -> {
                     assertThat(context).hasSingleBean(DefaultCoredeuxJdbcDataAccessService.class);
                     assertThat(context.getBean(DefaultCoredeuxJdbcDataAccessService.class)).isNotNull();
@@ -26,12 +27,19 @@ class CoredeuxJdbcAutoConfigurationTest {
     }
 
     @Test
+    void doesNotRegisterJdbcServiceWhenNotEnabled() {
+        contextRunner.run(context ->
+                assertThat(context).doesNotHaveBean(DefaultCoredeuxJdbcDataAccessService.class));
+    }
+
+    @Test
     void backsOffWhenJdbcServiceAlreadyExists() {
         DefaultCoredeuxJdbcDataAccessService customService =
                 new DefaultCoredeuxJdbcDataAccessService(mock(NamedParameterJdbcTemplate.class), "custom");
 
-        contextRunner.withBean("defaultCoredeuxJdbcDataAccessService",
-                DefaultCoredeuxJdbcDataAccessService.class, () -> customService)
+        contextRunner.withPropertyValues("coredeux.jdbc.enabled=true")
+                .withBean("defaultCoredeuxJdbcDataAccessService",
+                        DefaultCoredeuxJdbcDataAccessService.class, () -> customService)
                 .run(context -> assertThat(context.getBean(DefaultCoredeuxJdbcDataAccessService.class))
                         .isSameAs(customService));
     }

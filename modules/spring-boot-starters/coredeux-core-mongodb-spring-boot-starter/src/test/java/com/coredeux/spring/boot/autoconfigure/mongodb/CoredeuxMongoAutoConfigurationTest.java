@@ -18,7 +18,14 @@ class CoredeuxMongoAutoConfigurationTest {
 
     @Test
     void registersMongoService() {
-        contextRunner.run(context -> assertThat(context).hasSingleBean(DefaultCoredeuxMongoDataAccessService.class));
+        contextRunner.withPropertyValues("coredeux.mongodb.enabled=true")
+                .run(context -> assertThat(context).hasSingleBean(DefaultCoredeuxMongoDataAccessService.class));
+    }
+
+    @Test
+    void doesNotRegisterMongoServiceWhenNotEnabled() {
+        contextRunner.run(context ->
+                assertThat(context).doesNotHaveBean(DefaultCoredeuxMongoDataAccessService.class));
     }
 
     @Test
@@ -26,8 +33,9 @@ class CoredeuxMongoAutoConfigurationTest {
         DefaultCoredeuxMongoDataAccessService customService =
                 new DefaultCoredeuxMongoDataAccessService(mock(MongoTemplate.class));
 
-        contextRunner.withBean("defaultCoredeuxMongoDataAccessService",
-                DefaultCoredeuxMongoDataAccessService.class, () -> customService)
+        contextRunner.withPropertyValues("coredeux.mongodb.enabled=true")
+                .withBean("defaultCoredeuxMongoDataAccessService",
+                        DefaultCoredeuxMongoDataAccessService.class, () -> customService)
                 .run(context -> assertThat(context.getBean(DefaultCoredeuxMongoDataAccessService.class))
                         .isSameAs(customService));
     }
