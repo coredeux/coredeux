@@ -104,13 +104,11 @@ public class DefaultCoredeuxJdbcDataAccessService implements CoredeuxDataAccessS
                             .withTableName(metadata.qualifiedTableName())
                             .usingColumns(insertColumnNames(metadata, false))
                             .usingGeneratedKeyColumns(metadata.idColumn());
-                    Number generatedKey = insert.executeAndReturnKey(params);
-                    if (generatedKey != null) {
-                        setFieldValue(entity, metadata.idField(), convertIdentifier(generatedKey.toString(),
-                                metadata.idField().getType()));
-                        return String.valueOf(generatedKey);
-                    }
-                    return null;
+                    Number generatedKey = Objects.requireNonNull(insert.executeAndReturnKey(params),
+                            "Generated key must not be null");
+                    setFieldValue(entity, metadata.idField(), convertIdentifier(generatedKey.toString(),
+                            metadata.idField().getType()));
+                    return String.valueOf(generatedKey);
                 }
                 namedParameterJdbcTemplate.update(insertSql, params);
                 return null;

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -291,12 +292,12 @@ class CoredeuxDrlAutoConfigurationTest {
 
         @Override
         public <T> void update(T entity) {
-            // Intentionally empty: this test double only needs to satisfy the contract.
+            Objects.requireNonNull(entity, "entity must not be null");
         }
 
         @Override
         public <T> void remove(T entity) {
-            // Intentionally empty: this test double only needs to satisfy the contract.
+            Objects.requireNonNull(entity, "entity must not be null");
         }
 
         @Override

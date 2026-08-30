@@ -157,6 +157,5 @@ class DefaultCoredeuxEntityDefinitionResolverTest {
     }
 
     private static final class SampleEntity {
-        private String id;
     }
 }
