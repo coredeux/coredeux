@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.registry.InMemoryCoredeuxComponentRegistry;
 import com.coredeux.drl.exceptions.CoredeuxDRLException;
-import com.coredeux.drl.cache.DRLCache;
 import com.coredeux.drl.cache.CompiledDRLRule;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
@@ -136,7 +134,7 @@ class DefaultDRLServiceCoverageTest {
     }
 
     @Test
-    void shouldSurfaceRuleFailuresAsIllegalStateExceptions() {
+    void shouldSurfaceRuleFailuresAsDrlExceptions() {
         DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
 
         RuleContext context = RuleContext.method("fail");
@@ -152,6 +150,125 @@ class DefaultDRLServiceCoverageTest {
                     $context.setException(new RuntimeException("boom"));
                 end
                 """, context));
+    }
+
+    @Test
+    void shouldFailWhenDrlMatchesNoRules() {
+        DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
+        RuleContext context = RuleContext.method("missing");
+
+        CoredeuxDRLException exception = assertThrows(CoredeuxDRLException.class, () -> service.executeSource("""
+                package rules.inline;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "nonMatchingRule"
+                when
+                    $context : RuleContext(method == "different")
+                then
+                    $context.setOutput("should-not-run");
+                end
+                """, context));
+
+        assertEquals(0, context.getFiredRules());
+        assertTrue(exception.getMessage().contains("inline source"));
+        assertTrue(exception.getMessage().contains("missing"));
+        assertTrue(exception.getMessage().contains("did not match any rule"));
+        assertTrue(exception.getMessage().contains("Fired rules: 0"));
+    }
+
+    @Test
+    void shouldFailWhenDrlMatchesMoreThanOneRule() {
+        DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
+        RuleContext context = RuleContext.method("duplicate");
+
+        CoredeuxDRLException exception = assertThrows(CoredeuxDRLException.class, () -> service.executeSource("""
+                package rules.inline;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "duplicateRuleOne"
+                when
+                    $context : RuleContext(method == "duplicate")
+                then
+                    $context.setMessage("first");
+                end
+
+                rule "duplicateRuleTwo"
+                when
+                    $context : RuleContext(method == "duplicate")
+                then
+                    $context.setOutput("second");
+                end
+                """, context));
+
+        assertEquals(2, context.getFiredRules());
+        assertTrue(exception.getMessage().contains("inline source"));
+        assertTrue(exception.getMessage().contains("duplicate"));
+        assertTrue(exception.getMessage().contains("matched multiple rules"));
+        assertTrue(exception.getMessage().contains("Fired rules: 2"));
+    }
+
+    @Test
+    void shouldFailWhenExecutionContextIsNull() {
+        DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
+
+        CoredeuxDRLException exception = assertThrows(CoredeuxDRLException.class, () -> service.executeSource("""
+                package rules.inline;
+
+                rule "anyRule"
+                when
+                    eval(true)
+                then
+                end
+                """, null));
+
+        assertTrue(exception.getMessage().contains("inline source"));
+        assertTrue(exception.getMessage().contains("non-null RuleContext"));
+    }
+
+    @Test
+    void shouldFailWhenContextMethodIsBlank() {
+        DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
+        RuleContext context = RuleContext.method("   ");
+
+        CoredeuxDRLException exception = assertThrows(CoredeuxDRLException.class, () -> service.executeSource("""
+                package rules.inline;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "blankMethodRule"
+                when
+                    $context : RuleContext(method == "blank")
+                then
+                    $context.setOutput("should-not-run");
+                end
+                """, context));
+
+        assertEquals(0, context.getFiredRules());
+        assertTrue(exception.getMessage().contains("blank method name"));
+    }
+
+    @Test
+    void shouldFailWhenContextMethodIsMissing() {
+        DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class));
+        RuleContext<String> context = new RuleContext<>();
+
+        CoredeuxDRLException exception = assertThrows(CoredeuxDRLException.class, () -> service.executeSource("""
+                package rules.inline;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "missingMethodRule"
+                when
+                    $context : RuleContext()
+                then
+                    $context.setOutput("should-not-run");
+                end
+                """, context));
+
+        assertEquals(0, context.getFiredRules());
+        assertTrue(exception.getMessage().contains("blank method name"));
     }
 
     @Test

@@ -46,6 +46,22 @@ known rule id.
 Use `executeSource(source, context)` when you want to compile and run a source
 string immediately without resolver lookup or cache storage.
 
+All execution methods require a non-null `RuleContext` with a non-blank
+`method`. The runtime stores `firedRules`, output, messages, and captured
+exceptions on that object.
+
+Coredeux DRL execution uses the callable method contract. The method name on
+the context selects the rule to execute for handlers, hooks, validators, audit
+handlers, and DRL data-access implementations.
+
+For each execution:
+
+- `context.method` must be non-blank
+- exactly one rule must fire
+- `firedRules == 0` means no rule matched the requested method
+- `firedRules > 1` means the DRL has duplicate or ambiguous handlers for the
+  same method
+
 Use `isCached(ruleId)` when you want to know whether the compiled DRL is already
 in memory.
 
@@ -135,6 +151,9 @@ RuleContext<String> context = RuleContext.method("check")
         .param("entity", entity)
         .fact(entity);
 ```
+
+`RuleContext.method("check")` is the preferred way to create an execution
+context. The method must match exactly one rule condition.
 
 After execution, read the result back from the same object:
 

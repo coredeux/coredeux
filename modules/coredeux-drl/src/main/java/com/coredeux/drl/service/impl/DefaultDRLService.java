@@ -18,6 +18,7 @@ import com.coredeux.drl.cache.CompiledDRLRule;
 import com.coredeux.drl.cache.DRLCache;
 import com.coredeux.drl.cache.InMemoryDRLCache;
 import com.coredeux.drl.config.DrlRuntimeBootstrap;
+import com.coredeux.drl.exceptions.CoredeuxDRLException;
 import com.coredeux.drl.model.RuleContext;
 import com.coredeux.drl.service.DRLService;
 import com.coredeux.drl.source.resolver.DRLSourceResolver;
@@ -89,7 +90,7 @@ public class DefaultDRLService implements DRLService {
     @Override
     public <T> void execute(String ruleId, RuleContext<T> context) {
         CompiledDRLRule compiledRule = cache.computeIfAbsent(ruleId, () -> compile(ruleId));
-        executeCompiled(compiledRule, context);
+        executeCompiled(ruleId, compiledRule, context);
     }
 
     /**
@@ -104,7 +105,7 @@ public class DefaultDRLService implements DRLService {
     public <T> void execute(String ruleId, String source, RuleContext<T> context) {
         CompiledDRLRule compiledRule = compile(ruleId, source);
         cache.put(ruleId, compiledRule);
-        executeCompiled(compiledRule, context);
+        executeCompiled(ruleId, compiledRule, context);
     }
 
     /**
@@ -115,7 +116,7 @@ public class DefaultDRLService implements DRLService {
      */
     @Override
     public <T> void executeSource(String source, RuleContext<T> context) {
-        executeCompiled(compile("inline source", source), context);
+        executeCompiled("inline source", compile("inline source", source), context);
     }
 
     /**
@@ -218,7 +219,9 @@ public class DefaultDRLService implements DRLService {
      * @param compiledRule the compiled rule bundle
      * @param context the execution context to insert and update
      */
-    private void executeCompiled(CompiledDRLRule compiledRule, RuleContext<?> context) {
+    private void executeCompiled(String ruleId, CompiledDRLRule compiledRule, RuleContext<?> context) {
+        requireContext(ruleId, context);
+        validateMethod(ruleId, context);
         try (KieSession session = compiledRule.kieBase().newKieSession()) {
             if (compiledRule.requiresComponentRegistry()) {
                 session.setGlobal(COMPONENT_REGISTRY, componentRegistry);
@@ -232,9 +235,59 @@ public class DefaultDRLService implements DRLService {
                     }
                 }
             }
-            context.setFiredRules(session.fireAllRules());
+            int firedRules = session.fireAllRules();
+            context.setFiredRules(firedRules);
             RuleContextExecutionSupport.throwIfException(context, "DRL execution");
+            validateRuleMatch(ruleId, context, firedRules);
         }
+    }
+
+    /**
+     * Ensures DRL execution has a context that can receive execution results.
+     *
+     * @param ruleId the logical DRL identifier used for the execution
+     * @param context the rule execution context
+     */
+    private void requireContext(String ruleId, RuleContext<?> context) {
+        if (context == null) {
+            throw new CoredeuxDRLException("DRL '" + ruleId + "' requires a non-null RuleContext.");
+        }
+    }
+
+    /**
+     * Ensures DRL execution has the method required to enforce the single-rule
+     * contract.
+     *
+     * @param ruleId the logical DRL identifier used for the execution
+     * @param context the rule execution context
+     */
+    private void validateMethod(String ruleId, RuleContext<?> context) {
+        String method = context.getMethod();
+        if (method == null || method.isBlank()) {
+            throw new CoredeuxDRLException("DRL '" + ruleId + "' requires a non-blank method name.");
+        }
+    }
+
+    /**
+     * Ensures DRL execution matched exactly one rule.
+     *
+     * @param ruleId the logical DRL identifier used for the execution
+     * @param context the rule execution context
+     * @param firedRules the number of rules fired by the session
+     */
+    private void validateRuleMatch(String ruleId, RuleContext<?> context, int firedRules) {
+        String method = context.getMethod();
+        if (firedRules == 1) {
+            return;
+        }
+
+        if (firedRules == 0) {
+            throw new CoredeuxDRLException("DRL '" + ruleId + "' did not match any rule for method '" + method
+                    + "'. Fired rules: " + firedRules + ".");
+        }
+
+        throw new CoredeuxDRLException("DRL '" + ruleId + "' matched multiple rules for method '" + method
+                + "'. Fired rules: " + firedRules + ".");
     }
 
     /**

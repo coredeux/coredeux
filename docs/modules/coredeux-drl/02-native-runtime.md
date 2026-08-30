@@ -67,12 +67,18 @@ String output = context.getOutput();
 int firedRules = context.getFiredRules();
 ```
 
+`RuleContext.method("check")` is the expected shape for execution. Every
+`DRLService` call requires a non-null context with a non-blank method, and the
+runtime expects exactly one matching rule. If no rule matches the method, or if
+more than one rule matches it, execution fails with a clear DRL exception
+instead of returning an empty output.
+
 Keep the authored rule source self-contained. Any helper methods that exist in
 the Java authoring class are for authoring convenience only; the converted DRL
 should not depend on them as reusable rule methods.
 
 When the rule throws, the runtime stores the exception on the context and then
-raises an `IllegalStateException` so the caller can handle it in one place.
+raises a DRL exception so the caller can handle it in one place.
 
 ## Rule Context Contract
 
@@ -90,6 +96,8 @@ It carries:
 
 That makes it a good fit for request/response style hooks and validation rules
 where the caller wants a mutable result object instead of a new return type.
+
+A plain `new RuleContext<>()` must have a method assigned before execution.
 
 ## Working With Facts
 
