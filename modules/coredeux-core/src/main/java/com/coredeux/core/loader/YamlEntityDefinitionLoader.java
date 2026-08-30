@@ -111,7 +111,7 @@ public class YamlEntityDefinitionLoader implements EntityDefinitionLoader {
 
     private Object convertModuleConfig(String moduleName, Object value) {
         if (value == null) {
-            return null;
+            return Map.of();
         }
 
         switch (moduleName) {

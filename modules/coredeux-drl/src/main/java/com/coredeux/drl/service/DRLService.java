@@ -8,13 +8,17 @@ import com.coredeux.drl.model.RuleContext;
  *
  * <p>The service resolves rules by identifier, compiles caller-provided DRL
  * when requested, and updates the supplied {@link RuleContext} with execution
- * results.
+ * results. Every execution requires a context with a non-blank method, and that
+ * method must match exactly one rule.
  */
 public interface DRLService {
 
     /**
      * Resolves, compiles, caches, and executes the rule identified by the given
      * rule id.
+     *
+     * <p>The runtime fails if the context has no method, no rule fires, or more
+     * than one rule fires for the requested method.
      *
      * @param ruleId the rule identifier used by the configured source resolver
      * @param context the execution context and fact carrier
@@ -25,6 +29,9 @@ public interface DRLService {
      * Compiles the supplied DRL source, stores the compiled rule base under the
      * given rule id, and executes it immediately.
      *
+     * <p>The runtime fails if the context has no method, no rule fires, or more
+     * than one rule fires for the requested method.
+     *
      * @param ruleId the cache key to use for the compiled rule base
      * @param source the DRL source text to compile
      * @param context the execution context and fact carrier
@@ -34,6 +41,9 @@ public interface DRLService {
     /**
      * Compiles and executes the supplied DRL source without consulting a source
      * resolver or storing the compiled result in the cache.
+     *
+     * <p>The runtime fails if the context has no method, no rule fires, or more
+     * than one rule fires for the requested method.
      *
      * @param source the DRL source text to compile
      * @param context the execution context and fact carrier
