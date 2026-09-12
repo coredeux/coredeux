@@ -34,6 +34,7 @@ import com.coredeux.drl.support.RuleContextExecutionSupport;
 public class DefaultDRLService implements DRLService {
 
     private static final String COMPONENT_REGISTRY = "componentRegistry";
+    private static final int NO_RULE_MATCH_RETRY_ATTEMPTS = 1;
 
     static {
         DrlRuntimeBootstrap.initialize();
@@ -89,8 +90,23 @@ public class DefaultDRLService implements DRLService {
      */
     @Override
     public <T> void execute(String ruleId, RuleContext<T> context) {
-        CompiledDRLRule compiledRule = cache.computeIfAbsent(ruleId, () -> compile(ruleId));
-        executeCompiled(ruleId, compiledRule, context);
+        CoredeuxDRLException noRuleMatchException = null;
+        for (int attempt = 0; attempt <= NO_RULE_MATCH_RETRY_ATTEMPTS; attempt++) {
+            try {
+                CompiledDRLRule compiledRule = attempt == 0
+                        ? cache.computeIfAbsent(ruleId, () -> compile(ruleId))
+                        : compileAndReplaceCachedRule(ruleId);
+                executeCompiled(ruleId, compiledRule, context);
+                return;
+            } catch (CoredeuxDRLException exception) {
+                if (!isNoRuleMatch(context) || attempt == NO_RULE_MATCH_RETRY_ATTEMPTS) {
+                    throw exception;
+                }
+                noRuleMatchException = exception;
+                cache.remove(ruleId);
+            }
+        }
+        throw noRuleMatchException;
     }
 
     /**
@@ -288,6 +304,30 @@ public class DefaultDRLService implements DRLService {
 
         throw new CoredeuxDRLException("DRL '" + ruleId + "' matched multiple rules for method '" + method
                 + "'. Fired rules: " + firedRules + ".");
+    }
+
+    /**
+     * Re-resolves and replaces a cached compiled rule after an execution proves
+     * the current compiled rule no longer matches the requested method.
+     *
+     * @param ruleId the rule identifier to resolve and cache
+     * @return the freshly compiled rule bundle
+     */
+    private CompiledDRLRule compileAndReplaceCachedRule(String ruleId) {
+        CompiledDRLRule compiledRule = compile(ruleId);
+        cache.put(ruleId, compiledRule);
+        return compiledRule;
+    }
+
+    /**
+     * Detects the only execution failure that is safe to recover by refreshing
+     * source from the resolver. Since no rule fired, no rule consequence has
+     * mutated external state through DRL code.
+     *
+     * @return {@code true} when the failure is a fired-0 method miss
+     */
+    private boolean isNoRuleMatch(RuleContext<?> context) {
+        return context != null && context.getFiredRules() == 0;
     }
 
     /**
