@@ -54,6 +54,97 @@ class DefaultDRLServiceCoverageTest {
     }
 
     @Test
+    void shouldRecoverFromStaleCachedRuleWhenNoRuleMatches() {
+        DRLSourceResolver resolver = mock(DRLSourceResolver.class);
+        when(resolver.resolve("sample-rule")).thenReturn("""
+                package rules.sample;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "staleRule"
+                when
+                    $context : RuleContext(method == "stale")
+                then
+                    $context.setOutput("stale");
+                end
+                """, """
+                package rules.sample;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "resolvedRule"
+                when
+                    $context : RuleContext(method == "execute")
+                then
+                    $context.setOutput("recovered");
+                end
+                """);
+
+        DefaultDRLService service = new DefaultDRLService(resolver);
+        RuleContext context = RuleContext.method("execute");
+
+        service.execute("sample-rule", context);
+
+        assertEquals("recovered", context.getOutput());
+        assertEquals(1, context.getFiredRules());
+        assertTrue(service.isCached("sample-rule"));
+        verify(resolver, times(2)).resolve("sample-rule");
+    }
+
+    @Test
+    void shouldRetryNoRuleMatchesOnceBeforeFailing() {
+        DRLSourceResolver resolver = mock(DRLSourceResolver.class);
+        when(resolver.resolve("sample-rule")).thenReturn("""
+                package rules.sample;
+
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "nonMatchingRule"
+                when
+                    $context : RuleContext(method == "different")
+                then
+                    $context.setOutput("should-not-run");
+                end
+                """);
+
+        DefaultDRLService service = new DefaultDRLService(resolver);
+        RuleContext context = RuleContext.method("execute");
+
+        CoredeuxDRLException exception = assertThrows(CoredeuxDRLException.class,
+                () -> service.execute("sample-rule", context));
+
+        assertEquals(0, context.getFiredRules());
+        assertTrue(exception.getMessage().contains("did not match any rule"));
+        verify(resolver, times(2)).resolve("sample-rule");
+    }
+
+    @Test
+    void shouldNotRetryWhenRuleFiresAndReportsAnException() {
+        DRLSourceResolver resolver = mock(DRLSourceResolver.class);
+        when(resolver.resolve("sample-rule")).thenReturn("""
+                package rules.sample;
+
+                import com.coredeux.drl.exceptions.CoredeuxDRLException;
+                import com.coredeux.drl.model.RuleContext;
+
+                rule "failingRule"
+                when
+                    $context : RuleContext(method == "execute")
+                then
+                    $context.setException(new CoredeuxDRLException("did not match any rule downstream"));
+                end
+                """);
+
+        DefaultDRLService service = new DefaultDRLService(resolver);
+        RuleContext context = RuleContext.method("execute");
+
+        assertThrows(CoredeuxDRLException.class, () -> service.execute("sample-rule", context));
+
+        assertEquals(1, context.getFiredRules());
+        verify(resolver, times(1)).resolve("sample-rule");
+    }
+
+    @Test
     void shouldExecuteSourceAndOnlyInjectComponentRegistryWhenDeclared() {
         CoredeuxComponentRegistry registry = new InMemoryCoredeuxComponentRegistry(Map.of("sampleMessage", "hello"));
         DefaultDRLService service = new DefaultDRLService(mock(DRLSourceResolver.class), registry);
