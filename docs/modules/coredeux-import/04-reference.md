@@ -2082,3 +2082,7 @@ The host application can own concerns such as:
 <!-- docs-nav-start -->
 [Previous: Text And Excel File Import](/modules/coredeux-import/03-text-and-excel-file-import) | [Documentation Home](/) | [Next: Coredeux Export](/modules/coredeux-export/01-overview)
 <!-- docs-nav-end -->
+
+## Existing update targets
+
+`ImportUpdateTargetResolver` resolves an existing entity before an UPSERT or MODIFY binds fields and calls the update service. The default resolver returns its input unchanged. Applications may supply an implementation for their storage adapter, for example to unwrap a persistence proxy. Spring Boot uses an application-provided resolver when present. The original import-service constructor retains the identity behavior.

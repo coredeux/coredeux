@@ -30,6 +30,7 @@ import com.coredeux.impex.model.ImportRow;
 import com.coredeux.impex.model.ImportSeverity;
 import com.coredeux.impex.model.ImportStatement;
 import com.coredeux.impex.service.CoredeuxImportService;
+import com.coredeux.impex.service.ImportUpdateTargetResolver;
 
 public class DefaultCoredeuxImportService implements CoredeuxImportService {
 
@@ -37,6 +38,7 @@ public class DefaultCoredeuxImportService implements CoredeuxImportService {
     private static final String EQUALS = "EQUALS";
     private static final String ISNULL = "ISNULL";
 
+    private final ImportUpdateTargetResolver updateTargetResolver;
     private final CoredeuxService coredeuxService;
     private final CoredeuxReflectionHelperService reflectionHelperService;
     private final ImportEntityTargetService entityTargetService;
@@ -50,6 +52,15 @@ public class DefaultCoredeuxImportService implements CoredeuxImportService {
             CoredeuxReflectionHelperService reflectionHelperService,
             ImportEntityTargetService entityTargetService,
             CoredeuxValueHandlerService coredeuxValueHandlerService) {
+        this(coredeuxService, reflectionHelperService, entityTargetService, coredeuxValueHandlerService, entity -> entity);
+    }
+
+    public DefaultCoredeuxImportService(CoredeuxService coredeuxService,
+            CoredeuxReflectionHelperService reflectionHelperService,
+            ImportEntityTargetService entityTargetService,
+            CoredeuxValueHandlerService coredeuxValueHandlerService,
+            ImportUpdateTargetResolver updateTargetResolver) {
+        this.updateTargetResolver = java.util.Objects.requireNonNull(updateTargetResolver, "updateTargetResolver");
         this.coredeuxService = coredeuxService;
         this.reflectionHelperService = reflectionHelperService;
         this.entityTargetService = entityTargetService;
@@ -200,6 +211,7 @@ public class DefaultCoredeuxImportService implements CoredeuxImportService {
             create(request, statement, row, metadata, references);
             return;
         }
+        existing = updateTargetResolver.resolve(existing);
         populateInstance(request, statement, row, metadata, existing, references);
         coredeuxService.update(existing);
         storeReference(row, null, existing, metadata, references);
@@ -211,6 +223,7 @@ public class DefaultCoredeuxImportService implements CoredeuxImportService {
     private void modify(ImportRequest request, ImportStatement statement, ImportRow row,
             ImportEntityMetadata metadata, Map<String, String> references) {
         Object existing = findExisting(request, statement, row, metadata, references, true);
+        existing = updateTargetResolver.resolve(existing);
         populateInstance(request, statement, row, metadata, existing, references);
         coredeuxService.update(existing);
         storeReference(row, null, existing, metadata, references);
