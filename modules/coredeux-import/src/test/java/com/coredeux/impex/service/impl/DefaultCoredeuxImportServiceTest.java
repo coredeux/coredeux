@@ -493,6 +493,34 @@ class DefaultCoredeuxImportServiceTest {
     }
 
     @Test
+    void resolvesExistingUpdateTargetsBeforeBindingFields() {
+        for (ImportOperation operation : List.of(ImportOperation.UPSERT, ImportOperation.MODIFY)) {
+            Product existing = product("existing-id", "sku-resolver");
+            existing.price = BigInteger.ONE;
+            Product resolved = product("existing-id", "sku-resolver");
+            resolved.price = BigInteger.TWO;
+            coredeuxService.put(existing.id, existing);
+            var reflection = new DefaultCoredeuxReflectionHelperService();
+            var registry = new InMemoryEntityDefinitionRegistry(List.of(CoredeuxEntityDefinition.builder()
+                    .fullClassName(Product.class.getName()).identifier("id").build()));
+            var components = InMemoryCoredeuxComponentRegistry.builder()
+                    .component("coredeuxDefaultImportValueHandler", new DefaultCoredeuxImportValueHandler(coredeuxService))
+                    .build();
+            var importer = new DefaultCoredeuxImportService(coredeuxService, reflection,
+                    new ImportEntityTargetService(reflection, registry), new DefaultCoredeuxValueHandlerService(components),
+                    value -> { assertSame(existing, value); return resolved; });
+            var statement = ImportStatement.builder().operation(operation).entity(Product.class.getName())
+                    .columns(List.of(ImportColumn.builder().name("sku").unique(true).build(),
+                            ImportColumn.builder().name("price").build()))
+                    .rows(List.of(row(null, Map.of("sku", "sku-resolver", "price", "99")))).build();
+            assertFalse(importer.importData(ImportRequest.builder().statements(List.of(statement)).build()).hasErrors());
+            assertSame(resolved, coredeuxService.updated.get(coredeuxService.updated.size() - 1));
+            assertEquals(BigInteger.ONE, existing.price);
+            assertEquals(new BigInteger("99"), resolved.price);
+        }
+    }
+
+    @Test
     void shouldReplaceExistingCollectionByDefault() {
         Product existing = product("existing-replace-id", "sku-replace");
         existing.tags = new LinkedHashSet<>(List.of("old", "legacy"));

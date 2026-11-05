@@ -18,6 +18,7 @@ import com.coredeux.impex.handler.impl.JsonMapImportHandler;
 import com.coredeux.impex.parser.excel.CoredeuxExcelImportParser;
 import com.coredeux.impex.parser.text.CoredeuxTextImportParser;
 import com.coredeux.impex.service.CoredeuxImportService;
+import com.coredeux.impex.service.ImportUpdateTargetResolver;
 import com.coredeux.impex.service.impl.DefaultCoredeuxImportService;
 import com.coredeux.impex.service.impl.ImportEntityTargetService;
 
@@ -68,11 +69,17 @@ public class CoredeuxImportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    ImportUpdateTargetResolver coredeuxImportUpdateTargetResolver() {
+        return entity -> entity;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     CoredeuxImportService coredeuxImportService(CoredeuxService coredeuxService,
             CoredeuxReflectionHelperService reflectionHelperService,
             ImportEntityTargetService entityTargetService,
-            CoredeuxValueHandlerService coredeuxValueHandlerService) {
+            CoredeuxValueHandlerService coredeuxValueHandlerService, ImportUpdateTargetResolver updateTargetResolver) {
         return new DefaultCoredeuxImportService(coredeuxService, reflectionHelperService, entityTargetService,
-                coredeuxValueHandlerService);
+                coredeuxValueHandlerService, updateTargetResolver);
     }
 }

@@ -15,3 +15,5 @@
 - Import/export formats must be parsed structurally and validated explicitly.
 - Contract changes require focused tests and updates to affected implementations
   and documentation.
+
+- Import update targets are resolved before field binding through ImportUpdateTargetResolver. The default is identity; storage-specific proxy handling belongs in the consuming adapter.

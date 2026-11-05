@@ -20,6 +20,7 @@ import com.coredeux.core.service.CoredeuxService;
 import com.coredeux.impex.parser.excel.CoredeuxExcelImportParser;
 import com.coredeux.impex.parser.text.CoredeuxTextImportParser;
 import com.coredeux.impex.service.CoredeuxImportService;
+import com.coredeux.impex.service.ImportUpdateTargetResolver;
 import com.coredeux.impex.service.impl.ImportEntityTargetService;
 
 class CoredeuxImportAutoConfigurationTest {
@@ -41,6 +42,16 @@ class CoredeuxImportAutoConfigurationTest {
                 .hasSingleBean(CoredeuxValueHandlerService.class)
                 .hasSingleBean(ImportEntityTargetService.class)
                 .hasSingleBean(CoredeuxImportService.class));
+    }
+
+    @Test
+    void customUpdateTargetResolverReplacesDefault() {
+        ImportUpdateTargetResolver custom = entity -> entity;
+        contextRunner.withBean(ImportUpdateTargetResolver.class, () -> custom).run(context -> {
+            assertThat(context).hasSingleBean(ImportUpdateTargetResolver.class);
+            assertThat(context.getBean(ImportUpdateTargetResolver.class)).isSameAs(custom);
+            assertThat(context).hasSingleBean(CoredeuxImportService.class);
+        });
     }
 
     @Test
