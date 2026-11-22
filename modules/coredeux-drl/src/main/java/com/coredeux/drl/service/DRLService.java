@@ -1,7 +1,11 @@
 package com.coredeux.drl.service;
 
+import java.util.List;
+import java.util.Map;
+
 import com.coredeux.drl.cache.CompiledDRLRule;
 import com.coredeux.drl.model.RuleContext;
+import com.coredeux.drl.support.RuleContextExecutionSupport;
 
 /**
  * Runtime service for executing compiled or ad hoc DRL rules.
@@ -24,6 +28,45 @@ public interface DRLService {
      * @param context the execution context and fact carrier
      */
     <T> void execute(String ruleId, RuleContext<T> context);
+
+    /**
+     * Invokes the target in {@code ruleId#method} form and returns the rule output.
+     *
+     * <p>The rule id is passed to the configured source resolver through
+     * {@link #execute(String, RuleContext)}. Facts and parameters are copied into
+     * a fresh context. Execution failures propagate to the caller.
+     *
+     * @param target the stored rule id and context method separated by a single
+     *        {@code #}, with surrounding whitespace ignored
+     * @param facts the session facts, or {@code null} for no facts
+     * @param params the named parameters, or {@code null} for no parameters
+     * @return the rule output, which may be {@code null}
+     * @throws IllegalArgumentException if the target does not contain two
+     *         non-blank parts separated by a single {@code #}
+     */
+    default <T> T invoke(String target, List<?> facts, Map<String, ?> params) {
+        int separator = target == null ? -1 : target.indexOf('#');
+        if (separator < 0 || separator != target.lastIndexOf('#')) {
+            throw new IllegalArgumentException("DRL target must use ruleId#method with a single '#'.");
+        }
+
+        String ruleId = target.substring(0, separator).strip();
+        String method = target.substring(separator + 1).strip();
+        if (ruleId.isEmpty() || method.isEmpty()) {
+            throw new IllegalArgumentException("DRL target requires a rule id and method in ruleId#method form.");
+        }
+
+        RuleContext<T> context = RuleContext.method(method);
+        if (facts != null) {
+            facts.forEach(context::fact);
+        }
+        if (params != null) {
+            context.getParams().putAll(params);
+        }
+
+        execute(ruleId, context);
+        return RuleContextExecutionSupport.outputOrThrow(context, "DRL target '" + target + "'");
+    }
 
     /**
      * Compiles the supplied DRL source, stores the compiled rule base under the

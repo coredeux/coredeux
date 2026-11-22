@@ -80,6 +80,19 @@ should not depend on them as reusable rule methods.
 When the rule throws, the runtime stores the exception on the context and then
 raises a DRL exception so the caller can handle it in one place.
 
+For a stored rule whose output is all the caller needs, `invoke` builds the
+context from a `ruleId#method` target, session facts, and named parameters.
+
+```java
+String output = drlService.invoke("sample-rule#check", List.of(sampleEntity), Map.of("entity", sampleEntity));
+```
+
+Use the exact resolver id before the `#`, including a suffix if it is part of
+that id. Invocation uses the same cache and single-rule validation as
+`execute`. A rule may return `null`, and failures propagate to the caller.
+Use `execute` with an explicit context to read metadata such as the message or
+fired-rule count.
+
 ## Rule Context Contract
 
 `RuleContext<T>` is the object you pass into the runtime and read from after the

@@ -8,6 +8,8 @@
 - Global configuration is fallback behavior; entity definitions may override it.
 - Hooks and validators are extension contracts, not application controllers.
 - DRL execution uses `RuleContext` and reports output or exceptions through it.
+  `DRLService.invoke` accepts `ruleId#method`, delegates to standard execution,
+  and returns the output while propagating rule failures.
 - Native modules must not acquire accidental Spring dependencies.
 - Spring Boot starters wire framework contracts without redefining them.
 - Spring Boot data-access starters are opt-in; starter dependencies alone must
