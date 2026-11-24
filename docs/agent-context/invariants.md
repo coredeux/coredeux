@@ -7,6 +7,8 @@
 - Entity definitions own identifiers, storage selection, and module handlers.
 - Global configuration is fallback behavior; entity definitions may override it.
 - Hooks and validators are extension contracts, not application controllers.
+- Java hook execution failures propagate to the caller in both native and DRL-enabled
+  runtimes. The hook bean resolution error applies only to lookup and type checking.
 - DRL execution uses `RuleContext` and reports output or exceptions through it.
   `DRLService.invoke` accepts `ruleId#method`, delegates to standard execution,
   and returns the output while propagating rule failures.

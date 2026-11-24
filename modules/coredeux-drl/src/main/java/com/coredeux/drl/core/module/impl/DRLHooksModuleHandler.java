@@ -88,9 +88,9 @@ public class DRLHooksModuleHandler extends HooksModuleHandler implements Coredeu
 
     private <T> void executeJavaHook(String hookName, T entity, CoredeuxEntityDefinition definition, String phase,
             OperationContext context) {
+        CoredeuxEntityHook<T> hook;
         try {
-            CoredeuxEntityHook<T> hook = resolveHook(hookName, entity, definition);
-            invokeHook(hook, entity, definition, phase, context);
+            hook = resolveHook(hookName, entity, definition);
         } catch (CoredeuxStrategyException exception) {
             throw exception;
         } catch (Exception exception) {
@@ -98,6 +98,8 @@ public class DRLHooksModuleHandler extends HooksModuleHandler implements Coredeu
                     "Unable to resolve hook bean: " + hookName + " for class: " + definition.getFullClassName(),
                     exception);
         }
+
+        invokeHook(hook, entity, definition, phase, context);
     }
 
     private String phaseToHookMethod(String phase) {

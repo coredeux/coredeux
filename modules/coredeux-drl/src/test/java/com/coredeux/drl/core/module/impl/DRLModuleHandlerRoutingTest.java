@@ -2,12 +2,14 @@ package com.coredeux.drl.core.module.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -23,6 +25,7 @@ import com.coredeux.core.audit.CoredeuxEntityAuditHandler;
 import com.coredeux.core.context.OperationContext;
 import com.coredeux.core.definition.CoredeuxEntityDefinition;
 import com.coredeux.core.definition.CoredeuxModuleDefinition;
+import com.coredeux.core.exceptions.CoredeuxValidationException;
 import com.coredeux.core.hooks.CoredeuxEntityHook;
 import com.coredeux.core.registry.CoredeuxComponentRegistry;
 import com.coredeux.core.strategy.CoredeuxHookPhases;
@@ -335,6 +338,30 @@ class DRLModuleHandlerRoutingTest {
         assertThrows(com.coredeux.core.exceptions.CoredeuxStrategyException.class,
                 () -> drlHandler.execute("customer", definition, drlModuleDefinition, CoredeuxHookPhases.BEFORE_SAVE,
                         context));
+    }
+
+    @Test
+    void hooksPropagateJavaDeleteValidationFailures() {
+        CoredeuxComponentRegistry componentRegistry = mock(CoredeuxComponentRegistry.class);
+        @SuppressWarnings("unchecked")
+        CoredeuxEntityHook<Object> hook = mock(CoredeuxEntityHook.class);
+        when(componentRegistry.getComponent(eq("javaHook"), eq(CoredeuxEntityHook.class))).thenReturn(hook);
+        DRLHooksModuleHandler handler = new DRLHooksModuleHandler(componentRegistry);
+        CoredeuxEntityDefinition definition = entityDefinition();
+        CoredeuxModuleDefinition moduleDefinition = CoredeuxModuleDefinition.builder()
+                .name("hooks")
+                .enabled(true)
+                .handlers(List.of("javaHook"))
+                .build();
+        OperationContext context = OperationContext.builder().build();
+        CoredeuxValidationException failure = new CoredeuxValidationException("Customer is still referenced.");
+        doThrow(failure).when(hook).beforeDelete("customer", definition, context);
+
+        CoredeuxValidationException actual = assertThrows(CoredeuxValidationException.class,
+                () -> handler.execute("customer", definition, moduleDefinition, CoredeuxHookPhases.BEFORE_DELETE,
+                        context));
+
+        assertSame(failure, actual);
     }
 
     @Test
